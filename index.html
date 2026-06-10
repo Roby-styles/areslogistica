@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>ARES ERP MASTER - V47.3 (INTEGRALE)</title>
+    <title>ARES ERP MASTER - V47.4 (INTEGRALE)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -1611,7 +1611,7 @@
 
     <div class="sidebar">
         <img src="logo.jpg" style="max-width: 100%; max-height: 60px; display: block; margin: 0 auto 20px; border-radius: 8px;">
-        <h2 style="text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 20px; letter-spacing: 1px; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px;">ARES ERP <span style="font-size: 9px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 9999px; letter-spacing: 0.5px; font-weight: 800; width: fit-content; text-transform: uppercase;">v47.3 Stable</span></h2>
+        <h2 style="text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 20px; letter-spacing: 1px; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px;">ARES ERP <span style="font-size: 9px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 9999px; letter-spacing: 0.5px; font-weight: 800; width: fit-content; text-transform: uppercase;">v47.4 Stable</span></h2>
         <button class="btn-nav" onclick="show('dashboard')">🏠 Home</button>
         <button class="btn-nav" onclick="show('crm')">📞 CRM</button>
         <button class="btn-nav" onclick="show('planning')">📋 Planning</button>
@@ -19257,9 +19257,10 @@
                         <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
                             <div style="font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase;">🎯 Assegna Missione (Target)</div>
                             <div style="display: flex; gap: 6px;">
-                                <input type="text" id="mission-target-address" placeholder="Indirizzo (es. Via Roma 1, Milano)" style="flex: 1; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 6px; font-size: 11px;">
+                                <input type="text" id="mission-target-address" onkeyup="handleMissionSearch(this.value)" placeholder="Indirizzo (es. Via Roma 1, Milano)" style="flex: 1; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 6px; font-size: 11px;">
                                 <button onclick="assignMissionToSelected()" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: all 0.2s;">INVIA</button>
                             </div>
+                            <div id="mission-search-results" style="display: none; background: rgba(20, 22, 35, 0.95); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; max-height: 150px; overflow-y: auto; margin-top: 4px;"></div>
                             <div id="mission-status-box" style="display: none; padding: 10px; background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 11px; color: #fcd34d;">
                                 🚀 In rotta verso: <b id="mission-target-name"></b><br>
                                 ⏱️ ETA: <span id="mission-eta" style="font-weight: 800;">Calcolo in corso...</span><br>
@@ -21169,6 +21170,53 @@
                 supabaseClient.from('ares_presence').update({ device: cleanDevice }).eq('username', username).then();
             }
         }
+    }
+    }
+
+    let missionSearchTimeout = null;
+
+    function handleMissionSearch(query) {
+        query = query.trim();
+        const resultsBox = document.getElementById('mission-search-results');
+        if (!resultsBox) return;
+
+        clearTimeout(missionSearchTimeout);
+        
+        if (query.length < 3) {
+            resultsBox.style.display = 'none';
+            return;
+        }
+
+        resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #818cf8; font-size: 11px; text-align: center;">Ricerca in corso... ⏳</div>';
+        resultsBox.style.display = 'block';
+
+        missionSearchTimeout = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=it`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #f43f5e; font-size: 11px;">Nessun risultato trovato</div>';
+                    } else {
+                        resultsBox.innerHTML = data.map(item => `
+                            <div style="padding: 8px 10px; color: #cbd5e1; font-size: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);" 
+                                 onclick="selectMissionAddress('${item.display_name.replace(/'/g, "\\'")}')"
+                                 onmouseover="this.style.background='rgba(99,102,241,0.2)'"
+                                 onmouseout="this.style.background='transparent'">
+                                📍 ${item.display_name}
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(err => {
+                    console.error('Geocoding error:', err);
+                    resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #f43f5e; font-size: 11px;">Errore API mappe</div>';
+                });
+        }, 600);
+    }
+
+    function selectMissionAddress(address) {
+        document.getElementById('mission-target-address').value = address;
+        document.getElementById('mission-search-results').style.display = 'none';
     }
 
     function openWaLink() {
