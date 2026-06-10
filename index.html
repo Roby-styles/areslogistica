@@ -1472,6 +1472,175 @@
         }
         body.detached-mode .btn-detach {
             display: none !important;
+        }        /* --- FASCICOLI MODULE CSS --- */
+        .omnisearch-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+        }
+        .omnisearch-input {
+            width: 100%;
+            padding: 15px 25px 15px 50px;
+            font-size: 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            border-radius: 30px;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .omnisearch-input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 10px 40px rgba(56, 189, 248, 0.3);
+        }
+        .omnisearch-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #38bdf8;
+        }
+        
+        .fascicoli-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .fascicolo-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .fascicolo-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        
+        /* 3D Flip Book Modal */
+        .book-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            perspective: 2000px;
+        }
+        .book-modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .book-container {
+            width: 90vw;
+            max-width: 1200px;
+            height: 80vh;
+            display: flex;
+            transform-style: preserve-3d;
+            transform: rotateX(5deg);
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .book-page {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 4px 16px 16px 4px;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.5);
+            padding: 40px;
+            position: relative;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            background-image: linear-gradient(to right, rgba(255,255,255,0.02) 0%, transparent 5%);
+        }
+        .book-page.left {
+            border-radius: 16px 4px 4px 16px;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.5);
+            background-image: linear-gradient(to left, rgba(0,0,0,0.2) 0%, transparent 5%);
+            border-right: 2px solid rgba(0,0,0,0.6);
+        }
+        
+        .book-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(244, 63, 94, 0.2);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.4);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        .book-close-btn:hover {
+            background: #f43f5e;
+            color: #fff;
+        }
+        
+        /* Knowledge Graph Container */
+        #kg-container {
+            width: 100%;
+            height: 250px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .kg-node {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            cursor: grab;
+            user-select: none;
+        }
+        .kg-node.center {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: 2px solid #60a5fa;
+            z-index: 2;
+        }
+        .kg-node.satellite {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: 1px solid #34d399;
+            z-index: 1;
+        }
+        .kg-node.partner { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #fbbf24; }
+        .kg-node.finance { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; }
+        
+        .kg-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            transform-origin: 0 50%;
+            z-index: 0;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -1684,6 +1853,7 @@
         <button class="btn-nav" onclick="show('planning')">📋 Planning</button>
         <button class="btn-nav" onclick="show('risorse')">🛠️ Risorse</button>
         <button class="btn-nav" onclick="show('preventivatore')">📝 Preventivatore</button>
+        <button class="btn-nav" onclick="show('fascicoli')">📂 Fascicoli</button>
         <button class="btn-nav" onclick="show('grafana')">📊 Business Intelligence</button>
         <button class="btn-nav" onclick="show('operativa')">🗺️ Sala Operativa</button>
         <button class="btn-nav" onclick="show('videomanager')">📹 Video Manager</button>
@@ -19149,6 +19319,20 @@
             </div>
         </div>
 
+        <!-- --------------------------------------- -->
+        <!-- VIEW FASCICOLI LAVORI (DOSSIER DIGITALE) -->
+        <!-- --------------------------------------- -->
+        <div id="view-fascicoli" class="view-section">
+            <h2 style="margin-top:0; color:#fff; font-size:24px; letter-spacing:1px; display:flex; align-items:center; gap:10px;">
+                📂 Fascicoli Lavori & Commesse
+            </h2>
+            <p style="color:#94a3b8; font-size:14px; margin-top:-10px; margin-bottom:25px;">Archivio digitale interattivo delle commesse con Knowledge Graph e storage ibrido.</p>
+            
+            <div id="fascicoli-container">
+                <!-- Verrà popolato dinamicamente via JS -->
+            </div>
+        </div>
+
         <div id="view-grafana" class="view-section">
             <div class="bi-header">
                 <h2 class="bi-title">📊 Panorama Finanziario & BI</h2>
@@ -19865,6 +20049,7 @@
         if(id === 'dashboard') refreshDashboard();
         if(id === 'risorse') renderResources();
         if(id === 'preventivatore') renderPreventivi();
+        if(id === 'fascicoli') renderFascicoli();
         if(id === 'utenti') renderUsers();
         if(id === 'operativa') initGisMap();
         if(id === 'videomanager') renderCameraManager();
@@ -24386,6 +24571,11 @@
             refreshDashboard();
         }
 
+        // Auto-creazione fascicolo se convalidato
+        if (stato === 'convalidato') {
+            try { if (typeof autoCreateFascicoloFromPreventivo === 'function') autoCreateFascicoloFromPreventivo(prevObj); } catch(e){}
+        }
+
         // Sincronizzazione in Cloud
         if (supabaseClient) {
             try {
@@ -24682,6 +24872,9 @@
             if (p.id == id) {
                 p.stato = p.stato === 'convalidato' ? 'bozza' : 'convalidato';
                 targetState = p.stato;
+                if (targetState === 'convalidato') {
+                    try { if (typeof autoCreateFascicoloFromPreventivo === 'function') autoCreateFascicoloFromPreventivo(p); } catch(e){}
+                }
             }
             return p;
         });
@@ -26199,6 +26392,183 @@
     // Also update SVG lines on window resize
     window.addEventListener('resize', updateAllSVGLines);
     window.addEventListener('scroll', updateAllSVGLines);
+
+    // ==========================================
+    // MODULE: FASCICOLI LAVORI (DOSSIER DIGITALE)
+    // ==========================================
+    let aresFascicoli = [];
+    
+    // Generatore sonoro "Swoosh" per sfoglio pagina (usando Web Audio API, per non scaricare file)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playFlipSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    async function fetchFascicoli() {
+        if (!supabase) return;
+        const { data, error } = await supabase.from('ares_fascicoli').select('*').order('created_at', { ascending: false });
+        if (!error && data) aresFascicoli = data;
+    }
+
+    async function renderFascicoli() {
+        await fetchFascicoli();
+        const container = document.getElementById('fascicoli-container');
+        
+        let html = `
+            <div class="omnisearch-container">
+                <span class="omnisearch-icon">🔍</span>
+                <input type="text" class="omnisearch-input" placeholder="Cerca commessa, cliente o ID..." onkeyup="filterFascicoli(this.value)">
+            </div>
+            <div class="fascicoli-grid" id="fascicoli-grid-render">
+        `;
+        
+        if(aresFascicoli.length === 0) {
+            html += `<div style="color:#94a3b8; text-align:center; width:100%; grid-column: 1 / -1;">Nessun fascicolo trovato. Convalida un preventivo per crearne uno.</div>`;
+        } else {
+            aresFascicoli.forEach(f => {
+                html += `
+                <div class="fascicolo-card" onclick="openFascicoloBook(${f.id})">
+                    <div style="font-size:12px; color:#38bdf8; font-weight:700; margin-bottom:5px;">#FAS-${f.id}</div>
+                    <div style="font-size:18px; color:#fff; font-weight:700; margin-bottom:10px;">${f.titolo_commessa || 'Senza Titolo'}</div>
+                    <div style="font-size:12px; color:#94a3b8;">📅 Inizio: ${f.data_inizio || '-'}</div>
+                    <div style="font-size:12px; color:#94a3b8;">📍 ${f.indirizzo || 'N/D'}</div>
+                    <div style="margin-top:15px; font-size:11px; background:rgba(56,189,248,0.1); color:#38bdf8; padding:5px; border-radius:4px; text-align:center;">
+                        📖 Apri Fascicolo
+                    </div>
+                </div>`;
+            });
+        }
+        
+        html += `</div>`;
+        container.innerHTML = html;
+        
+        // Setup Book Modal se non esiste
+        if(!document.getElementById('fascicolo-book-modal')) {
+            const modalHTML = `
+            <div id="fascicolo-book-modal" class="book-modal-overlay">
+                <button class="book-close-btn" onclick="closeFascicoloBook()">X CHIUDI</button>
+                <div class="book-container" id="fascicolo-book-element">
+                    <!-- Pagine generate dinamicamente -->
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+    }
+
+    function filterFascicoli(query) {
+        query = query.toLowerCase();
+        const cards = document.querySelectorAll('#fascicoli-grid-render .fascicolo-card');
+        cards.forEach(card => {
+            if(card.innerText.toLowerCase().includes(query)) card.style.display = 'block';
+            else card.style.display = 'none';
+        });
+    }
+
+    function openFascicoloBook(id) {
+        const fascicolo = aresFascicoli.find(f => f.id === id);
+        if(!fascicolo) return;
+        
+        playFlipSound();
+        const modal = document.getElementById('fascicolo-book-modal');
+        const book = document.getElementById('fascicolo-book-element');
+        
+        book.innerHTML = `
+            <div class="book-page left" style="transform: rotateY(0deg);">
+                <h3 style="color:#38bdf8; margin-top:0;">Dossier Tecnico #${fascicolo.id}</h3>
+                <h1 style="color:#fff; font-size:28px;">${fascicolo.titolo_commessa || 'Commessa'}</h1>
+                
+                <div id="kg-container">
+                    <div class="kg-node center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">Commessa<br>${fascicolo.id}</div>
+                    <div class="kg-node satellite partner" style="left: 20%; top: 20%;">Partner</div>
+                    <div class="kg-node satellite finance" style="left: 80%; top: 30%;">Costi</div>
+                    <div class="kg-node satellite" style="left: 50%; top: 80%;">Risorse</div>
+                    <div class="kg-line" style="width:100px; left:50%; top:50%; transform: rotate(-45deg);"></div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px;">
+                    <p style="color:#a5b4fc; font-size:12px; margin:0;">📍 Location</p>
+                    <p style="color:#fff; font-weight:bold; margin-top:5px;">${fascicolo.indirizzo || 'Da definire'}</p>
+                </div>
+                
+                <div style="margin-top:20px;">
+                    <button onclick="copyLocalPath('${(fascicolo.percorso_locale || '').replace(/\\/g, '\\\\')}')" style="width:100%; padding:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">
+                        📂 Apri Cartella Allegati Locale
+                    </button>
+                    <p style="font-size:10px; color:#94a3b8; text-align:center; margin-top:5px;">Path: ${fascicolo.percorso_locale || 'Nessuno'}</p>
+                </div>
+            </div>
+            
+            <div class="book-page right">
+                <h3 style="color:#f59e0b; border-bottom:1px solid rgba(245, 158, 11, 0.3); padding-bottom:10px;">Diario Operativo & Note</h3>
+                <textarea id="note-fascicolo-${fascicolo.id}" style="width:100%; height:300px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; padding:15px; font-family:monospace; resize:none;" placeholder="Scrivi qui gli appunti della commessa...">${fascicolo.note_diario || ''}</textarea>
+                <button onclick="saveFascicoloNote(${fascicolo.id})" style="margin-top:15px; padding:10px 20px; background:#3b82f6; border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; float:right;">💾 Salva Diario</button>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        book.style.transform = "rotateX(5deg) scale(1)";
+        
+        // Simula piccola animazione di apertura
+        setTimeout(() => {
+            book.querySelector('.left').style.transform = "rotateY(0deg)";
+        }, 100);
+    }
+
+    function closeFascicoloBook() {
+        playFlipSound();
+        const modal = document.getElementById('fascicolo-book-modal');
+        const book = document.getElementById('fascicolo-book-element');
+        book.style.transform = "rotateX(5deg) scale(0.8)";
+        modal.classList.remove('active');
+    }
+
+    function copyLocalPath(path) {
+        if(!path) {
+            alert("Nessun percorso locale associato a questo fascicolo.");
+            return;
+        }
+        navigator.clipboard.writeText(path).then(() => {
+            alert("Percorso Cartella copiato! Vai su Esplora Risorse di Windows e fai INCOLLA nella barra in alto per aprire gli allegati.");
+        });
+    }
+
+    async function saveFascicoloNote(id) {
+        const text = document.getElementById(`note-fascicolo-${id}`).value;
+        if(supabase) {
+            await supabase.from('ares_fascicoli').update({ note_diario: text }).eq('id', id);
+            alert("Diario salvato nel Cloud!");
+        }
+    }
+
+    async function autoCreateFascicoloFromPreventivo(prev) {
+        if(!supabase) return;
+        
+        // Controlla se esiste già
+        const { data: ext } = await supabase.from('ares_fascicoli').select('id').eq('preventivo_id', prev.id).single();
+        if(ext) return; // Esiste già
+        
+        const fascicolo = {
+            titolo_commessa: prev.cliente + " - " + prev.note,
+            preventivo_id: prev.id,
+            indirizzo: "",
+            data_inizio: new Date().toISOString().split('T')[0],
+            percorso_locale: `D:\\Ares_Archivio\\Commessa_${prev.id}_${prev.cliente.replace(/\\s+/g, '_')}`
+        };
+        
+        const { error } = await supabase.from('ares_fascicoli').insert([fascicolo]);
+        if(!error) console.log("Fascicolo autogenerato per il preventivo " + prev.id);
+    }
 
     // Load cameras on startup
     loadCameras();
