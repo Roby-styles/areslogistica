@@ -18876,30 +18876,30 @@
                             <!-- TRASFERTE TRASPORTO -->
                             <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); padding:20px; border-radius:12px;">
                                 <h4 style="margin-top:0; margin-bottom:15px; color:#6366f1; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">🚚 Stima Trasferta (Carburante & Pedaggi)</h4>
-                                <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-row" style="margin-bottom:12px; align-items:end;">
                                     <div class="form-group">
-                                        <label for="prev-tr-km">Distanza (KM solo andata)</label>
-                                        <input type="number" id="prev-tr-km" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;">
+                                        <label for="prev-tr-km" style="font-size:10px;">Distanza (KM solo andata)</label>
+                                        <input type="number" id="prev-tr-km" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
                                     </div>
                                     <div class="form-group">
-                                        <label for="prev-tr-pedaggio">Pedaggi Autostrada (€)</label>
-                                        <input type="number" id="prev-tr-pedaggio" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;">
-                                    </div>
-                                </div>
-                                <div class="form-row" style="margin-bottom:12px;">
-                                    <div class="form-group">
-                                        <label for="prev-tr-costokm">Costo Carburante al KM (€)</label>
-                                        <input type="number" id="prev-tr-costokm" value="0.35" step="0.01" min="0" oninput="calculateTrasferte()" style="width:100%;">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="prev-tr-staff">Membri Staff in Trasferta</label>
-                                        <input type="number" id="prev-tr-staff" value="2" min="1" oninput="calculateTrasferte()" style="width:100%;">
+                                        <label for="prev-tr-pedaggio" style="font-size:10px;">Pedaggi Autostrada (€)</label>
+                                        <input type="number" id="prev-tr-pedaggio" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
                                     </div>
                                 </div>
-                                <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-row" style="margin-bottom:12px; align-items:end;">
+                                    <div class="form-group">
+                                        <label for="prev-tr-costokm" style="font-size:10px;">Costo Carburante al KM (€)</label>
+                                        <input type="number" id="prev-tr-costokm" value="0.35" step="0.01" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="prev-tr-staff" style="font-size:10px;">Membri Staff in Trasferta</label>
+                                        <input type="number" id="prev-tr-staff" value="2" min="1" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom:12px; align-items:end;">
                                     <div class="form-group" style="max-width:50%;">
-                                        <label for="prev-tr-diaria">Diaria / Spesa a Persona (€)</label>
-                                        <input type="number" id="prev-tr-diaria" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;" placeholder="es. Pranzo, indennità...">
+                                        <label for="prev-tr-diaria" style="font-size:10px;">Diaria / Spesa a Persona (€)</label>
+                                        <input type="number" id="prev-tr-diaria" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;" placeholder="es. Pranzo...">
                                     </div>
                                 </div>
                                 <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.06); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
@@ -18911,20 +18911,20 @@
                             <!-- ALLOGGIO VITTO -->
                             <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); padding:20px; border-radius:12px;">
                                 <h4 style="margin-top:0; margin-bottom:15px; color:#3b82f6; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">🏨 Stima Alloggio & Vitto (Hotel)</h4>
-                                <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-row" style="margin-bottom:12px; align-items:end;">
                                     <div class="form-group">
-                                        <label for="prev-al-camera">Costo Camera/Notte per Persona (€)</label>
-                                        <input type="number" id="prev-al-camera" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;">
+                                        <label for="prev-al-camera" style="font-size:10px;">Costo Camera/Notte/Pers. (€)</label>
+                                        <input type="number" id="prev-al-camera" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
                                     </div>
                                     <div class="form-group">
-                                        <label for="prev-al-persone">Persone in Hotel</label>
-                                        <input type="number" id="prev-al-persone" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;">
+                                        <label for="prev-al-persone" style="font-size:10px;">Persone in Hotel</label>
+                                        <input type="number" id="prev-al-persone" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
                                     </div>
                                 </div>
-                                <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-row" style="margin-bottom:12px; align-items:end;">
                                     <div class="form-group" style="max-width:50%;">
-                                        <label for="prev-al-notti">Numero di Notti</label>
-                                        <input type="number" id="prev-al-notti" value="0" min="0" oninput="calculateTrasferte()" style="width:100%;">
+                                        <label for="prev-al-notti" style="font-size:10px;">Numero di Notti</label>
+                                        <input type="number" id="prev-al-notti" value="0" min="0" oninput="calculateTrasferte()" style="width:100%; padding:6px 10px; font-size:13px; height:32px;">
                                     </div>
                                 </div>
                                 <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.06); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
