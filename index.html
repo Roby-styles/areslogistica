@@ -19195,6 +19195,13 @@
                                 <div class="neon-indicator"></div>
                             </label>
 
+                            <!-- Scia Bavetta -->
+                            <div style="margin-top: 10px; background: rgba(14, 165, 233, 0.05); padding: 10px; border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 8px;">
+                                <div style="font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 5px;">🐌 LUNGHEZZA SCIA (BAVETTA)</div>
+                                <input type="range" id="trail-length-slider" min="0" max="100" value="20" style="width: 100%; accent-color: #38bdf8;" oninput="updateTrailLength(this.value)">
+                                <div style="text-align: right; font-size: 10px; color: #94a3b8;"><span id="trail-length-val">20</span> punti rilevati</div>
+                            </div>
+
                             <!-- 📹 Layer Telecamere -->
                             <label class="neon-toggle-btn">
                                 <input type="checkbox" id="layer-cameras" onchange="toggleCameraLayer()">
@@ -19243,6 +19250,20 @@
                                 <button id="btn-video-link" onclick="openVideoLink()" style="padding:8px; background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.3); color:#818cf8; font-weight:700; border-radius:8px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:4px;">
                                     📹 Video
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- MISSION DISPATCHER WIDGET -->
+                        <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 4px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase;">🎯 Assegna Missione (Target)</div>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="mission-target-address" placeholder="Indirizzo (es. Via Roma 1, Milano)" style="flex: 1; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 6px; font-size: 11px;">
+                                <button onclick="assignMissionToSelected()" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: all 0.2s;">INVIA</button>
+                            </div>
+                            <div id="mission-status-box" style="display: none; padding: 10px; background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: 8px; font-size: 11px; color: #fcd34d;">
+                                🚀 In rotta verso: <b id="mission-target-name"></b><br>
+                                ⏱️ ETA: <span id="mission-eta" style="font-weight: 800;">Calcolo in corso...</span><br>
+                                <button onclick="cancelMission()" style="margin-top: 6px; background: transparent; border: 1px solid #f43f5e; color: #f43f5e; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 9px;">Annulla Rotta</button>
                             </div>
                         </div>
                     </div>
@@ -20312,7 +20333,39 @@
                         }
                         
                         if (typeof isSosMuted !== 'undefined' && !isSosMuted) {
-                            if (!window.lastSosBeep || Date.now() - window.lastSosBeep > 8000) {
+                            if (!window.lastSosBeep) {
+                                // ----------------------------------------------------
+                                // MAPPA E GIS
+                                // ----------------------------------------------------
+                                let mapInstance = null;
+                                let markersGroup = null;
+                                let mapMarkers = {};
+                                let selectedWorker = null;
+                                let autoUpdateGisInterval = null;
+                                
+                                // VARIABILI PER MASTERPLAN: BAVETTA E DISPATCHER
+                                let mapTrails = {}; 
+                                let mapPolylines = {}; 
+                                let trailLength = 20; 
+                                let activeMissions = {};
+
+                                function updateTrailLength(val) {
+                                    trailLength = parseInt(val);
+                                    document.getElementById('trail-length-val').innerText = val;
+                                    // Aggiorna visivamente tutte le polilinee istantaneamente
+                                    Object.keys(mapPolylines).forEach(username => {
+                                        if (trailLength === 0) {
+                                            mapPolylines[username].setStyle({opacity: 0});
+                                        } else {
+                                            mapPolylines[username].setStyle({opacity: 0.7});
+                                            // Troncamento immediato visivo se ridotto
+                                            if (mapTrails[username] && mapTrails[username].length > trailLength) {
+                                                mapTrails[username] = mapTrails[username].slice(-trailLength);
+                                                mapPolylines[username].setLatLngs(mapTrails[username]);
+                                            }
+                                        }
+                                    });
+                                }
                                 window.lastSosBeep = Date.now();
                                 
                                 // 1. Sintesi Vocale Femminile in Italiano (HTML5 Web Speech API)
@@ -20836,11 +20889,39 @@
                         mapMarkers[w.username].setIcon(customIcon);
                     } else {
                         const marker = L.marker([lat, lon], { icon: customIcon }).addTo(markersGroup);
-                        marker.bindPopup(`<b>👷 ${w.username}</b><br>Dispositivo: ${w.device}<br>Velocità: ${speed} km/h`);
+                        // Rimosso il popup nativo banale a favore del Widget Operatore integrato a destra
                         marker.on('click', () => {
                             selectGisWorker(w);
                         });
                         mapMarkers[w.username] = marker;
+                    }
+
+                    // --- BAVETTA (Snail Trail) LOGIC ---
+                    if (!mapTrails[w.username]) mapTrails[w.username] = [];
+                    const history = mapTrails[w.username];
+                    const newPoint = [lat, lon];
+                    
+                    if (history.length === 0 || (Math.abs(history[history.length-1][0]-lat) > 0.00002 || Math.abs(history[history.length-1][1]-lon) > 0.00002)) {
+                        history.push(newPoint);
+                        if (history.length > trailLength) history.shift();
+                    }
+                    
+                    if (!mapPolylines[w.username]) {
+                        mapPolylines[w.username] = L.polyline(history, {
+                            color: '#0ea5e9',
+                            weight: 5,
+                            opacity: trailLength > 0 ? 0.7 : 0,
+                            dashArray: '5, 10',
+                            lineCap: 'round',
+                            lineJoin: 'round'
+                        }).addTo(mapInstance);
+                    } else {
+                        mapPolylines[w.username].setLatLngs(history);
+                    }
+
+                    // --- MISSION TRACKING & ETA ---
+                    if (activeMissions[w.username]) {
+                        checkMissionArrival(w.username, lat, lon);
                     }
 
                     if (selectedWorker && selectedWorker.username === w.username) {
@@ -20883,6 +20964,21 @@
         document.getElementById('gis-worker-coords').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
         document.getElementById('gis-worker-battery').innerText = batteryVal;
         document.getElementById('gis-worker-speed').innerText = `${speed} km/h`;
+        
+        // Refresh mission UI se l'utente selezionato ha una missione in corso
+        const missionBox = document.getElementById('mission-status-box');
+        if (activeMissions[selectedWorker.username]) {
+            missionBox.style.display = 'block';
+            missionBox.style.background = 'rgba(245, 158, 11, 0.1)';
+            missionBox.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            missionBox.innerHTML = `
+                🚀 In rotta verso: <b id="mission-target-name">${activeMissions[selectedWorker.username].target}</b><br>
+                ⏱️ ETA stimato: <span id="mission-eta" style="font-weight: 800;">${activeMissions[selectedWorker.username].etaMinutes || '?'} minuti</span><br>
+                <button onclick="cancelMission()" style="margin-top: 6px; background: transparent; border: 1px solid #f43f5e; color: #f43f5e; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 9px;">Annulla Rotta</button>
+            `;
+        } else {
+            missionBox.style.display = 'none';
+        }
 
         // Calcolo tempo reale trascorso dall'ultimo segnale ricevuto
         let lastSeenText = "N/D";
@@ -20930,6 +21026,156 @@
                 animate: true,
                 duration: 1.5
             });
+        }
+    }
+
+    // --- FUNZIONI WIDGET DISPATCHER E MISSIONI ---
+
+    async function assignMissionToSelected() {
+        if (!selectedWorker) return;
+        const address = document.getElementById('mission-target-address').value;
+        if (!address) return;
+        
+        const missionBox = document.getElementById('mission-status-box');
+        missionBox.style.display = 'block';
+        missionBox.style.background = 'rgba(245, 158, 11, 0.1)';
+        missionBox.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+        missionBox.innerHTML = `
+            🚀 In rotta verso: <b id="mission-target-name">${address}</b><br>
+            ⏱️ ETA: <span id="mission-eta" style="font-weight: 800;">Ricerca coordinate...</span><br>
+            <button onclick="cancelMission()" style="margin-top: 6px; background: transparent; border: 1px solid #f43f5e; color: #f43f5e; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 9px;">Annulla Rotta</button>
+        `;
+        
+        try {
+            // Geocoding via Nominatim
+            const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const geocodeData = await geocodeRes.json();
+            if (!geocodeData || geocodeData.length === 0) {
+                document.getElementById('mission-eta').innerText = 'Indirizzo non trovato!';
+                return;
+            }
+            
+            const targetLat = parseFloat(geocodeData[0].lat);
+            const targetLon = parseFloat(geocodeData[0].lon);
+            
+            cancelMission(selectedWorker.username, true); // pulizia precedente
+            
+            activeMissions[selectedWorker.username] = {
+                target: address,
+                coords: [targetLat, targetLon],
+                startTime: Date.now()
+            };
+            
+            // OSRM Routing
+            const startLon = parseFloat(selectedWorker.longitude);
+            const startLat = parseFloat(selectedWorker.latitude);
+            
+            document.getElementById('mission-eta').innerText = 'Calcolo rotta...';
+            const osrmRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${targetLon},${targetLat}?overview=full&geometries=geojson`);
+            const osrmData = await osrmRes.json();
+            
+            if (osrmData && osrmData.routes && osrmData.routes.length > 0) {
+                const route = osrmData.routes[0];
+                const durationMinutes = Math.max(1, Math.round(route.duration / 60));
+                document.getElementById('mission-eta').innerText = `${durationMinutes} minuti (${(route.distance/1000).toFixed(1)} km)`;
+                
+                // Draw route
+                const latlngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                const routeLine = L.polyline(latlngs, {
+                    color: '#f59e0b',
+                    weight: 4,
+                    dashArray: '10, 15',
+                    opacity: 0.8
+                }).addTo(mapInstance);
+                
+                activeMissions[selectedWorker.username].routeLine = routeLine;
+                activeMissions[selectedWorker.username].etaMinutes = durationMinutes;
+                
+                // Draw target marker
+                const targetIcon = L.divIcon({
+                    className: 'custom-leaflet-icon',
+                    html: `<div style="font-size:28px; filter: drop-shadow(0 0 10px rgba(245,158,11,0.8));">🎯</div>`,
+                    iconSize: [28, 28], iconAnchor: [14, 14]
+                });
+                activeMissions[selectedWorker.username].targetMarker = L.marker([targetLat, targetLon], {icon: targetIcon}).addTo(mapInstance);
+                
+                // Optional: update Supabase device string to show mission globally
+                if (supabaseClient) {
+                    const cleanDevice = selectedWorker.device ? selectedWorker.device.split(' [MISSION')[0] : 'Sconosciuto';
+                    await supabaseClient.from('ares_presence').update({ 
+                        device: `${cleanDevice} [MISSION: ${address}]` 
+                    }).eq('username', selectedWorker.username);
+                }
+            }
+        } catch (e) {
+            console.error("Errore routing:", e);
+            document.getElementById('mission-eta').innerText = 'Errore API di rotta.';
+        }
+    }
+
+    function cancelMission(usernameOverride, isSilent) {
+        const uname = usernameOverride || (selectedWorker ? selectedWorker.username : null);
+        if (!uname) return;
+        
+        if (activeMissions[uname]) {
+            if (activeMissions[uname].routeLine) mapInstance.removeLayer(activeMissions[uname].routeLine);
+            if (activeMissions[uname].targetMarker) mapInstance.removeLayer(activeMissions[uname].targetMarker);
+            delete activeMissions[uname];
+        }
+        
+        if (!isSilent && selectedWorker && uname === selectedWorker.username) {
+            document.getElementById('mission-status-box').style.display = 'none';
+            document.getElementById('mission-target-address').value = '';
+            
+            // Ripristina nome device pulito su Supabase
+            if (supabaseClient) {
+                const cleanDevice = selectedWorker.device ? selectedWorker.device.split(' [MISSION')[0] : 'Sconosciuto';
+                supabaseClient.from('ares_presence').update({ device: cleanDevice }).eq('username', selectedWorker.username).then();
+            }
+        }
+    }
+
+    function checkMissionArrival(username, currentLat, currentLon) {
+        const mission = activeMissions[username];
+        if (!mission) return;
+        const targetLat = mission.coords[0];
+        const targetLon = mission.coords[1];
+        
+        // Haversine formula
+        const R = 6371e3;
+        const f1 = currentLat * Math.PI/180;
+        const f2 = targetLat * Math.PI/180;
+        const df = (targetLat-currentLat) * Math.PI/180;
+        const dl = (targetLon-currentLon) * Math.PI/180;
+        const a = Math.sin(df/2) * Math.sin(df/2) + Math.cos(f1) * Math.cos(f2) * Math.sin(dl/2) * Math.sin(dl/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        
+        if (distance < 50) { // ARRIVATO (sotto 50 metri)
+            const elapsedMins = Math.max(1, Math.round((Date.now() - mission.startTime) / 60000));
+            
+            // Rimuovi rotte visive
+            if (mission.routeLine) mapInstance.removeLayer(mission.routeLine);
+            if (mission.targetMarker) mapInstance.removeLayer(mission.targetMarker);
+            delete activeMissions[username];
+            
+            // Seleziona il widget se è quello visibile
+            if (selectedWorker && selectedWorker.username === username) {
+                const missionBox = document.getElementById('mission-status-box');
+                missionBox.style.background = 'rgba(16, 185, 129, 0.2)';
+                missionBox.style.borderColor = '#10b981';
+                missionBox.innerHTML = `
+                    🎉 <b style="color: #10b981; font-size:14px;">ARRIVATO A DESTINAZIONE!</b><br>
+                    <span style="color: #fff;">L'operatore ha completato la rotta in <b style="color:#34d399;">${elapsedMins} minuti</b>.</span><br>
+                    <button onclick="document.getElementById('mission-status-box').style.display='none';" style="margin-top:8px; background:rgba(16,185,129,0.3); border:none; color:#10b981; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">Chiudi Log</button>
+                `;
+            }
+            
+            // Aggiorna device su DB
+            if (supabaseClient) {
+                const cleanDevice = selectedWorker ? (selectedWorker.device ? selectedWorker.device.split(' [MISSION')[0] : 'Sconosciuto') : 'Mobile';
+                supabaseClient.from('ares_presence').update({ device: cleanDevice }).eq('username', username).then();
+            }
         }
     }
 
