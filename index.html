@@ -8,9 +8,11 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d0e15">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ARES ERP">
     <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1406,6 +1408,70 @@
         .cam-kpi-accent-yellow .cam-kpi-value { color: #f59e0b; }
         .cam-kpi-accent-red .cam-kpi-value { color: #f43f5e; }
         .cam-kpi-accent-indigo .cam-kpi-value { color: #818cf8; }
+        
+        /* DETACHED MODE STYLES */
+        body.detached-mode .sidebar {
+            display: none !important;
+        }
+        body.detached-mode .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 20px !important;
+            height: 100vh !important;
+            box-sizing: border-box !important;
+            overflow: auto !important;
+        }
+        .btn-detach {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-detach:hover {
+            background: rgba(99, 102, 241, 0.25);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transform: translateY(-1px);
+        }
+        .btn-reattach {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-reattach:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+        }
+        body.detached-mode .btn-reattach {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.detached-mode .btn-detach {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -26224,6 +26290,109 @@
         </div>
     </div>
     <div id="print-sheet-actual"></div>
+
+<script>
+// ==========================================
+// HMI MULTI-SCHERMO (DETACHABLE VIEWS)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDetached = urlParams.get('detached') === 'true';
+    const detachedView = urlParams.get('view');
+    const aresChannel = new BroadcastChannel('ares_channel');
+
+    // Funzione per inviare broadcast
+    window.sendAresBroadcast = function(action, payload) {
+        aresChannel.postMessage({ action, payload, source: isDetached ? 'detached' : 'main' });
+    };
+
+    // Ascolto Broadcast
+    aresChannel.onmessage = (event) => {
+        const { action, payload, source } = event.data;
+        if (action === 'reattach' && source === 'detached' && payload === detachedView) {
+            console.log(`Modulo ${payload} ri-ancorato`);
+        }
+        if (action === 'sync_data') {
+            console.log("Ricevuto sync data:", payload);
+        }
+    };
+
+    if (isDetached) {
+        // Entriamo in modalità Detached
+        document.body.classList.add('detached-mode');
+        
+        // Nascondiamo tutte le viste
+        document.querySelectorAll('.view-section').forEach(view => {
+            view.style.display = 'none';
+        });
+        
+        // Mostriamo solo quella richiesta
+        if (detachedView) {
+            const targetView = document.getElementById(`view-${detachedView}`);
+            if (targetView) {
+                targetView.style.display = 'block';
+                // Triggeriamo eventuali resize del GIS/Mappa
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
+            }
+        }
+
+        // Creazione bottone Re-Attach
+        const reattachBtn = document.createElement('button');
+        reattachBtn.className = 'btn-reattach';
+        reattachBtn.innerHTML = '↙️ Ri-Ancora Finestra';
+        reattachBtn.onclick = () => {
+            sendAresBroadcast('reattach', detachedView);
+            window.close();
+        };
+        document.body.appendChild(reattachBtn);
+
+        // Se l'utente chiude la finestra con la X
+        window.addEventListener('beforeunload', () => {
+            sendAresBroadcast('reattach', detachedView);
+        });
+
+    } else {
+        // Modalità Main: Aggiungiamo i bottoni Detach ai titoli delle view
+        document.querySelectorAll('.view-section').forEach(view => {
+            const viewId = view.id.replace('view-', '');
+            
+            // Creiamo il bottone
+            const detachBtn = document.createElement('button');
+            detachBtn.className = 'btn-detach';
+            detachBtn.innerHTML = '↗️ Sgancia';
+            detachBtn.title = 'Sgancia in una nuova finestra indipendente';
+            detachBtn.onclick = (e) => {
+                e.preventDefault();
+                // Apriamo la nuova finestra
+                window.open(`${window.location.pathname}?detached=true&view=${viewId}`, `_blank_ares_${viewId}`, "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no");
+            };
+
+            // Inject logic
+            const header = view.querySelector('.bi-header, .planning-header-bar, .crm-header') || view.querySelector('h2, h1, h3');
+            if (header) {
+                if (header.tagName && header.tagName.match(/^H[1-6]$/i)) {
+                    // Standard header
+                    header.style.display = 'flex';
+                    header.style.alignItems = 'center';
+                    header.style.justifyContent = 'space-between';
+                    header.appendChild(detachBtn);
+                } else {
+                    // Header container
+                    header.appendChild(detachBtn);
+                }
+            } else {
+                // Fallback
+                const wrap = document.createElement('div');
+                wrap.style.padding = '10px 20px';
+                wrap.style.display = 'flex';
+                wrap.style.justifyContent = 'flex-end';
+                wrap.appendChild(detachBtn);
+                view.insertBefore(wrap, view.firstChild);
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>
 
