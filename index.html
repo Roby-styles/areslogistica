@@ -1447,7 +1447,8 @@
             display: none;
             position: fixed;
             top: 20px;
-            right: 20px;
+            left: 50%;
+            margin-left: -90px;
             z-index: 9999;
             background: linear-gradient(135deg, #10b981, #059669);
             border: none;
@@ -26326,13 +26327,18 @@ document.addEventListener('DOMContentLoaded', () => {
             view.style.display = 'none';
         });
         
-        // Mostriamo solo quella richiesta
+        // Mostriamo e inizializziamo solo quella richiesta
         if (detachedView) {
             const targetView = document.getElementById(`view-${detachedView}`);
             if (targetView) {
                 targetView.style.display = 'block';
-                // Triggeriamo eventuali resize del GIS/Mappa
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
+                // Ritardo per assicurare che completeAppInitialization() sia finito
+                setTimeout(() => {
+                    if (typeof show === 'function') {
+                        show(detachedView);
+                    }
+                    window.dispatchEvent(new Event('resize'));
+                }, 800);
             }
         }
 
