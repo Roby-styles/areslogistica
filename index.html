@@ -26416,8 +26416,8 @@
     }
 
     async function fetchFascicoli() {
-        if (!supabase) return;
-        const { data, error } = await supabase.from('ares_fascicoli').select('*').order('created_at', { ascending: false });
+        if (!supabaseClient) return;
+        const { data, error } = await supabaseClient.from('ares_fascicoli').select('*').order('created_at', { ascending: false });
         if (!error && data) aresFascicoli = data;
     }
 
@@ -26545,17 +26545,17 @@
 
     async function saveFascicoloNote(id) {
         const text = document.getElementById(`note-fascicolo-${id}`).value;
-        if(supabase) {
-            await supabase.from('ares_fascicoli').update({ note_diario: text }).eq('id', id);
+        if(supabaseClient) {
+            await supabaseClient.from('ares_fascicoli').update({ note_diario: text }).eq('id', id);
             alert("Diario salvato nel Cloud!");
         }
     }
 
     async function autoCreateFascicoloFromPreventivo(prev) {
-        if(!supabase) return;
+        if(!supabaseClient) return;
         
         // Controlla se esiste già
-        const { data: ext } = await supabase.from('ares_fascicoli').select('id').eq('preventivo_id', prev.id).single();
+        const { data: ext } = await supabaseClient.from('ares_fascicoli').select('id').eq('preventivo_id', prev.id).single();
         if(ext) return; // Esiste già
         
         const fascicolo = {
@@ -26566,7 +26566,7 @@
             percorso_locale: `D:\\Ares_Archivio\\Commessa_${prev.id}_${prev.cliente.replace(/\\s+/g, '_')}`
         };
         
-        const { error } = await supabase.from('ares_fascicoli').insert([fascicolo]);
+        const { error } = await supabaseClient.from('ares_fascicoli').insert([fascicolo]);
         if(!error) console.log("Fascicolo autogenerato per il preventivo " + prev.id);
     }
 
