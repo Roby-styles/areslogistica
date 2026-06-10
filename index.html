@@ -26555,7 +26555,7 @@
         if(!supabaseClient) return;
         
         // Controlla se esiste già
-        const { data: ext } = await supabaseClient.from('ares_fascicoli').select('id').eq('preventivo_id', prev.id).single();
+        const { data: ext } = await supabaseClient.from('ares_fascicoli').select('id').eq('preventivo_id', prev.id).maybeSingle();
         if(ext) return; // Esiste già
         
         const fascicolo = {
