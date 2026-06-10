@@ -20334,38 +20334,6 @@
                         
                         if (typeof isSosMuted !== 'undefined' && !isSosMuted) {
                             if (!window.lastSosBeep) {
-                                // ----------------------------------------------------
-                                // MAPPA E GIS
-                                // ----------------------------------------------------
-                                let mapInstance = null;
-                                let markersGroup = null;
-                                let mapMarkers = {};
-                                let selectedWorker = null;
-                                let autoUpdateGisInterval = null;
-                                
-                                // VARIABILI PER MASTERPLAN: BAVETTA E DISPATCHER
-                                let mapTrails = {}; 
-                                let mapPolylines = {}; 
-                                let trailLength = 20; 
-                                let activeMissions = {};
-
-                                function updateTrailLength(val) {
-                                    trailLength = parseInt(val);
-                                    document.getElementById('trail-length-val').innerText = val;
-                                    // Aggiorna visivamente tutte le polilinee istantaneamente
-                                    Object.keys(mapPolylines).forEach(username => {
-                                        if (trailLength === 0) {
-                                            mapPolylines[username].setStyle({opacity: 0});
-                                        } else {
-                                            mapPolylines[username].setStyle({opacity: 0.7});
-                                            // Troncamento immediato visivo se ridotto
-                                            if (mapTrails[username] && mapTrails[username].length > trailLength) {
-                                                mapTrails[username] = mapTrails[username].slice(-trailLength);
-                                                mapPolylines[username].setLatLngs(mapTrails[username]);
-                                            }
-                                        }
-                                    });
-                                }
                                 window.lastSosBeep = Date.now();
                                 
                                 // 1. Sintesi Vocale Femminile in Italiano (HTML5 Web Speech API)
@@ -20526,6 +20494,30 @@
     let selectedWorker = null;
     let mapMarkers = {}; // Mappa dei marker attivi (chiave: username)
     let autoUpdateGisInterval = null;
+    
+    // VARIABILI PER MASTERPLAN: BAVETTA E DISPATCHER
+    let mapTrails = {}; 
+    let mapPolylines = {}; 
+    let trailLength = 20; 
+    let activeMissions = {};
+
+    function updateTrailLength(val) {
+        trailLength = parseInt(val);
+        document.getElementById('trail-length-val').innerText = val;
+        // Aggiorna visivamente tutte le polilinee istantaneamente
+        Object.keys(mapPolylines).forEach(username => {
+            if (trailLength === 0) {
+                mapPolylines[username].setStyle({opacity: 0});
+            } else {
+                mapPolylines[username].setStyle({opacity: 0.7});
+                // Troncamento immediato visivo se ridotto
+                if (mapTrails[username] && mapTrails[username].length > trailLength) {
+                    mapTrails[username] = mapTrails[username].slice(-trailLength);
+                    mapPolylines[username].setLatLngs(mapTrails[username]);
+                }
+            }
+        });
+    }
 
     function initGisMap() {
         if (mapInstance) {
