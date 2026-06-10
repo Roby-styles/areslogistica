@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>ARES ERP MASTER - V47.4 (INTEGRALE)</title>
+    <title>ARES ERP MASTER - V47.5 (INTEGRALE)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -1611,7 +1611,7 @@
 
     <div class="sidebar">
         <img src="logo.jpg" style="max-width: 100%; max-height: 60px; display: block; margin: 0 auto 20px; border-radius: 8px;">
-        <h2 style="text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 20px; letter-spacing: 1px; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px;">ARES ERP <span style="font-size: 9px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 9999px; letter-spacing: 0.5px; font-weight: 800; width: fit-content; text-transform: uppercase;">v47.4 Stable</span></h2>
+        <h2 style="text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 20px; letter-spacing: 1px; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px;">ARES ERP <span style="font-size: 9px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 9999px; letter-spacing: 0.5px; font-weight: 800; width: fit-content; text-transform: uppercase;">v47.5 Stable</span></h2>
         <button class="btn-nav" onclick="show('dashboard')">🏠 Home</button>
         <button class="btn-nav" onclick="show('crm')">📞 CRM</button>
         <button class="btn-nav" onclick="show('planning')">📋 Planning</button>
@@ -21170,7 +21170,6 @@
                 supabaseClient.from('ares_presence').update({ device: cleanDevice }).eq('username', username).then();
             }
         }
-    }
     }
 
     let missionSearchTimeout = null;
