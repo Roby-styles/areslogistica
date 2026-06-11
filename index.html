@@ -21047,6 +21047,36 @@
         }
     }
 
+    let fascicoliLayerGroup = null;
+
+    function toggleAttivitaLayer() {
+        if (!mapInstance) return;
+        const cb = document.getElementById('layer-attivita');
+        if(!fascicoliLayerGroup) {
+            fascicoliLayerGroup = L.layerGroup();
+        }
+        if (cb && cb.checked) {
+            fascicoliLayerGroup.clearLayers();
+            aresFascicoli.forEach(fascicolo => {
+                if (fascicolo.lat && fascicolo.lng) {
+                    const icon = L.divIcon({
+                        className: 'custom-leaflet-icon', 
+                        html: `<div style="width:20px;height:20px;background:#38bdf8;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px #38bdf8; display:flex; justify-content:center; align-items:center; color:#0f172a; font-weight:bold; font-size:10px;">${fascicolo.id}</div>`
+                    });
+                    const marker = L.marker([fascicolo.lat, fascicolo.lng], {icon: icon});
+                    marker.bindTooltip(`<b>#FAS-${fascicolo.id}</b><br>${fascicolo.titolo_commessa || 'Cantiere'}`);
+                    marker.on('click', () => {
+                        openFascicoloBook(fascicolo.id);
+                    });
+                    marker.addTo(fascicoliLayerGroup);
+                }
+            });
+            fascicoliLayerGroup.addTo(mapInstance);
+        } else {
+            mapInstance.removeLayer(fascicoliLayerGroup);
+        }
+    }
+
     function toggleTrafficLayer() {
         if (!mapInstance) return;
         const cb = document.getElementById('layer-traffic');
@@ -26710,9 +26740,11 @@
 
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px;">
                     <p style="color:#a5b4fc; font-size:12px; margin:0 0 5px 0;">📍 Location Geocoding</p>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="fascicolo-address-${fascicolo.id}" value="${fascicolo.indirizzo || ''}" placeholder="Cerca indirizzo (es. Via Roma 1, Milano)" style="flex:1; padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:#fff; font-size:14px; outline:none;">
+                    <div style="display:flex; gap:10px; position:relative;">
+                        <input type="text" id="fascicolo-address-${fascicolo.id}" value="${fascicolo.indirizzo || ''}" placeholder="Cerca indirizzo (es. Via Roma 1, Milano)" style="flex:1; padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:#fff; font-size:14px; outline:none;" onkeyup="handleFascicoloAddressSearch(this.value, ${fascicolo.id})">
                         <button onclick="geocodeFascicoloAddress(${fascicolo.id})" style="padding:10px 15px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer;">🔍 Salva</button>
+                        
+                        <div id="fascicolo-address-results-${fascicolo.id}" style="display:none; position:absolute; top:45px; left:0; width:calc(100% - 95px); background:#1e293b; border:1px solid rgba(255,255,255,0.1); border-radius:6px; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; max-height:150px; overflow-y:auto;"></div>
                     </div>
                 </div>
             `;
@@ -27562,6 +27594,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+    
+    let fascicoloAddressTimeout = null;
+
+    function handleFascicoloAddressSearch(query, fascicoloId) {
+        query = query.trim();
+        const resultsBox = document.getElementById(`fascicolo-address-results-${fascicoloId}`);
+        if (!resultsBox) return;
+
+        clearTimeout(fascicoloAddressTimeout);
+        
+        if (query.length < 3) {
+            resultsBox.style.display = 'none';
+            return;
+        }
+
+        resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #818cf8; font-size: 11px; text-align: center;">Ricerca in corso... ⏳</div>';
+        resultsBox.style.display = 'block';
+
+        fascicoloAddressTimeout = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=it`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #f43f5e; font-size: 11px;">Nessun risultato trovato</div>';
+                    } else {
+                        resultsBox.innerHTML = data.map(item => `
+                            <div style="padding: 8px 10px; color: #cbd5e1; font-size: 11px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);" 
+                                 onclick="selectFascicoloAddress('${item.display_name.replace(/'/g, "\\'")}', ${fascicoloId})"
+                                 onmouseover="this.style.background='rgba(99,102,241,0.2)'"
+                                 onmouseout="this.style.background='transparent'">
+                                📍 ${item.display_name}
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(err => {
+                    resultsBox.innerHTML = '<div style="padding: 8px 10px; color: #f43f5e; font-size: 11px;">Errore di ricerca</div>';
+                });
+        }, 600);
+    }
+
+    function selectFascicoloAddress(address, fascicoloId) {
+        const input = document.getElementById(`fascicolo-address-${fascicoloId}`);
+        const resultsBox = document.getElementById(`fascicolo-address-results-${fascicoloId}`);
+        if(input) {
+            input.value = address;
+        }
+        if(resultsBox) {
+            resultsBox.style.display = 'none';
+        }
+        // Avvia geocoding automaticamente
+        geocodeFascicoloAddress(fascicoloId);
+    }
+
     async function geocodeFascicoloAddress(fascicoloId) {
         const addrInput = document.getElementById(`fascicolo-address-${fascicoloId}`);
         if(!addrInput) return;
