@@ -26801,39 +26801,48 @@
                 
                 const mbSize = (totalSizeBytes / (1024 * 1024)).toFixed(1);
                 
-                btnContainerEl.innerHTML = `
-                    <button id="radar-album-btn-action-${fascicoloId}" style="
-                        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.2);
-                        padding: 15px 30px;
-                        border-radius: 15px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        cursor: pointer;
-                        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-                        transition: all 0.2s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        width: 90%;
-                        z-index: 100;
-                        position: relative;
-                        pointer-events: auto;
-                    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 25px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.3)'">
-                        <span style="font-size: 20px; margin-bottom: 5px;">📸 Consulta Album</span>
-                        <span style="font-size: 11px; font-weight: normal; opacity: 0.8;">Cartella: FAS-${fascicoloId} | ${fileCount} file (${mbSize} MB)</span>
-                    </button>
+                btnContainerEl.innerHTML = `<div style="color:#10b981; font-weight:bold; font-size:14px; text-align:center; margin-top:20px;">📸 Album pronto.<br>Usa il pulsante fluttuante a destra per aprirlo.</div>`;
+                
+                let oldBtn = document.getElementById('floating-radar-album-btn');
+                if (oldBtn) oldBtn.remove();
+                
+                const floatingBtn = document.createElement('button');
+                floatingBtn.id = 'floating-radar-album-btn';
+                floatingBtn.onclick = () => openRadarAlbum(fascicoloId, masterHandle.name || '');
+                floatingBtn.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    right: 30px;
+                    transform: translateY(-50%);
+                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                    color: white;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 20px 30px;
+                    border-radius: 16px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(59, 130, 246, 0.4);
+                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    z-index: 100000;
+                    pointer-events: auto;
+                `;
+                floatingBtn.onmouseover = () => { floatingBtn.style.transform = 'translateY(-50%) scale(1.05)'; floatingBtn.style.boxShadow = '0 20px 40px rgba(0,0,0,0.7), 0 0 30px rgba(59, 130, 246, 0.6)'; };
+                floatingBtn.onmouseout = () => { floatingBtn.style.transform = 'translateY(-50%) scale(1)'; floatingBtn.style.boxShadow = '0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(59, 130, 246, 0.4)'; };
+                floatingBtn.innerHTML = `
+                    <span style="font-size: 32px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📸</span>
+                    <span style="font-size: 20px; margin-bottom: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Consulta Album</span>
+                    <span style="font-size: 12px; font-weight: normal; opacity: 0.9;">FAS-${fascicoloId} | ${fileCount} file (${mbSize} MB)</span>
                 `;
                 
-                // Agganciamo l'evento in modo sicuro e diretto tramite DOM
-                const actionBtn = document.getElementById(`radar-album-btn-action-${fascicoloId}`);
-                if (actionBtn) {
-                    actionBtn.addEventListener('click', function() {
-                        console.log("Apertura album per fascicolo:", fascicoloId);
-                        openRadarAlbum(fascicoloId, masterHandle.name);
-                    });
+                const modalOverlay = document.getElementById('fascicolo-book-modal');
+                if (modalOverlay) {
+                    modalOverlay.appendChild(floatingBtn);
                 }
+
                 
             } else {
                 btnContainerEl.innerHTML = `<div style="width:100%; text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Cartella vuota.</div>`;
@@ -27473,6 +27482,9 @@
         
         if (currentFascicoloPage + direction > 2 || currentFascicoloPage + direction < 0) return;
         
+        let fBtn = document.getElementById('floating-radar-album-btn');
+        if (fBtn) fBtn.remove();
+        
         const book = document.getElementById('fascicolo-book-element');
         const leftPage = book.querySelector('.left');
         const rightPage = book.querySelector('.right');
@@ -27498,6 +27510,8 @@
         const book = document.getElementById('fascicolo-book-element');
         book.style.transform = "rotateX(5deg) scale(0.8)";
         modal.classList.remove('active');
+        let fBtn = document.getElementById('floating-radar-album-btn');
+        if (fBtn) fBtn.remove();
     }
 
     function copyLocalPath(path) {
