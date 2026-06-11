@@ -26641,6 +26641,121 @@
     window.addEventListener('scroll', updateAllSVGLines);
 
     // ==========================================
+    // RADAR MULTIMEDIA FASCICOLI (FILE SYSTEM API)
+    // ==========================================
+    const AresRadarDB = {
+        dbName: 'ares_radar_db',
+        storeName: 'master_folders',
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, 1);
+                request.onupgradeneeded = (e) => {
+                    e.target.result.createObjectStore(this.storeName);
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        },
+        async getHandle(id) {
+            const db = await this.init();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(this.storeName, 'readonly');
+                const req = tx.objectStore(this.storeName).get(id);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        },
+        async saveHandle(id, handle) {
+            const db = await this.init();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(this.storeName, 'readwrite');
+                const req = tx.objectStore(this.storeName).put(handle, id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+    };
+
+    let activeMasterFolderHandle = null;
+
+    async function pickMasterFolder() {
+        try {
+            activeMasterFolderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            await AresRadarDB.saveHandle('radar_master', activeMasterFolderHandle);
+            alert("Cartella Master impostata con successo!");
+        } catch (e) {
+            console.error("Scelta cartella annullata o fallita", e);
+        }
+    }
+
+    async function getVerifyRadarHandle() {
+        if (!activeMasterFolderHandle) {
+            activeMasterFolderHandle = await AresRadarDB.getHandle('radar_master');
+        }
+        if (activeMasterFolderHandle) {
+            if ((await activeMasterFolderHandle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
+                if ((await activeMasterFolderHandle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
+                    return null;
+                }
+            }
+            return activeMasterFolderHandle;
+        }
+        return null;
+    }
+
+    function handleRadarDragOver(e, fascicoloId) {
+        e.preventDefault();
+        const dropzone = document.getElementById(`radar-dropzone-${fascicoloId}`);
+        if(dropzone) dropzone.style.borderColor = '#10b981';
+    }
+
+    function handleRadarDragLeave(e, fascicoloId) {
+        e.preventDefault();
+        const dropzone = document.getElementById(`radar-dropzone-${fascicoloId}`);
+        if(dropzone) dropzone.style.borderColor = 'rgba(16,185,129,0.5)';
+    }
+
+    async function handleRadarDrop(e, fascicoloId) {
+        e.preventDefault();
+        const dropzone = document.getElementById(`radar-dropzone-${fascicoloId}`);
+        const statusEl = document.getElementById(`radar-status-${fascicoloId}`);
+        if(dropzone) dropzone.style.borderColor = 'rgba(16,185,129,0.5)';
+        
+        if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+
+        const masterHandle = await getVerifyRadarHandle();
+        if (!masterHandle) {
+            statusEl.innerHTML = "<span style='color:#f43f5e'>Errore: Devi prima selezionare la 'Cartella Master' in basso!</span>";
+            return;
+        }
+
+        statusEl.innerHTML = "Creazione cartella fascicolo...";
+
+        try {
+            // Crea o ottiene cartella fascicolo (es. FAS-12)
+            const fascicoloFolder = await masterHandle.getDirectoryHandle(`FAS-${fascicoloId}`, { create: true });
+            
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                const file = e.dataTransfer.files[i];
+                statusEl.innerHTML = `Salvataggio ${file.name}...`;
+                const fileHandle = await fascicoloFolder.getFileHandle(file.name, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(file);
+                await writable.close();
+            }
+            statusEl.innerHTML = `<span style='color:#10b981'>✅ ${e.dataTransfer.files.length} file salvati in locale (FAS-${fascicoloId})</span>`;
+            
+            // Effetto grafico
+            dropzone.style.transform = 'scale(1.05)';
+            setTimeout(() => dropzone.style.transform = 'scale(1)', 200);
+
+        } catch (err) {
+            console.error(err);
+            statusEl.innerHTML = "<span style='color:#f43f5e'>Errore durante il salvataggio locale!</span>";
+        }
+    }
+
+    // ==========================================
     // MODULE: FASCICOLI LAVORI (DOSSIER DIGITALE)
     // ==========================================
     let aresFascicoli = [];
