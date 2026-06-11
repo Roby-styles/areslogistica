@@ -26695,7 +26695,7 @@
         if (activeMasterFolderHandle) {
             if ((await activeMasterFolderHandle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
                 if ((await activeMasterFolderHandle.requestPermission({ mode: 'readwrite' })) !== 'granted') {
-                    return null;
+                    throw new Error("Permission denied or needs user gesture");
                 }
             }
             return activeMasterFolderHandle;
@@ -26765,78 +26765,78 @@
         
         try {
             const masterHandle = await getVerifyRadarHandle();
-            if (!masterHandle) return;
+            if (!masterHandle) {
+                galleryEl.innerHTML = `<div style="width:100%; text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nessuna Cartella Master collegata.<br>Clicca "Cambia Cartella Master" in basso per ripristinare il collegamento.</div>`;
+                return;
+            }
             
-            const fascicoloFolder = await masterHandle.getDirectoryHandle(`FAS-${fascicoloId}`);
-            if (!fascicoloFolder) return;
+            let fascicoloFolder;
+            try {
+                fascicoloFolder = await masterHandle.getDirectoryHandle(`FAS-${fascicoloId}`);
+            } catch(e) {
+                galleryEl.innerHTML = `<div style="width:100%; text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nessun file presente nel Radar.<br>Trascina un file nel cerchio per iniziare.</div>`;
+                return;
+            }
             
             galleryEl.innerHTML = '';
             let fileCount = 0;
             
             for await (const entry of fascicoloFolder.values()) {
                 if (entry.kind === 'file') {
+                    fileCount++;
                     const file = await entry.getFile();
-                    const isImg = file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                    const isImg = file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|gif|webp|heic|bmp)$/i);
                     const isVid = file.type.startsWith('video/') || file.name.match(/\.(mp4|webm|mov|avi)$/i);
                     
+                    const url = URL.createObjectURL(file);
+                    const polaroid = document.createElement('div');
+                    polaroid.style.cssText = "background:#fff; padding:8px 8px 30px 8px; border-radius:4px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.5); width:120px; text-align:center; position:relative; transform:rotate(" + (Math.random() * 6 - 3) + "deg); transition: transform 0.2s; cursor:pointer;";
+                    polaroid.onmouseover = () => polaroid.style.transform = "scale(1.1) rotate(0deg)";
+                    polaroid.onmouseout = () => polaroid.style.transform = "scale(1) rotate(" + polaroid.dataset.rot + "deg)";
+                    polaroid.dataset.rot = (Math.random() * 6 - 3).toFixed(1);
+                    polaroid.style.transform = "rotate(" + polaroid.dataset.rot + "deg)";
+                    
+                    let mediaEl;
                     if(isImg) {
-                        fileCount++;
-                        const url = URL.createObjectURL(file);
-                        const polaroid = document.createElement('div');
-                        polaroid.style.cssText = "background:#fff; padding:8px 8px 30px 8px; border-radius:4px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.5); width:120px; text-align:center; position:relative; transform:rotate(" + (Math.random() * 6 - 3) + "deg); transition: transform 0.2s; cursor:pointer;";
-                        polaroid.onmouseover = () => polaroid.style.transform = "scale(1.1) rotate(0deg)";
-                        polaroid.onmouseout = () => polaroid.style.transform = "scale(1) rotate(" + polaroid.dataset.rot + "deg)";
-                        polaroid.dataset.rot = (Math.random() * 6 - 3).toFixed(1);
-                        polaroid.style.transform = "rotate(" + polaroid.dataset.rot + "deg)";
-                        
-                        const img = document.createElement('img');
-                        img.src = url;
-                        img.style.cssText = "width:100%; height:100px; object-fit:cover; border:1px solid #ddd;";
-                        
-                        const label = document.createElement('div');
-                        label.textContent = file.name;
-                        label.style.cssText = "color:#333; font-family:'Segoe UI', sans-serif; font-weight:bold; font-size:10px; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
-                        
-                        polaroid.appendChild(img);
-                        polaroid.appendChild(label);
-                        galleryEl.appendChild(polaroid);
+                        mediaEl = document.createElement('img');
+                        mediaEl.src = url;
+                        mediaEl.style.cssText = "width:100%; height:100px; object-fit:cover; border:1px solid #ddd;";
                     } else if (isVid) {
-                        fileCount++;
-                        const url = URL.createObjectURL(file);
-                        const polaroid = document.createElement('div');
-                        polaroid.style.cssText = "background:#fff; padding:8px 8px 30px 8px; border-radius:4px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.5); width:120px; text-align:center; position:relative; transform:rotate(" + (Math.random() * 6 - 3) + "deg); transition: transform 0.2s; cursor:pointer;";
-                        polaroid.onmouseover = () => polaroid.style.transform = "scale(1.1) rotate(0deg)";
-                        polaroid.onmouseout = () => polaroid.style.transform = "scale(1) rotate(" + polaroid.dataset.rot + "deg)";
-                        polaroid.dataset.rot = (Math.random() * 6 - 3).toFixed(1);
-                        polaroid.style.transform = "rotate(" + polaroid.dataset.rot + "deg)";
-                        
-                        const vid = document.createElement('video');
-                        vid.src = url;
-                        vid.style.cssText = "width:100%; height:100px; object-fit:cover; border:1px solid #ddd; background:#000;";
-                        
-                        const label = document.createElement('div');
-                        label.textContent = "🎬 " + file.name;
-                        label.style.cssText = "color:#333; font-family:'Segoe UI', sans-serif; font-weight:bold; font-size:10px; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
-                        
-                        polaroid.appendChild(vid);
-                        polaroid.appendChild(label);
-                        galleryEl.appendChild(polaroid);
+                        mediaEl = document.createElement('video');
+                        mediaEl.src = url;
+                        mediaEl.style.cssText = "width:100%; height:100px; object-fit:cover; border:1px solid #ddd; background:#000;";
+                    } else {
+                        mediaEl = document.createElement('div');
+                        mediaEl.style.cssText = "width:100%; height:100px; border:1px solid #ddd; background:#e2e8f0; display:flex; justify-content:center; align-items:center; font-size:30px; color:#64748b;";
+                        mediaEl.innerHTML = "📄";
                     }
+                    
+                    const label = document.createElement('div');
+                    label.textContent = (isVid ? "🎬 " : "") + file.name;
+                    label.style.cssText = "color:#333; font-family:'Segoe UI', sans-serif; font-weight:bold; font-size:10px; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+                    
+                    polaroid.appendChild(mediaEl);
+                    polaroid.appendChild(label);
+                    galleryEl.appendChild(polaroid);
                 }
             }
-            if(statusEl && fileCount > 0) statusEl.innerHTML = `<span style='color:#10b981'>✅ Trovati ${fileCount} file in locale</span>`;
-        } catch (e) {
-            console.log("Nessun file o cartella locale trovata per la galleria:", e);
-            if(e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.message.includes('permission')) {
-                galleryEl.innerHTML = `
-                    <div style="width:100%; text-align:center; padding:20px;">
-                        <button onclick="loadRadarGallery(${fascicoloId})" style="padding:10px 20px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; box-shadow:0 5px 15px rgba(16,185,129,0.3);">
-                            🔓 Clicca qui per autorizzare l'accesso alle foto
-                        </button>
-                        <div style="color:#94a3b8; font-size:11px; margin-top:10px;">Il browser richiede il tuo click per poter leggere l'Hard Disk.</div>
-                    </div>
-                `;
+            
+            if(fileCount > 0) {
+                if(statusEl) statusEl.innerHTML = `<span style='color:#10b981'>✅ Trovati ${fileCount} file in locale</span>`;
+            } else {
+                galleryEl.innerHTML = `<div style="width:100%; text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Cartella vuota.</div>`;
             }
+            
+        } catch (e) {
+            console.error("Errore Radar Gallery:", e);
+            galleryEl.innerHTML = `
+                <div style="width:100%; text-align:center; padding:20px;">
+                    <button onclick="loadRadarGallery(${fascicoloId})" style="padding:10px 20px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; box-shadow:0 5px 15px rgba(16,185,129,0.3);">
+                        🔓 Clicca qui per sbloccare l'accesso al tuo Hard Disk
+                    </button>
+                    <div style="color:#94a3b8; font-size:11px; margin-top:10px;">Il browser per sicurezza richiede un tuo click esplicito per leggere i file locali dopo ogni riavvio.</div>
+                </div>
+            `;
         }
     }
 
