@@ -78,16 +78,32 @@
         .main-content { 
             margin-left: 0; 
             padding: 35px; 
-            padding-left: 60px; /* Spazio per la linguetta */
+            padding-left: 60px; /* Spazio per la linguetta sx */
+            padding-right: 60px; /* Spazio per la linguetta dx */
             width: 100%; 
             box-sizing: border-box;
-            transition: margin-left 0.4s ease, width 0.4s ease, padding-left 0.4s ease;
+            transition: margin-left 0.4s ease, margin-right 0.4s ease, width 0.4s ease, padding-left 0.4s ease, padding-right 0.4s ease;
         }
         
         body.sidebar-pinned .main-content {
             margin-left: var(--sidebar-width);
             padding-left: 35px;
             width: calc(100% - var(--sidebar-width));
+        }
+
+        body.right-sidebar-pinned .main-content {
+            margin-right: var(--sidebar-width);
+            padding-right: 35px;
+            width: calc(100% - var(--sidebar-width));
+            /* Per evitare overlay se non gestiamo bene margin-right, usiamo transform o padding extra, ma calcoliamo width */
+            float: left; /* o usiamo box-sizing normale */
+        }
+        
+        body.sidebar-pinned.right-sidebar-pinned .main-content {
+            margin-left: var(--sidebar-width);
+            padding-left: 35px;
+            padding-right: 35px;
+            width: calc(100% - calc(var(--sidebar-width) * 2));
         }
 
         #sidebar-neon-tab {
@@ -142,6 +158,75 @@
             text-shadow: 0 0 10px #38bdf8;
         }
         #sidebar-pin-btn.pinned {
+            color: #10b981;
+            text-shadow: 0 0 10px #10b981;
+        }
+        
+        /* Right Sidebar Additions */
+        .right-sidebar {
+            left: auto;
+            right: 0;
+            border-right: none;
+            border-left: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: -5px 0 25px rgba(16, 185, 129, 0.1);
+            transform: translateX(100%);
+        }
+        .right-sidebar.pinned {
+            border-left: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        #sidebar-neon-tab-right {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 100px;
+            background: #10b981;
+            border-radius: 8px 0 0 8px;
+            box-shadow: 0 0 15px #10b981;
+            z-index: 999;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #sidebar-neon-tab-right:hover {
+            width: 20px;
+            height: 120px;
+            box-shadow: 0 0 25px #10b981;
+        }
+        
+        #sidebar-neon-tab-icon-right {
+            opacity: 0;
+            transition: opacity 0.3s;
+            color: #0f172a;
+            font-weight: 900;
+            font-size: 12px;
+        }
+        #sidebar-neon-tab-right:hover #sidebar-neon-tab-icon-right {
+            opacity: 1;
+        }
+
+        #right-sidebar-pin-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            z-index: 1001;
+        }
+        #right-sidebar-pin-btn:hover {
+            color: #10b981;
+            text-shadow: 0 0 10px #10b981;
+        }
+        #right-sidebar-pin-btn.pinned {
             color: #10b981;
             text-shadow: 0 0 10px #10b981;
         }
@@ -1938,7 +2023,6 @@
 
     <div id="sidebar-neon-tab">
         <span id="sidebar-neon-tab-icon">▶</span>
-        <div id="sidebar-neon-presence-badge" style="position: absolute; top: -5px; right: -5px; background: #10b981; color: #fff; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 5px #10b981; opacity: 0;">1</div>
     </div>
 
     <div class="sidebar" id="main-sidebar">
@@ -1955,6 +2039,16 @@
         <button class="btn-nav" onclick="show('operativa')">🗺️ Sala Operativa</button>
         <button class="btn-nav" onclick="show('videomanager')">📹 Video Manager</button>
         <button class="btn-nav" id="btn-nav-utenti" onclick="show('utenti')" style="display: none;">⚙️ Amministratore Super</button>
+        
+    </div>
+
+    <div id="sidebar-neon-tab-right">
+        <span id="sidebar-neon-tab-icon-right">◀</span>
+        <div id="sidebar-neon-presence-badge" style="position: absolute; top: -5px; right: -5px; background: #10b981; color: #fff; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 5px #10b981; opacity: 0;">1</div>
+    </div>
+
+    <div class="sidebar right-sidebar" id="right-sidebar">
+        <button id="right-sidebar-pin-btn" title="Blocca Sidebar" onclick="toggleRightSidebarPin()">📌</button>
         
         <!-- Pannello Regolazione Dimensione Caratteri (Accessibilità) -->
         <div style="margin-top: 15px; padding: 12px; background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
@@ -27028,6 +27122,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSidebarPinned = false;
     let sidebarHideTimeout;
 
+    const neonTabRight = document.getElementById('sidebar-neon-tab-right');
+    const rightSidebar = document.getElementById('right-sidebar');
+    const rightPinBtn = document.getElementById('right-sidebar-pin-btn');
+    let isRightSidebarPinned = false;
+    let rightSidebarHideTimeout;
+
     function openSidebar() {
         mainSidebar.classList.add('active');
         neonTab.style.transform = 'translateY(-50%) translateX(-20px)'; // sposta fuori
@@ -27065,14 +27165,59 @@ document.addEventListener('DOMContentLoaded', () => {
         mainSidebar.addEventListener('mouseenter', () => {
             clearTimeout(sidebarHideTimeout);
         });
+    }
 
-        document.addEventListener('click', (e) => {
-            if(isSidebarPinned) return;
+    function openRightSidebar() {
+        rightSidebar.classList.add('active');
+        neonTabRight.style.transform = 'translateY(-50%) translateX(20px)'; // sposta fuori a destra
+        neonTabRight.style.opacity = '0';
+    }
+
+    function closeRightSidebar() {
+        if(isRightSidebarPinned) return;
+        rightSidebar.classList.remove('active');
+        neonTabRight.style.transform = 'translateY(-50%) translateX(0)'; // rimetti a posto
+        neonTabRight.style.opacity = '1';
+    }
+
+    function toggleRightSidebarPin() {
+        isRightSidebarPinned = !isRightSidebarPinned;
+        if(isRightSidebarPinned) {
+            rightSidebar.classList.add('pinned');
+            rightPinBtn.classList.add('pinned');
+            document.body.classList.add('right-sidebar-pinned');
+        } else {
+            rightSidebar.classList.remove('pinned');
+            rightPinBtn.classList.remove('pinned');
+            document.body.classList.remove('right-sidebar-pinned');
+        }
+    }
+
+    if(neonTabRight && rightSidebar) {
+        neonTabRight.addEventListener('mouseenter', openRightSidebar);
+        neonTabRight.addEventListener('click', openRightSidebar);
+        
+        rightSidebar.addEventListener('mouseleave', () => {
+            rightSidebarHideTimeout = setTimeout(closeRightSidebar, 400);
+        });
+        
+        rightSidebar.addEventListener('mouseenter', () => {
+            clearTimeout(rightSidebarHideTimeout);
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if(!isSidebarPinned && mainSidebar && neonTab) {
             if(!mainSidebar.contains(e.target) && !neonTab.contains(e.target)) {
                 closeSidebar();
             }
-        });
-    }
+        }
+        if(!isRightSidebarPinned && rightSidebar && neonTabRight) {
+            if(!rightSidebar.contains(e.target) && !neonTabRight.contains(e.target)) {
+                closeRightSidebar();
+            }
+        }
+    });
 </script>
 </body>
 </html>
