@@ -19254,6 +19254,19 @@
                                 <input type="text" id="prev-segnalatore" placeholder="Es. VE, ALB, RO" value="VE" max-length="3" oninput="updateLiveProtocol()">
                             </div>
                         </div>
+                        
+                        <div class="form-row" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 10px;">
+                            <div class="form-group" style="flex:1;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#10b981; font-weight:bold; margin-top:10px;">
+                                    <input type="checkbox" id="prev-is-ricorrente" style="width:18px; height:18px; accent-color:#10b981;" onchange="toggleRicorrenteDurata()">
+                                    🔄 Contratto Ricorrente (Abbonamento Mensile)
+                                </label>
+                            </div>
+                            <div class="form-group" style="flex:1; opacity:0.5; pointer-events:none; transition:all 0.3s;" id="prev-durata-container">
+                                <label for="prev-mesi-ricorrenza">Durata Contratto (Mesi)</label>
+                                <input type="number" id="prev-mesi-ricorrenza" value="12" min="1" max="120">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- TAB CONTENT: LOGISTICA & DISEGNO -->
@@ -19585,6 +19598,13 @@
                     <div style="position: relative; height: 320px;">
                         <canvas id="doughnutChart"></canvas>
                     </div>
+                </div>
+            </div>
+            
+            <div class="chart-box" style="margin-top: 20px;">
+                <div class="chart-header">📈 Proiezione di Cassa (Cash Flow MRR a 12 Mesi)</div>
+                <div style="position: relative; height: 320px;">
+                    <canvas id="cashFlowChart"></canvas>
                 </div>
             </div>
         </div>
@@ -20251,7 +20271,7 @@
     }
 
     const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-    let barChart, doughChart;
+    let barChart, doughChart, cashFlowChart;
 
     function show(id) {
         document.querySelectorAll('.view-section').forEach(s => s.style.display='none');
@@ -23835,12 +23855,37 @@
             }
         });
         
+        let cashFlowRev = new Array(12).fill(0);
+        
         // Aggiungi preventivi convalidati
         const savedPrev = JSON.parse(localStorage.getItem('ares_preventivi') || "[]");
         savedPrev.forEach(p => {
             if (p.stato === 'convalidato') {
-                totalRev += parseFloat(p.totalePreventivo || 0);
+                let pTot = parseFloat(p.totalePreventivo || 0);
+                totalRev += pTot;
                 totalCost += parseFloat(p.spesePresunte || 0);
+                
+                let isRic = false;
+                let mesiRic = 1;
+                if (p.voci) {
+                    p.voci.forEach(v => {
+                        if (v.desc && v.desc.startsWith("__RICORRENTE__:true")) isRic = true;
+                        if (v.desc && v.desc.startsWith("__DURATA_MESI__:__")) {
+                            mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                        } else if (v.desc && v.desc.startsWith("__DURATA_MESI__:")){
+                            mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                        }
+                    });
+                }
+                
+                if (isRic && mesiRic > 0) {
+                    let monthlyRev = pTot / mesiRic;
+                    for (let i = 0; i < Math.min(mesiRic, 12); i++) {
+                        cashFlowRev[i] += monthlyRev;
+                    }
+                } else {
+                    cashFlowRev[0] += pTot; // Assume Mese 1
+                }
             }
         });
         
@@ -24037,6 +24082,68 @@
                 }
             }
         });
+        
+        if(cashFlowChart) cashFlowChart.destroy();
+        const cfCtx = document.getElementById('cashFlowChart');
+        if (cfCtx) {
+            const gradCf = cfCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+            gradCf.addColorStop(0, 'rgba(16, 185, 129, 0.85)');
+            gradCf.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
+            
+            const monthLabels = [];
+            const currentDate = new Date();
+            for (let i = 0; i < 12; i++) {
+                let d = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
+                monthLabels.push(d.toLocaleString('it-IT', { month: 'short' }) + " " + String(d.getFullYear()).slice(-2));
+            }
+            
+            cashFlowChart = new Chart(cfCtx, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Entrate Previste (MRR) €',
+                        data: cashFlowRev,
+                        backgroundColor: gradCf,
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#131520',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#131520',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     function renderDashboardAgenda() {
@@ -24410,12 +24517,28 @@
         return protocolCode;
     }
 
+    function toggleRicorrenteDurata() {
+        const isRec = document.getElementById('prev-is-ricorrente').checked;
+        const container = document.getElementById('prev-durata-container');
+        if (isRec) {
+            container.style.opacity = '1';
+            container.style.pointerEvents = 'all';
+        } else {
+            container.style.opacity = '0.5';
+            container.style.pointerEvents = 'none';
+        }
+    }
+
     function openNewPreventivoForm() {
         document.getElementById('prev-list-screen').style.display = 'none';
         document.getElementById('prev-form-screen').style.display = 'block';
         document.getElementById('prev-form-title').innerText = "Nuovo Progetto & Preventivo";
         
         document.getElementById('prev-edit-id').value = "";
+        
+        document.getElementById('prev-is-ricorrente').checked = false;
+        document.getElementById('prev-mesi-ricorrenza').value = "12";
+        toggleRicorrenteDurata();
         document.getElementById('prev-cliente').value = "";
         document.getElementById('prev-cantiere').value = "";
         document.getElementById('prev-referente').value = "";
@@ -24723,6 +24846,8 @@
         
         const spesePresunte = parseFloat(document.getElementById('prev-spese-presunte').value) || 0;
         const ivaFlag = document.getElementById('prev-iva-flag').checked;
+        const isRicorrente = document.getElementById('prev-is-ricorrente').checked;
+        const mesiRicorrenza = parseInt(document.getElementById('prev-mesi-ricorrenza').value) || 12;
         
         const voci = [];
         document.querySelectorAll('.computo-row').forEach(tr => {
@@ -24738,6 +24863,8 @@
         // Aggiunta metadati locali in modo sicuro per il database
         voci.push({ desc: "__DIARIA__:" + diaria, qta: 0, um: "", prezzo: 0, totale: 0 });
         voci.push({ desc: "__IVA__:" + (ivaFlag ? "true" : "false"), qta: 0, um: "", prezzo: 0, totale: 0 });
+        voci.push({ desc: "__RICORRENTE__:" + (isRicorrente ? "true" : "false"), qta: 0, um: "", prezzo: 0, totale: 0 });
+        voci.push({ desc: "__DURATA_MESI__:" + mesiRicorrenza, qta: 0, um: "", prezzo: 0, totale: 0 });
         
         const costoFurgone = parseFloat(document.getElementById('prev-costo-furgone').value) || 0;
         const costoAttrezzature = parseFloat(document.getElementById('prev-costo-attrezzature').value) || 0;
@@ -24756,7 +24883,11 @@
         });
         
         const subtotalVoci = voci.filter(v => !v.desc.startsWith("__")).reduce((sum, v) => sum + v.totale, 0);
-        const totalePreventivo = subtotalVoci + costoTrasferta + costoAlloggio;
+        let totalePreventivo = subtotalVoci + costoTrasferta + costoAlloggio;
+        
+        if (isRicorrente) {
+            totalePreventivo = totalePreventivo * mesiRicorrenza;
+        }
         
         const layoutPrintOption = document.querySelector('input[name="layout-print-option"]:checked').value;
         voci.push({ desc: "__LAYOUT_MODE__:" + layoutPrintOption, qta: 0, um: "", prezzo: 0, totale: 0 });
@@ -25052,6 +25183,25 @@
             addCustomExpenseRow("", 0);
         }
         
+        // Restore Ricorrente
+        let isRic = false;
+        let mesiRic = 12;
+        if (p.voci) {
+            p.voci.forEach(v => {
+                if (v.desc && v.desc.startsWith("__RICORRENTE__:true")) isRic = true;
+                if (v.desc && v.desc.startsWith("__DURATA_MESI__:__")) {
+                    // Note: saved as "__DURATA_MESI__:12" so split fallback
+                    mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                } else if (v.desc && v.desc.startsWith("__DURATA_MESI__:")){
+                    mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                }
+            });
+        }
+        document.getElementById('prev-is-ricorrente').checked = isRic;
+        document.getElementById('prev-mesi-ricorrenza').value = mesiRic;
+        if(typeof toggleRicorrenteDurata === 'function') toggleRicorrenteDurata();
+
+        
         // Restore layout mode UI options
         if (!layoutMode) {
             layoutMode = (p.canvasData && p.canvasData !== "") ? "canvas" : "none";
@@ -25112,6 +25262,47 @@
         }
     }
 
+    function autoCreateRecurringTasksFromPreventivo(prev) {
+        let isRic = false;
+        let mesiRic = 0;
+        if (prev.voci) {
+            prev.voci.forEach(v => {
+                if (v.desc && v.desc.startsWith("__RICORRENTE__:true")) isRic = true;
+                if (v.desc && v.desc.startsWith("__DURATA_MESI__:__")) {
+                    mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                } else if (v.desc && v.desc.startsWith("__DURATA_MESI__:")){
+                    mesiRic = parseInt(v.desc.split(":")[1]) || 12;
+                }
+            });
+        }
+        
+        if (!isRic || mesiRic <= 0) return;
+        
+        let taskTime = "09:00";
+        let title = "Servizio Ricorrente: " + prev.cliente + " (" + prev.cantiere + ")";
+        let startDate = new Date();
+        
+        for(let i = 0; i < mesiRic; i++) {
+            let taskDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, startDate.getDate());
+            let dateKey = taskDate.toISOString().split('T')[0];
+            
+            let notesForDate = JSON.parse(localStorage.getItem(`note_${dateKey}`) || "[]");
+            let exists = notesForDate.some(n => n.txt === title && n.type === 'ricorrente');
+            
+            if (!exists) {
+                notesForDate.push({
+                    id: Date.now() + i,
+                    time: taskTime,
+                    txt: title,
+                    important: true,
+                    type: 'ricorrente'
+                });
+                localStorage.setItem(`note_${dateKey}`, JSON.stringify(notesForDate));
+            }
+        }
+        console.log(`Creati ${mesiRic} task ricorrenti per preventivo ${prev.id}`);
+    }
+
     async function toggleConvalida(id) {
         let list = JSON.parse(localStorage.getItem('ares_preventivi') || "[]");
         let targetState = 'bozza';
@@ -25121,6 +25312,7 @@
                 targetState = p.stato;
                 if (targetState === 'convalidato') {
                     try { if (typeof autoCreateFascicoloFromPreventivo === 'function') autoCreateFascicoloFromPreventivo(p); } catch(e){}
+                    try { autoCreateRecurringTasksFromPreventivo(p); } catch(e){}
                 }
             }
             return p;
