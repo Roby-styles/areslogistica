@@ -26800,10 +26800,9 @@
                 if(statusEl) statusEl.innerHTML = `<span style='color:#10b981'>✅ Trovati ${fileCount} file in locale</span>`;
                 
                 const mbSize = (totalSizeBytes / (1024 * 1024)).toFixed(1);
-                const safeMasterName = masterHandle.name.replace(/'/g, "\\'");
                 
                 btnContainerEl.innerHTML = `
-                    <button onclick="window.openRadarAlbum(${fascicoloId}, '${safeMasterName}')" style="
+                    <button id="radar-album-btn-action-${fascicoloId}" style="
                         background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
                         color: white;
                         border: 1px solid rgba(255,255,255,0.2);
@@ -26820,11 +26819,22 @@
                         width: 90%;
                         z-index: 100;
                         position: relative;
+                        pointer-events: auto;
                     " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 25px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.3)'">
                         <span style="font-size: 20px; margin-bottom: 5px;">📸 Consulta Album</span>
                         <span style="font-size: 11px; font-weight: normal; opacity: 0.8;">Cartella: FAS-${fascicoloId} | ${fileCount} file (${mbSize} MB)</span>
                     </button>
                 `;
+                
+                // Agganciamo l'evento in modo sicuro e diretto tramite DOM
+                const actionBtn = document.getElementById(`radar-album-btn-action-${fascicoloId}`);
+                if (actionBtn) {
+                    actionBtn.addEventListener('click', function() {
+                        console.log("Apertura album per fascicolo:", fascicoloId);
+                        openRadarAlbum(fascicoloId, masterHandle.name);
+                    });
+                }
+                
             } else {
                 btnContainerEl.innerHTML = `<div style="width:100%; text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Cartella vuota.</div>`;
             }
