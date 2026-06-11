@@ -27402,9 +27402,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.body.removeChild(overlay);
             
+            const eventId = Date.now();
             let newEvent = {
+                id: eventId,
                 descrizione: 'PLAN:' + desc,
                 data_scadenza: date + ' ' + time,
+                importante: false,
                 fascicolo_id: fascicoloId
             };
             
