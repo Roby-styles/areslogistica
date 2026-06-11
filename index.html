@@ -1643,6 +1643,7 @@
             pointer-events: none;
         }
     </style>
+    <script src="https://unpkg.com/force-graph"></script>
 </head>
 <body>
     <!-- Floating Dramatic SOS Alert for PC -->
@@ -26506,12 +26507,8 @@
                 <h3 style="color:#38bdf8; margin-top:0;">Dossier Tecnico #${fascicolo.id}</h3>
                 <h1 style="color:#fff; font-size:28px;">${fascicolo.titolo_commessa || 'Commessa'}</h1>
                 
-                <div id="kg-container">
-                    <div class="kg-node center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">Commessa<br>${fascicolo.id}</div>
-                    <div class="kg-node satellite partner" style="left: 20%; top: 20%;">Partner</div>
-                    <div class="kg-node satellite finance" style="left: 80%; top: 30%;">Costi</div>
-                    <div class="kg-node satellite" style="left: 50%; top: 80%;">Risorse</div>
-                    <div class="kg-line" style="width:100px; left:50%; top:50%; transform: rotate(-45deg);"></div>
+                <div id="kg-render-target" style="width: 100%; height: 250px; background: #0f172a; border-radius: 8px; margin: 15px 0; overflow: hidden; position: relative; border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+                    <div style="color:#38bdf8; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:monospace; font-size:10px; animation: pulse 1.5s infinite;">INITIALIZING INTELLIGENCE PROTOCOL...</div>
                 </div>
 
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px;">
@@ -26560,6 +26557,101 @@
                 ${rightContent}
             </div>
         `;
+        
+        if (currentFascicoloPage === 0) {
+            setTimeout(() => {
+                buildInteractiveGraph(fascicolo);
+            }, 300);
+        }
+    }
+    
+    async function buildInteractiveGraph(fascicolo) {
+        const container = document.getElementById('kg-render-target');
+        if(!container) return;
+        
+        const nodes = [];
+        const links = [];
+        
+        // NODO CENTRALE
+        nodes.push({ id: 'Nucleo', name: 'Commessa #' + fascicolo.id, group: 0, color: '#38bdf8', icon: '📁' });
+
+        // Cerca Preventivo
+        const localPrev = JSON.parse(localStorage.getItem('ares_preventivi') || "[]");
+        const prev = localPrev.find(p => p.id === fascicolo.preventivo_id);
+        
+        if (prev) {
+            nodes.push({ id: 'Prev', name: 'Prev. €' + (prev.totale_preventivo || 0), group: 1, color: '#f59e0b', icon: '💶' });
+            links.push({ source: 'Nucleo', target: 'Prev' });
+            
+            if (prev.cliente) {
+                nodes.push({ id: 'Cliente', name: prev.cliente, group: 2, color: '#10b981', icon: '🏢' });
+                links.push({ source: 'Prev', target: 'Cliente' });
+                
+                const localCRM = JSON.parse(localStorage.getItem('ares_crm') || "{}");
+                if (localCRM[prev.cliente]) {
+                    const info = localCRM[prev.cliente];
+                    if (info.phone) {
+                        nodes.push({ id: 'Telefono', name: info.phone, group: 2, color: '#94a3b8', icon: '📞' });
+                        links.push({ source: 'Cliente', target: 'Telefono' });
+                    }
+                }
+                
+                const localPlan = JSON.parse(localStorage.getItem('planning_events') || "[]");
+                const clientEvents = localPlan.filter(e => e.desc && e.desc.toLowerCase().includes(prev.cliente.toLowerCase()));
+                clientEvents.forEach((evt, i) => {
+                    if(i > 3) return; // Limita a 4 appuntamenti
+                    const evtId = 'Evt'+i;
+                    nodes.push({ id: evtId, name: evt.date, group: 3, color: '#8b5cf6', icon: '📅' });
+                    links.push({ source: 'Cliente', target: evtId });
+                });
+            }
+            
+            if (prev.operatore) {
+                nodes.push({ id: 'Operatore', name: prev.operatore, group: 4, color: '#f43f5e', icon: '👤' });
+                links.push({ source: 'Prev', target: 'Operatore' });
+            }
+        }
+        
+        container.innerHTML = ''; // Rimuovi il loading
+        
+        const Graph = ForceGraph()(container)
+            .width(container.clientWidth)
+            .height(container.clientHeight)
+            .backgroundColor('#0f172a')
+            .nodeRelSize(6)
+            .linkDirectionalParticles(2)
+            .linkDirectionalParticleSpeed(0.01)
+            .linkColor(() => 'rgba(56, 189, 248, 0.3)')
+            .linkWidth(1)
+            .nodeCanvasObject((node, ctx, globalScale) => {
+                const label = node.icon + ' ' + node.name;
+                const fontSize = 12/globalScale;
+                ctx.font = `${fontSize}px Sans-Serif`;
+                const textWidth = ctx.measureText(label).width;
+                const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.beginPath();
+                ctx.roundRect(node.x - bckgDimensions[0]/2, node.y - bckgDimensions[1]/2, bckgDimensions[0], bckgDimensions[1], 4);
+                ctx.fill();
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = node.color;
+                ctx.fillText(label, node.x, node.y);
+                
+                node.__bckgDimensions = bckgDimensions;
+            })
+            .nodePointerAreaPaint((node, color, ctx) => {
+                ctx.fillStyle = color;
+                const bckgDimensions = node.__bckgDimensions;
+                bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0]/2, node.y - bckgDimensions[1]/2, bckgDimensions[0], bckgDimensions[1]);
+            })
+            .graphData({ nodes, links });
+            
+        setTimeout(() => {
+            Graph.zoomToFit(600, 30);
+        }, 800);
     }
 
     function turnBookPage(id, direction) {
