@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ares-cache-v58';
+const CACHE_NAME = 'ares-cache-v59';
 const ASSETS = [
   './',
   './index.html',
@@ -32,8 +32,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
+    fetch(e.request).catch(() => {
+      return caches.match(e.request);
     })
   );
 });
