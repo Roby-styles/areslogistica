@@ -27108,7 +27108,7 @@
         if(ext) return; // Esiste già
         
         const fascicolo = {
-            titolo_commessa: prev.cliente + " - " + prev.note,
+            titolo_commessa: prev.cliente + (prev.note ? " - " + prev.note : ""),
             preventivo_id: prev.id,
             indirizzo: "",
             data_inizio: new Date().toISOString().split('T')[0],
