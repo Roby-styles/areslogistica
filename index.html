@@ -26439,13 +26439,16 @@
         } else {
             aresFascicoli.forEach(f => {
                 html += `
-                <div class="fascicolo-card" onclick="openFascicoloBook(${f.id})">
-                    <div style="font-size:12px; color:#38bdf8; font-weight:700; margin-bottom:5px;">#FAS-${f.id}</div>
-                    <div style="font-size:18px; color:#fff; font-weight:700; margin-bottom:10px;">${f.titolo_commessa || 'Senza Titolo'}</div>
-                    <div style="font-size:12px; color:#94a3b8;">📅 Inizio: ${f.data_inizio || '-'}</div>
-                    <div style="font-size:12px; color:#94a3b8;">📍 ${f.indirizzo || 'N/D'}</div>
-                    <div style="margin-top:15px; font-size:11px; background:rgba(56,189,248,0.1); color:#38bdf8; padding:5px; border-radius:4px; text-align:center;">
-                        📖 Apri Fascicolo
+                <div class="fascicolo-card" style="position:relative; cursor:pointer;">
+                    <button onclick="event.stopPropagation(); deleteFascicolo(${f.id})" style="position:absolute; top:10px; right:10px; background:rgba(244, 63, 94, 0.2); border:none; border-radius:4px; color:#f43f5e; cursor:pointer; font-size:12px; padding:4px 8px; z-index:10;">🗑️ Elimina</button>
+                    <div onclick="openFascicoloBook(${f.id})">
+                        <div style="font-size:12px; color:#38bdf8; font-weight:700; margin-bottom:5px;">#FAS-${f.id}</div>
+                        <div style="font-size:18px; color:#fff; font-weight:700; margin-bottom:10px;">${f.titolo_commessa || 'Senza Titolo'}</div>
+                        <div style="font-size:12px; color:#94a3b8;">📅 Inizio: ${f.data_inizio || '-'}</div>
+                        <div style="font-size:12px; color:#94a3b8;">📍 ${f.indirizzo || 'N/D'}</div>
+                        <div style="margin-top:15px; font-size:11px; background:rgba(56,189,248,0.1); color:#38bdf8; padding:5px; border-radius:4px; text-align:center;">
+                            📖 Apri Fascicolo
+                        </div>
                     </div>
                 </div>`;
             });
