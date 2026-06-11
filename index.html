@@ -19611,6 +19611,13 @@
                         
                         <!-- Selettore di Layer Cartografici -->
                         <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <!-- Layer Attività (Cantieri e Fascicoli) -->
+                            <label class="neon-toggle-btn">
+                                <input type="checkbox" id="layer-attivita" onchange="toggleAttivitaLayer()">
+                                <span class="btn-text">🚧 Attività e Cantieri</span>
+                                <div class="neon-indicator"></div>
+                            </label>
+                            
                             <!-- Traffico Live -->
                             <label class="neon-toggle-btn">
                                 <input type="checkbox" id="layer-traffic" onchange="toggleTrafficLayer()">
@@ -26702,8 +26709,11 @@
                 </div>
 
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px;">
-                    <p style="color:#a5b4fc; font-size:12px; margin:0;">📍 Location</p>
-                    <p style="color:#fff; font-weight:bold; margin-top:5px;">${fascicolo.indirizzo || 'Da definire'}</p>
+                    <p style="color:#a5b4fc; font-size:12px; margin:0 0 5px 0;">📍 Location Geocoding</p>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="fascicolo-address-${fascicolo.id}" value="${fascicolo.indirizzo || ''}" placeholder="Cerca indirizzo (es. Via Roma 1, Milano)" style="flex:1; padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:#fff; font-size:14px; outline:none;">
+                        <button onclick="geocodeFascicoloAddress(${fascicolo.id})" style="padding:10px 15px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:6px; color:#fff; font-weight:bold; cursor:pointer;">🔍 Salva</button>
+                    </div>
                 </div>
             `;
             
@@ -27551,6 +27561,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         };
+    }
+    async function geocodeFascicoloAddress(fascicoloId) {
+        const addrInput = document.getElementById(`fascicolo-address-${fascicoloId}`);
+        if(!addrInput) return;
+        const address = addrInput.value.trim();
+        if(!address) {
+            alert("Inserisci un indirizzo prima di effettuare la geocodifica.");
+            return;
+        }
+
+        showCloudStatus("Geocoding in corso...", "syncing");
+
+        try {
+            // Geocoding Nominatim OpenStreetMap
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+
+                if(supabaseClient) {
+                    const { error } = await supabaseClient.from('ares_fascicoli').update({ 
+                        indirizzo: address,
+                        lat: lat, 
+                        lng: lng 
+                    }).eq('id', fascicoloId);
+
+                    if(!error) {
+                        showCloudStatus("Geocoding Completato! 📍", "success");
+                        await fetchFascicoli(); // Ricarica dati
+                        
+                        // Lampo visivo per conferma all'utente
+                        addrInput.style.borderColor = "#10b981";
+                        addrInput.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
+                        setTimeout(() => {
+                            addrInput.style.borderColor = "rgba(255,255,255,0.2)";
+                            addrInput.style.backgroundColor = "rgba(0,0,0,0.3)";
+                        }, 1500);
+
+                    } else {
+                        showCloudStatus("Errore salvataggio indirizzo", "error");
+                    }
+                }
+            } else {
+                showCloudStatus("Indirizzo non trovato", "error");
+                alert("Non è stato possibile trovare le coordinate per questo indirizzo. Prova a scriverlo in modo più specifico (es. Via Roma 1, Milano).");
+            }
+        } catch(e) {
+            console.error("Errore Geocoding:", e);
+            showCloudStatus("Errore di Rete", "error");
+        }
     }
     
     async function setFascicoloCoordinates(fascicoloId) {
