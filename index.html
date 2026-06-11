@@ -1828,7 +1828,7 @@
         <div style="font-size: 32px;">🚨</div>
         <div style="text-align: left;">
             <h4 style="margin: 0; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Allarme SOS in Tempo Reale</h4>
-            <p style="margin: 3px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.9);">L'operaio <b id="pc-sos-worker-name" style="font-size: 13px; text-decoration: underline;">-</b> richiede assistenza immediata!</p>
+            <p style="margin: 3px 0 0 0; font-size: 12px; color: rgba(255,255,255,0.9);">La risorsa <b id="pc-sos-worker-name" style="font-size: 13px; text-decoration: underline;">-</b> richiede assistenza immediata!</p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <button id="pc-btn-sos-focus" onclick="focusSosWorker()" style="background: #fff; color: #dc2626; border: none; padding: 10px 16px; font-weight: 800; border-radius: 10px; cursor: pointer; font-size: 11px; text-transform: uppercase; font-family: inherit;">🎯 Centra</button>
@@ -1954,7 +1954,7 @@
                 
                 <div>
                     <h4 id="mobile-profile-name" style="margin: 0; font-size: 20px; color: #fff; font-weight: 800;">-</h4>
-                    <span style="font-size: 12px; color: #818cf8; font-weight: 600;">Operaio ARES Logistica</span>
+                    <span style="font-size: 12px; color: #818cf8; font-weight: 600;">Risorsa ARES Logistica</span>
                 </div>
                 
                 <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 15px;">
@@ -19667,7 +19667,7 @@
                     
                     <!-- PANNELLO OPERATORE SELEZIONATO -->
                     <div id="gis-worker-card" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 15px; display: none; flex-direction: column; gap: 12px; transition: all 0.3s ease;">
-                        <h4 style="margin: 0; font-size: 14px; color: #818cf8; display: flex; align-items: center; gap: 6px;">👷 Operaio Selezionato</h4>
+                        <h4 style="margin: 0; font-size: 14px; color: #818cf8; display: flex; align-items: center; gap: 6px;">👷 Risorsa Selezionata</h4>
                         <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
                             <span id="gis-worker-name" style="font-size: 18px; font-weight: 800; color: #fff;">-</span>
                             <div id="gis-worker-status" style="font-size: 11px; color: #10b981; font-weight: 700; margin-top: 2px;">🟢 In Servizio Attivo</div>
@@ -19682,7 +19682,7 @@
                         <!-- PONTE COMUNICAZIONE OPERATIVA RAPIDA -->
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
                             <button id="btn-focus-map" onclick="focusMapOnSelectedWorker()" style="width:100%; padding:8px; background:rgba(99, 102, 241, 0.15); border:1px solid rgba(99, 102, 241, 0.35); color:#a5b4fc; font-weight:700; border-radius:8px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-                                🎯 Centra Mappa su Operaio
+                                🎯 Centra Mappa su Risorsa
                             </button>
                             <button id="btn-wa-link" onclick="openWaLink()" style="width:100%; padding:8px; background:#10b981; border:none; color:#fff; font-weight:700; border-radius:8px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; gap:6px;">
                                 💬 WhatsApp Chat
@@ -19714,7 +19714,7 @@
                     </div>
                     
                     <div id="gis-no-worker-msg" style="text-align: center; color: #94a3b8; font-style: italic; font-size: 12px; padding: 20px 0;">
-                        Clicca sul segnaposto di un operaio sulla mappa per avviare il Centro di Controllo.
+                        Clicca sul segnaposto di una risorsa sulla mappa per avviare il Centro di Controllo.
                     </div>
                 </div>
             </div>
@@ -20762,7 +20762,7 @@
                     const sosNameEl = document.getElementById('pc-sos-worker-name');
                     
                     if (currentSosWorkerObj && isPcDisplay) {
-                        // Reset tacitazione se è un nuovo allarme SOS o se cambia l'operaio
+                        // Reset tacitazione se è un nuovo allarme SOS o se cambia la risorsa
                         if (!activeSosWorker || activeSosWorker.username !== currentSosWorkerObj.username) {
                             isSosMuted = false;
                             const muteBtn = document.getElementById('pc-btn-sos-mute');
@@ -20785,7 +20785,7 @@
                                 // 1. Sintesi Vocale Femminile in Italiano (HTML5 Web Speech API)
                                 if ('speechSynthesis' in window) {
                                     try {
-                                        const msgText = `Attenzione! Allarme S O S. L'operaio ${activeSosWorker.username} richiede assistenza immediata!`;
+                                        const msgText = `Attenzione! Allarme S O S. La risorsa ${activeSosWorker.username} richiede assistenza immediata!`;
                                         const utterance = new SpeechSynthesisUtterance(msgText);
                                         utterance.lang = 'it-IT';
                                         utterance.rate = 0.92; // Ritmo naturale e comprensibile
@@ -21032,7 +21032,7 @@
 
             markersGroup = L.layerGroup().addTo(mapInstance);
 
-            // Avvia la sincronizzazione automatica degli operai sulla mappa
+            // Avvia la sincronizzazione automatica delle risorse sulla mappa
             updateGisWorkers();
             if (autoUpdateGisInterval) clearInterval(autoUpdateGisInterval);
             autoUpdateGisInterval = setInterval(updateGisWorkers, 10000);
@@ -21290,7 +21290,7 @@
 
                 let currentSosWorkerObj = null;
 
-                // Aggiungi o aggiorna i marker per ciascun operaio attivo
+                // Aggiungi o aggiorna i marker per ciascuna risorsa attiva
                 activeWorkers.forEach(w => {
                     const lat = w.nudgedLat;
                     const lon = w.nudgedLon;
@@ -21377,7 +21377,7 @@
                 }
             }
         } catch (e) {
-            console.error("Errore aggiornamento operai sulla mappa:", e);
+            console.error("Errore aggiornamento risorse sulla mappa:", e);
         }
     }
 
