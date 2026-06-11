@@ -27329,28 +27329,97 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // --- FASCICOLI EXTENSION FUNCTIONS ---
     async function addFascicoloTask(fascicoloId) {
-        let desc = prompt("Inserisci descrizione della scadenza (es. Ispezione in Cantiere):");
-        if(!desc) return;
-        let dataScadenza = prompt("Inserisci data di scadenza (YYYY-MM-DD):");
-        if(!dataScadenza) return;
+        // Crea l'overlay del modale glassmorphism
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.backdropFilter = 'blur(10px)';
+        overlay.style.zIndex = '100000';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+
+        overlay.innerHTML = `
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(139, 92, 246, 0.4); padding: 30px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 450px; text-align:center; font-family: 'Inter', sans-serif;">
+                <h3 style="color:#8b5cf6; margin-top:0; margin-bottom:10px; font-size:22px;">Pianifica Task / Scadenza</h3>
+                <p style="color:#94a3b8; font-size:14px; margin-bottom:25px; line-height:1.5;">Inserisci i dettagli dell'evento per questo fascicolo. Sarà visibile anche sul calendario generale.</p>
+                
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <label style="color:#cbd5e1; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">DESCRIZIONE EVENTO</label>
+                    <input type="text" id="task-desc" placeholder="Es. Ispezione in Cantiere" style="width:100%; padding:12px; border-radius:8px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+                </div>
+
+                <div style="display:flex; gap:15px; margin-bottom: 25px;">
+                    <div style="flex:1; text-align: left;">
+                        <label style="color:#cbd5e1; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">DATA</label>
+                        <input type="date" id="task-date" style="width:100%; padding:12px; border-radius:8px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box; cursor:pointer;">
+                    </div>
+                    <div style="flex:1; text-align: left;">
+                        <label style="color:#cbd5e1; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">ORA</label>
+                        <input type="time" id="task-time" value="09:00" style="width:100%; padding:12px; border-radius:8px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:14px; outline:none; box-sizing:border-box; cursor:pointer;">
+                    </div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; gap:15px;">
+                    <button id="btn-cancel-task" style="flex:1; padding:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; transition:all 0.2s;">Annulla</button>
+                    <button id="btn-confirm-task" style="flex:1; padding:12px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; box-shadow:0 5px 15px rgba(139,92,246,0.3); transition:all 0.2s;">Aggiungi Task ✨</button>
+                </div>
+            </div>
+        `;
         
-        let newEvent = {
-            descrizione: 'PLAN:' + desc,
-            data_scadenza: dataScadenza + ' 09:00',
-            fascicolo_id: fascicoloId
+        document.body.appendChild(overlay);
+
+        // Imposta la data di oggi come default
+        document.getElementById('task-date').valueAsDate = new Date();
+        
+        // Hover effects sulle modali
+        const cancelBtn = document.getElementById('btn-cancel-task');
+        const confirmBtn = document.getElementById('btn-confirm-task');
+        
+        cancelBtn.onmouseover = () => cancelBtn.style.background = 'rgba(255,255,255,0.1)';
+        cancelBtn.onmouseout = () => cancelBtn.style.background = 'rgba(255,255,255,0.05)';
+        
+        confirmBtn.onmouseover = () => confirmBtn.style.transform = 'translateY(-2px)';
+        confirmBtn.onmouseout = () => confirmBtn.style.transform = 'translateY(0)';
+        
+        cancelBtn.onclick = () => {
+            document.body.removeChild(overlay);
         };
         
-        if (supabaseClient) {
-            showCloudStatus("Salvataggio Task nel Fascicolo...", "syncing");
-            const { error } = await supabaseClient.from('ares_planning').insert(newEvent);
-            if (!error) {
-                showCloudStatus("Task Aggiunto!", "success");
-                await loadPlanning(); // reload from DB
-                openFascicoloBook(fascicoloId); // re-render book
-            } else {
-                showCloudStatus("Errore salvataggio task", "error");
+        confirmBtn.onclick = async () => {
+            const desc = document.getElementById('task-desc').value.trim();
+            const date = document.getElementById('task-date').value;
+            const time = document.getElementById('task-time').value;
+            
+            if(!desc || !date || !time) {
+                alert("Compila tutti i campi (Descrizione, Data e Ora).");
+                return;
             }
-        }
+            
+            document.body.removeChild(overlay);
+            
+            let newEvent = {
+                descrizione: 'PLAN:' + desc,
+                data_scadenza: date + ' ' + time,
+                fascicolo_id: fascicoloId
+            };
+            
+            if (supabaseClient) {
+                showCloudStatus("Salvataggio Task nel Fascicolo...", "syncing");
+                const { error } = await supabaseClient.from('ares_planning').insert(newEvent);
+                if (!error) {
+                    showCloudStatus("Task Aggiunto!", "success");
+                    await loadPlanning(); // ricarica eventi da db
+                    openFascicoloBook(fascicoloId); // riaggiorna UI fascicolo
+                } else {
+                    showCloudStatus("Errore salvataggio task", "error");
+                }
+            }
+        };
     }
     
     async function assignFascicoloResource(fascicoloId) {
