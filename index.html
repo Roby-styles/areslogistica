@@ -20779,7 +20779,8 @@
                         }
                         
                         if (typeof isSosMuted !== 'undefined' && !isSosMuted) {
-                            if (!window.lastSosBeep) {
+                            // Suona se è il primo beep, oppure se sono passati 8 secondi dall'ultimo (ripetizione continua)
+                            if (!window.lastSosBeep || (Date.now() - window.lastSosBeep > 8000)) {
                                 window.lastSosBeep = Date.now();
                                 
                                 // 1. Sintesi Vocale Femminile in Italiano (HTML5 Web Speech API)
@@ -20826,6 +20827,7 @@
                         if (isPcDisplay) {
                             activeSosWorker = null;
                             isSosMuted = false; // Reset per prossime emergenze
+                            window.lastSosBeep = null; // Reset per permettere un nuovo allarme in futuro
                         }
                     }
                     // --------------------------------------------------------
