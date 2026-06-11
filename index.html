@@ -31,6 +31,24 @@
             --base-font-size: 19px;
             --sidebar-width: 290px;
         }
+        
+        .neon-glass-tooltip {
+            background: rgba(15, 23, 42, 0.75) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(56, 189, 248, 0.5) !important;
+            color: #f8fafc !important;
+            border-radius: 8px !important;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2) !important;
+            font-family: 'Outfit', sans-serif !important;
+            padding: 10px 14px !important;
+            font-size: 13px !important;
+        }
+        .neon-glass-tooltip::before,
+        .neon-glass-tooltip::after {
+            display: none !important; 
+        }
+
         html {
             font-size: var(--base-font-size); /* Aumenta la dimensione base globale per l'accessibilità */
         }
@@ -21064,7 +21082,11 @@
                         html: `<div style="width:20px;height:20px;background:#38bdf8;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px #38bdf8; display:flex; justify-content:center; align-items:center; color:#0f172a; font-weight:bold; font-size:10px;">${fascicolo.id}</div>`
                     });
                     const marker = L.marker([fascicolo.lat, fascicolo.lng], {icon: icon});
-                    marker.bindTooltip(`<b>#FAS-${fascicolo.id}</b><br>${fascicolo.titolo_commessa || 'Cantiere'}`);
+                    marker.bindTooltip(`<b>#FAS-${fascicolo.id}</b><br>${fascicolo.titolo_commessa || 'Cantiere'}`, {
+                        className: 'neon-glass-tooltip',
+                        direction: 'top',
+                        offset: [0, -10]
+                    });
                     marker.on('click', () => {
                         openFascicoloBook(fascicolo.id);
                     });
