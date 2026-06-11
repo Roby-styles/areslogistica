@@ -27413,6 +27413,28 @@ document.addEventListener('DOMContentLoaded', () => {
             L.marker([lat, lng], {icon: L.divIcon({className: 'custom-leaflet-icon', html: `<div style="width:20px;height:20px;background:#38bdf8;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px #38bdf8;"></div>`})}).addTo(mapInstance).bindPopup("<b>Area Operativa</b><br>Cantiere Fascicolo").openPopup();
         }
     }
+    async function deleteFascicolo(fascicoloId) {
+        if(!confirm("Sei sicuro di voler eliminare definitivamente questo Fascicolo? L'operazione non è reversibile.")) return;
+        
+        if(supabaseClient) {
+            showCloudStatus("Eliminazione Fascicolo...", "syncing");
+            
+            // Dissocia le risorse
+            await supabaseClient.from('ares_resources').update({ fascicolo_id: null }).eq('fascicolo_id', fascicoloId);
+            
+            // Elimina i task di planning
+            await supabaseClient.from('ares_planning').delete().eq('fascicolo_id', fascicoloId);
+            
+            // Elimina il fascicolo
+            const { error } = await supabaseClient.from('ares_fascicoli').delete().eq('id', fascicoloId);
+            if(!error) {
+                showCloudStatus("Fascicolo Eliminato", "success");
+                await renderFascicoli();
+            } else {
+                showCloudStatus("Errore eliminazione fascicolo", "error");
+            }
+        }
+    }
 </script>
 </body>
 </html>
