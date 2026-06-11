@@ -26853,17 +26853,19 @@
     }
 
     async function openRadarAlbum(fascicoloId, masterName) {
-        // Create full-screen modal
-        const modal = document.createElement('div');
-        modal.id = `radar-modal-${fascicoloId}`;
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            z-index: 99999; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.3s ease;
-            overflow-y: auto; padding-bottom: 50px;
-        `;
-        
-        // Header
+        try {
+            console.log("Esecuzione openRadarAlbum per fascicolo:", fascicoloId);
+            // Create full-screen modal
+            const modal = document.createElement('div');
+            modal.id = `radar-modal-${fascicoloId}`;
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+                z-index: 99999; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.3s ease;
+                overflow-y: auto; padding-bottom: 50px;
+            `;
+            
+            // Header
         const header = document.createElement('div');
         header.style.cssText = `
             width: 100%; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;
@@ -26982,6 +26984,10 @@
         } catch (e) {
             console.error(e);
             grid.innerHTML = '<div style="color:#ef4444; font-size:18px;">Errore nel caricamento delle foto. L\'accesso potrebbe essere stato negato.</div>';
+        }
+        } catch (err) {
+            console.error("ERRORE CRITICO OPENRADARALBUM:", err);
+            alert("ERRORE di sistema nell'apertura dell'album: " + err.message);
         }
     }
     
@@ -27349,7 +27355,7 @@
             setTimeout(() => {
                 buildInteractiveGraph(fascicolo);
             }, 300);
-        } else if (currentFascicoloPage === 2) {
+        } else if (currentFascicoloPage === 1) {
             setTimeout(() => {
                 if(typeof loadRadarGallery === 'function') loadRadarGallery(fascicolo.id);
             }, 300);
