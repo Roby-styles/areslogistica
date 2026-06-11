@@ -22760,7 +22760,8 @@
                             localEvents.push({
                                 id: Number(row.id),
                                 date: row.data_scadenza ? row.data_scadenza.replace(' ', 'T') : "",
-                                desc: txt
+                                desc: txt,
+                                fascicolo_id: row.fascicolo_id || null
                             });
                         } else if (desc === 'CRITICAL') {
                             const dateKey = row.data_scadenza.split('T')[0];
@@ -22830,7 +22831,8 @@
                                 patenteFile: row.file_2 || "",
                                 patenteScadenza: row.scadenza_2 || "",
                                 abilFile: row.file_3 || "",
-                                abilScadenza: row.scadenza_3 || ""
+                                abilScadenza: row.scadenza_3 || "",
+                                fascicolo_id: row.fascicolo_id || null
                             });
                         } else if (row.tipo === 'mezzi') {
                             resources.mezzi.push({
@@ -22842,7 +22844,8 @@
                                 assScadenza: row.scadenza_1 || "",
                                 revFile: row.file_2 || "",
                                 revScadenza: row.scadenza_2 || "",
-                                repairs: row.repairs || []
+                                repairs: row.repairs || [],
+                                fascicolo_id: row.fascicolo_id || null
                             });
                         } else if (row.tipo === 'attrezzature') {
                             resources.attrezzature.push({
@@ -22895,7 +22898,8 @@
                             file_3: p.abilFile || "",
                             acquisto_data: null,
                             acquisto_valore: 0,
-                            repairs: []
+                            repairs: [],
+                            fascicolo_id: p.fascicolo_id || null
                         });
                     });
                 }
@@ -22916,7 +22920,8 @@
                             file_3: "",
                             acquisto_data: null,
                             acquisto_valore: 0,
-                            repairs: m.repairs || []
+                            repairs: m.repairs || [],
+                            fascicolo_id: m.fascicolo_id || null
                         });
                     });
                 }
@@ -26722,24 +26727,68 @@
             `;
         } else if (currentFascicoloPage === 1) {
             // Pagina 1: Allocazione Operativa (Planning e Risorse)
+            
+            // --- LOGICA PLANNING ---
+            let planningEventsHTML = "";
+            let localEvents = JSON.parse(localStorage.getItem('planning_events') || "[]");
+            let fEvents = localEvents.filter(e => e.fascicolo_id === fascicolo.id);
+            if(fEvents.length === 0) {
+                planningEventsHTML = `<div style="color:#94a3b8; font-size:12px; font-style:italic; padding:10px;">Nessuna scadenza pianificata per questo cantiere.</div>`;
+            } else {
+                fEvents.forEach(e => {
+                    planningEventsHTML += `
+                        <div style="background:rgba(139, 92, 246, 0.1); border:1px solid rgba(139, 92, 246, 0.2); padding:12px; border-radius:8px;">
+                            <span style="font-size:11px; color:#c4b5fd; font-weight:bold;">SCADENZA ATTIVA</span>
+                            <div style="color:#fff; font-size:14px; margin-top:4px;">${e.desc}</div>
+                            <div style="color:#8b5cf6; font-size:12px; margin-top:4px;">🗓️ ${e.date.replace('T', ' - ')}</div>
+                        </div>`;
+                });
+            }
+            
+            // --- LOGICA RISORSE ---
+            let resourcesHTML = "";
+            let allocPersone = resources.persone ? resources.persone.filter(p => p.fascicolo_id === fascicolo.id) : [];
+            let allocMezzi = resources.mezzi ? resources.mezzi.filter(m => m.fascicolo_id === fascicolo.id) : [];
+
+            if(allocPersone.length === 0 && allocMezzi.length === 0) {
+                resourcesHTML = `<div style="color:#94a3b8; font-size:12px; font-style:italic; padding:10px;">Nessuna risorsa assegnata.</div>`;
+            } else {
+                allocPersone.forEach(p => {
+                    resourcesHTML += `
+                        <div style="background:rgba(249, 115, 22, 0.1); border:1px solid rgba(249, 115, 22, 0.2); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="color:#fff; font-size:14px; font-weight:bold;">${p.nome} ${p.cognome}</div>
+                                <div style="color:#fdba74; font-size:11px; margin-top:2px;">Personale</div>
+                            </div>
+                            <span style="background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">Allocato</span>
+                        </div>`;
+                });
+                allocMezzi.forEach(m => {
+                    resourcesHTML += `
+                        <div style="background:rgba(249, 115, 22, 0.1); border:1px solid rgba(249, 115, 22, 0.2); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="color:#fff; font-size:14px; font-weight:bold;">${m.tipo}</div>
+                                <div style="color:#fdba74; font-size:11px; margin-top:2px;">Targa: ${m.targa}</div>
+                            </div>
+                            <span style="background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">Allocato</span>
+                        </div>`;
+                });
+            }
+
             leftContent = `
                 <h3 style="color:#8b5cf6; border-bottom:1px solid rgba(139, 92, 246, 0.3); padding-bottom:10px;">📅 Planning & Scadenze</h3>
                 <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px; height: 260px; overflow-y: auto; scrollbar-width: none;">
                     <style>#fascicolo-planning-list::-webkit-scrollbar { display: none; }</style>
                     <div id="fascicolo-planning-list" style="display:flex; flex-direction:column; gap:10px;">
-                        <div style="background:rgba(139, 92, 246, 0.1); border:1px solid rgba(139, 92, 246, 0.2); padding:12px; border-radius:8px;">
-                            <span style="font-size:11px; color:#c4b5fd; font-weight:bold;">SCADENZA PROSSIMA</span>
-                            <div style="color:#fff; font-size:14px; margin-top:4px;">Ispezione Cantiere Preliminare</div>
-                            <div style="color:#8b5cf6; font-size:12px; margin-top:4px;">🗓️ 15 Nov 2026 - 09:00</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:8px; display:flex; align-items:center; justify-content:center; border-style:dashed; cursor:pointer;">
+                        ${planningEventsHTML}
+                        <div onclick="addFascicoloTask(${fascicolo.id})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:8px; display:flex; align-items:center; justify-content:center; border-style:dashed; cursor:pointer;">
                             <span style="color:#94a3b8; font-size:13px;">+ Aggiungi Task / Scadenza</span>
                         </div>
                     </div>
                 </div>
                 <div style="margin-top:20px; display:flex; justify-content:space-between;">
                     <button onclick="turnBookPage(${fascicolo.id}, -1)" style="padding:10px 20px; background:rgba(255,255,255,0.1); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">⬅️ Indietro</button>
-                    <button style="padding:10px 20px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">Apri Planning Esteso</button>
+                    <button onclick="show('view-planning'); closeFascicoloBook();" style="padding:10px 20px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">Apri Calendario</button>
                 </div>
             `;
             
@@ -26748,21 +26797,8 @@
                 <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px; height: 260px; overflow-y: auto; scrollbar-width: none;">
                     <style>#fascicolo-risorse-list::-webkit-scrollbar { display: none; }</style>
                     <div id="fascicolo-risorse-list" style="display:flex; flex-direction:column; gap:10px;">
-                        <div style="background:rgba(249, 115, 22, 0.1); border:1px solid rgba(249, 115, 22, 0.2); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div style="color:#fff; font-size:14px; font-weight:bold;">Mario Rossi</div>
-                                <div style="color:#fdba74; font-size:11px; margin-top:2px;">Capo Cantiere</div>
-                            </div>
-                            <span style="background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">Allocato</span>
-                        </div>
-                        <div style="background:rgba(249, 115, 22, 0.1); border:1px solid rgba(249, 115, 22, 0.2); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div style="color:#fff; font-size:14px; font-weight:bold;">Furgone Iveco Daily</div>
-                                <div style="color:#fdba74; font-size:11px; margin-top:2px;">Targa: ZA123BC</div>
-                            </div>
-                            <span style="background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">Allocato</span>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:8px; display:flex; align-items:center; justify-content:center; border-style:dashed; cursor:pointer;">
+                        ${resourcesHTML}
+                        <div onclick="assignFascicoloResource(${fascicolo.id})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:8px; display:flex; align-items:center; justify-content:center; border-style:dashed; cursor:pointer;">
                             <span style="color:#94a3b8; font-size:13px;">+ Assegna Risorsa</span>
                         </div>
                     </div>
@@ -26773,19 +26809,35 @@
             `;
         } else if (currentFascicoloPage === 2) {
             // Pagina 2: GIS e Fine (Dati Sensibili)
+            
+            let gisHTML = "";
+            if(fascicolo.lat && fascicolo.lng) {
+                gisHTML = `
+                    <div style="font-size:30px; margin-bottom:10px;">🛰️</div>
+                    <div style="color:#fff; font-size:16px; font-weight:bold;">Cantiere Attivo</div>
+                    <div style="color:#7dd3fc; font-size:12px; font-family:monospace; margin-top:5px;">LAT: ${fascicolo.lat.toFixed(5)} | LNG: ${fascicolo.lng.toFixed(5)}</div>
+                `;
+            } else {
+                gisHTML = `
+                    <div style="font-size:30px; margin-bottom:10px; opacity:0.5;">🛰️</div>
+                    <div style="color:#94a3b8; font-size:16px; font-weight:bold;">Posizione Ignota</div>
+                    <div style="color:#475569; font-size:11px; margin-top:5px;">Nessuna coordinata salvata</div>
+                `;
+            }
+            
             leftContent = `
                 <h3 style="color:#0ea5e9; border-bottom:1px solid rgba(14, 165, 233, 0.3); padding-bottom:10px;">🗺️ Geolocalizzazione GIS</h3>
                 <div style="margin-top:20px;">
                     <div style="background:rgba(14, 165, 233, 0.05); border:1px solid rgba(14, 165, 233, 0.2); padding:15px; border-radius:8px; text-align:center;">
-                        <div style="font-size:30px; margin-bottom:10px;">🛰️</div>
-                        <div style="color:#fff; font-size:16px; font-weight:bold;">Cantiere Attivo</div>
-                        <div style="color:#7dd3fc; font-size:12px; font-family:monospace; margin-top:5px;">LAT: 41.8902 | LNG: 12.4922</div>
+                        ${gisHTML}
                     </div>
-                    <button style="width:100%; padding:15px; background:linear-gradient(135deg, #0ea5e9, #0284c7); border:none; border-radius:8px; color:#fff; font-weight:bold; font-size:14px; cursor:pointer; margin-top:15px; box-shadow:0 10px 20px rgba(14,165,233,0.2);">
+                    ${(fascicolo.lat && fascicolo.lng) ? `
+                    <button onclick="focusFascicoloOnGIS(${fascicolo.lat}, ${fascicolo.lng})" style="width:100%; padding:15px; background:linear-gradient(135deg, #0ea5e9, #0284c7); border:none; border-radius:8px; color:#fff; font-weight:bold; font-size:14px; cursor:pointer; margin-top:15px; box-shadow:0 10px 20px rgba(14,165,233,0.2);">
                         🎯 Centra in Sala Operativa
                     </button>
-                    <button style="width:100%; padding:10px; background:transparent; border:1px solid rgba(14,165,233,0.3); border-radius:8px; color:#38bdf8; font-size:12px; cursor:pointer; margin-top:10px;">
-                        📍 Imposta Coordinate
+                    ` : ''}
+                    <button onclick="setFascicoloCoordinates(${fascicolo.id})" style="width:100%; padding:10px; background:transparent; border:1px solid rgba(14,165,233,0.3); border-radius:8px; color:#38bdf8; font-size:12px; cursor:pointer; margin-top:10px;">
+                        📍 Imposta Coordinate Manuali
                     </button>
                 </div>
             `;
@@ -27285,6 +27337,80 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    // --- FASCICOLI EXTENSION FUNCTIONS ---
+    async function addFascicoloTask(fascicoloId) {
+        let desc = prompt("Inserisci descrizione della scadenza (es. Ispezione in Cantiere):");
+        if(!desc) return;
+        let dataScadenza = prompt("Inserisci data di scadenza (YYYY-MM-DD):");
+        if(!dataScadenza) return;
+        
+        let newEvent = {
+            descrizione: 'PLAN:' + desc,
+            data_scadenza: dataScadenza + ' 09:00',
+            fascicolo_id: fascicoloId
+        };
+        
+        if (supabaseClient) {
+            showCloudStatus("Salvataggio Task nel Fascicolo...", "syncing");
+            const { error } = await supabaseClient.from('ares_planning').insert(newEvent);
+            if (!error) {
+                showCloudStatus("Task Aggiunto!", "success");
+                await loadPlanning(); // reload from DB
+                openFascicoloBook(fascicoloId); // re-render book
+            } else {
+                showCloudStatus("Errore salvataggio task", "error");
+            }
+        }
+    }
+    
+    async function assignFascicoloResource(fascicoloId) {
+        let idStr = prompt("Inserisci l'ID della risorsa da assegnare (guarda l'ID numerico nella vista Risorse):");
+        let id = Number(idStr);
+        if(!id || isNaN(id)) return;
+        
+        if(supabaseClient) {
+            showCloudStatus("Assegnazione Risorsa...", "syncing");
+            const { error } = await supabaseClient.from('ares_resources').update({ fascicolo_id: fascicoloId }).eq('id', id);
+            if(!error) {
+                showCloudStatus("Risorsa Assegnata!", "success");
+                await loadResources();
+                openFascicoloBook(fascicoloId);
+            } else {
+                showCloudStatus("Errore assegnazione", "error");
+            }
+        }
+    }
+    
+    async function setFascicoloCoordinates(fascicoloId) {
+        let latStr = prompt("Inserisci Latitudine (es. 41.8902):");
+        if(!latStr) return;
+        let lngStr = prompt("Inserisci Longitudine (es. 12.4922):");
+        if(!lngStr) return;
+        
+        let lat = parseFloat(latStr);
+        let lng = parseFloat(lngStr);
+        
+        if(supabaseClient) {
+            showCloudStatus("Salvataggio Coordinate GPS...", "syncing");
+            const { error } = await supabaseClient.from('ares_fascicoli').update({ lat: lat, lng: lng }).eq('id', fascicoloId);
+            if(!error) {
+                showCloudStatus("Coordinate Salvate!", "success");
+                await fetchFascicoli(); // reload
+                openFascicoloBook(fascicoloId);
+            } else {
+                showCloudStatus("Errore salvataggio GPS", "error");
+            }
+        }
+    }
+    
+    function focusFascicoloOnGIS(lat, lng) {
+        closeFascicoloBook();
+        show('view-operativa');
+        if(mapInstance) {
+            mapInstance.setView([lat, lng], 18);
+            L.marker([lat, lng], {icon: L.divIcon({className: 'custom-leaflet-icon', html: `<div style="width:20px;height:20px;background:#38bdf8;border-radius:50%;border:2px solid #fff;box-shadow:0 0 15px #38bdf8;"></div>`})}).addTo(mapInstance).bindPopup("<b>Area Operativa</b><br>Cantiere Fascicolo").openPopup();
+        }
+    }
 </script>
 </body>
 </html>
