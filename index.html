@@ -26800,9 +26800,10 @@
                 if(statusEl) statusEl.innerHTML = `<span style='color:#10b981'>✅ Trovati ${fileCount} file in locale</span>`;
                 
                 const mbSize = (totalSizeBytes / (1024 * 1024)).toFixed(1);
+                const safeMasterName = masterHandle.name.replace(/'/g, "\\'");
                 
                 btnContainerEl.innerHTML = `
-                    <button onclick="openRadarAlbum(${fascicoloId}, '${masterHandle.name}')" style="
+                    <button onclick="window.openRadarAlbum(${fascicoloId}, '${safeMasterName}')" style="
                         background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
                         color: white;
                         border: 1px solid rgba(255,255,255,0.2);
@@ -26817,6 +26818,8 @@
                         flex-direction: column;
                         align-items: center;
                         width: 90%;
+                        z-index: 100;
+                        position: relative;
                     " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 25px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.3)'">
                         <span style="font-size: 20px; margin-bottom: 5px;">📸 Consulta Album</span>
                         <span style="font-size: 11px; font-weight: normal; opacity: 0.8;">Cartella: FAS-${fascicoloId} | ${fileCount} file (${mbSize} MB)</span>
@@ -27008,6 +27011,9 @@
         document.body.appendChild(lb);
         requestAnimationFrame(() => lb.style.opacity = '1');
     }
+    
+    // Assicura che la funzione sia globale per i bottoni generati dinamicamente
+    window.openRadarAlbum = openRadarAlbum;
 
     // ==========================================
     // MODULE: FASCICOLI LAVORI (DOSSIER DIGITALE)
