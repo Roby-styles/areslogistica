@@ -26760,6 +26760,7 @@
 
     async function loadRadarGallery(fascicoloId) {
         const galleryEl = document.getElementById(`radar-gallery-${fascicoloId}`);
+        const statusEl = document.getElementById(`radar-status-${fascicoloId}`);
         if (!galleryEl) return;
         
         try {
@@ -26770,11 +26771,16 @@
             if (!fascicoloFolder) return;
             
             galleryEl.innerHTML = '';
+            let fileCount = 0;
             
             for await (const entry of fascicoloFolder.values()) {
                 if (entry.kind === 'file') {
                     const file = await entry.getFile();
-                    if(file.type.startsWith('image/')) {
+                    const isImg = file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                    const isVid = file.type.startsWith('video/') || file.name.match(/\.(mp4|webm|mov|avi)$/i);
+                    
+                    if(isImg) {
+                        fileCount++;
                         const url = URL.createObjectURL(file);
                         const polaroid = document.createElement('div');
                         polaroid.style.cssText = "background:#fff; padding:8px 8px 30px 8px; border-radius:4px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.5); width:120px; text-align:center; position:relative; transform:rotate(" + (Math.random() * 6 - 3) + "deg); transition: transform 0.2s; cursor:pointer;";
@@ -26794,7 +26800,8 @@
                         polaroid.appendChild(img);
                         polaroid.appendChild(label);
                         galleryEl.appendChild(polaroid);
-                    } else if (file.type.startsWith('video/')) {
+                    } else if (isVid) {
+                        fileCount++;
                         const url = URL.createObjectURL(file);
                         const polaroid = document.createElement('div');
                         polaroid.style.cssText = "background:#fff; padding:8px 8px 30px 8px; border-radius:4px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.5); width:120px; text-align:center; position:relative; transform:rotate(" + (Math.random() * 6 - 3) + "deg); transition: transform 0.2s; cursor:pointer;";
@@ -26817,8 +26824,19 @@
                     }
                 }
             }
+            if(statusEl && fileCount > 0) statusEl.innerHTML = `<span style='color:#10b981'>✅ Trovati ${fileCount} file in locale</span>`;
         } catch (e) {
             console.log("Nessun file o cartella locale trovata per la galleria:", e);
+            if(e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.message.includes('permission')) {
+                galleryEl.innerHTML = `
+                    <div style="width:100%; text-align:center; padding:20px;">
+                        <button onclick="loadRadarGallery(${fascicoloId})" style="padding:10px 20px; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; box-shadow:0 5px 15px rgba(16,185,129,0.3);">
+                            🔓 Clicca qui per autorizzare l'accesso alle foto
+                        </button>
+                        <div style="color:#94a3b8; font-size:11px; margin-top:10px;">Il browser richiede il tuo click per poter leggere l'Hard Disk.</div>
+                    </div>
+                `;
+            }
         }
     }
 
