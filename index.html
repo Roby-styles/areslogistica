@@ -26683,6 +26683,9 @@
             activeMasterFolderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
             await AresRadarDB.saveHandle('radar_master', activeMasterFolderHandle);
             alert("Cartella Master impostata con successo!");
+            document.querySelectorAll('[id^="radar-master-folder-name-"]').forEach(el => {
+                el.innerText = `📂 ${activeMasterFolderHandle.name}`;
+            });
         } catch (e) {
             console.error("Scelta cartella annullata o fallita", e);
         }
@@ -26722,6 +26725,7 @@
         if(dropzone) dropzone.style.borderColor = 'rgba(16,185,129,0.5)';
         
         if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+        const filesToSave = Array.from(e.dataTransfer.files);
 
         const masterHandle = await getVerifyRadarHandle();
         if (!masterHandle) {
@@ -26735,15 +26739,15 @@
             // Crea o ottiene cartella fascicolo (es. FAS-12)
             const fascicoloFolder = await masterHandle.getDirectoryHandle(`FAS-${fascicoloId}`, { create: true });
             
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                const file = e.dataTransfer.files[i];
+            for (let i = 0; i < filesToSave.length; i++) {
+                const file = filesToSave[i];
                 statusEl.innerHTML = `Salvataggio ${file.name}...`;
                 const fileHandle = await fascicoloFolder.getFileHandle(file.name, { create: true });
                 const writable = await fileHandle.createWritable();
                 await writable.write(file);
                 await writable.close();
             }
-            statusEl.innerHTML = `<span style='color:#10b981'>✅ ${e.dataTransfer.files.length} file salvati in locale (FAS-${fascicoloId})</span>`;
+            statusEl.innerHTML = `<span style='color:#10b981'>✅ ${filesToSave.length} file salvati in locale (FAS-${fascicoloId})</span>`;
             
             // Effetto grafico
             dropzone.style.transform = 'scale(1.05)';
@@ -27219,6 +27223,27 @@
                 links.push({ source: 'Prev', target: 'Operatore' });
             }
         }
+        
+        // Cerca file nel Radar
+        try {
+            const handle = await AresRadarDB.getHandle('radar_master');
+            if (handle) {
+                if ((await handle.queryPermission({ mode: 'read' })) === 'granted') {
+                    const fascicoloFolder = await handle.getDirectoryHandle(`FAS-${fascicolo.id}`);
+                    let mediaCount = 0;
+                    for await (const entry of fascicoloFolder.values()) {
+                        if (entry.kind === 'file') {
+                            mediaCount++;
+                            if(mediaCount <= 10) {
+                                const fId = 'File_'+mediaCount;
+                                nodes.push({ id: fId, name: entry.name, group: 5, color: '#ec4899', icon: '🖼️' });
+                                links.push({ source: 'Nucleo', target: fId });
+                            }
+                        }
+                    }
+                }
+            }
+        } catch(e) {}
         
         container.innerHTML = ''; // Rimuovi il loading
         
