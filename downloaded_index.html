@@ -1840,10 +1840,6 @@
         }
     </style>
     <script src="https://unpkg.com/force-graph"></script>
-    <!-- MapLibre GL CSS & JS per VERO 3D Interattivo -->
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="spazio_cliente.css?v=25">
 </head>
 <body>
     <!-- Floating Dramatic SOS Alert for PC -->
@@ -2064,7 +2060,6 @@
         <button class="btn-nav" onclick="show('operativa')">🗺️ Sala Operativa</button>
         <button class="btn-nav" onclick="show('videomanager')">📹 Video Manager</button>
         <button class="btn-nav" id="btn-nav-utenti" onclick="show('utenti')" style="display: none;">⚙️ Amministratore Super</button>
-        <button class="btn-nav" id="btn-nav-spaziocliente" onclick="show('spaziocliente')">🏢 Spazio Cliente</button>
         
     </div>
 
@@ -19905,239 +19900,6 @@
         <div id="video-windows-container"></div>
 
         <!-- VIEW GESTIONE UTENTI (AMMINISTRATORE SUPER) -->
-        
-        <!-- VIEW SPAZIO CLIENTE -->
-        <div id="view-spaziocliente" class="view-section" style="display:none; height:100%; position:relative;">
-            <div id="spazio-cliente-root" style="width:100%; height:100%; overflow:auto;">
-                <!-- HTML copiato dal Mockup -->
-                <div class="app-container" style="max-width:none;">
-                    <!-- Header -->
-                    <header class="top-nav">
-                        <div class="logo-area">
-                            <div class="logo-icon">🌿</div>
-                            <div>
-                                <h1 class="glow-text">Ares Smart Green</h1>
-                                <div class="subtitle">Property Management - Area Riservata Cliente</div>
-                            </div>
-                        </div>
-                        <div class="status-indicator">
-                            <div class="led pulse-green"></div>
-                            <span>Sistema Online</span>
-                            <button onclick="logout()" style="margin-left: 20px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-weight: bold; border-radius: 8px; cursor: pointer; padding: 6px 12px; transition: all 0.2s;">🚪 Esci</button>
-                        </div>
-                    </header>
-                    <!-- Main Dashboard -->
-                    <main class="dashboard-grid">
-                        
-                        <!-- Alert Banner -->
-                        <div id="alert-banner" style="display: none; grid-column: 1 / -1; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <span style="font-size: 24px;">⚠️</span>
-                                <div>
-                                    <strong style="font-size: 16px; text-transform: uppercase;">Allerta Meteo:</strong>
-                                    <span id="alert-text" style="font-size: 16px; margin-left: 5px;">Nessuna Allerta</span>
-                                </div>
-                            </div>
-                            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; opacity: 0.8;">Fonte: Open-Meteo Allerts / Simulazione</div>
-                        </div>
-
-                        <!-- Left Panel: Metrics -->
-                        <aside class="panel glass-panel metrics-panel">
-                            <div class="panel-header">
-                                <h2>📊 Metriche Ambientali</h2>
-                                <span class="badge">Live</span>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-icon temp-icon">🌡️</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Temperatura Aria</span>
-                                    <div class="metric-value"><span id="val-temp">24.5</span> <span class="unit">°C</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-icon rain-icon">🌧️</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Probabilità Pioggia</span>
-                                    <div class="metric-value"><span id="val-rain">0</span> <span class="unit">%</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                            <div class="metric-card highlight-card">
-                                <div class="metric-icon wind-icon">🌬️</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Velocità Vento (Suolo)</span>
-                                    <div class="metric-value"><span id="val-wind">0</span> <span class="unit">km/h</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-
-                            <!-- Nuove Metriche -->
-                            <div class="metric-card">
-                                <div class="metric-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">🏭</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Qualità Aria (AQI)</span>
-                                    <div class="metric-value"><span id="val-aqi">--</span> <span class="unit">AQI</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-icon" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">💧</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Umidità Relativa</span>
-                                    <div class="metric-value"><span id="val-humidity">--</span> <span class="unit">%</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">❄️</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Rischio Gelo/Neve</span>
-                                    <div class="metric-value"><span id="val-ice">Basso</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-icon" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">☁️</div>
-                                <div class="metric-data">
-                                    <span class="metric-title">Copertura Nuvolosa</span>
-                                    <div class="metric-value"><span id="val-clouds">--</span> <span class="unit">%</span></div>
-                                    <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight: 600; text-transform: uppercase;">Fonte: Open-Meteo</div>
-                                </div>
-                            </div>
-                        </aside>
-                        <!-- Center: 2.5D Isometric Map -->
-                        <section class="panel glass-panel map-panel">
-                            <div class="panel-header">
-                                <h2>🗺️ Planimetria Telemetrica 2.5D</h2>
-                                <div class="site-badge">
-                                    <span class="site-icon">📍</span> Villa Ciciarelli
-                                </div>
-                            </div>
-                            <div class="telemetry-map-wrapper">
-                                <!-- La vera mappa 3D WebGL -->
-                                <div id="telemetry-map"></div>
-                                <!-- Overlay Cursore/Mirino opzionale -->
-                                <div class="map-crosshair"></div>
-                            </div>
-                        </section>
-                        <!-- Right Panel: Controls & Logs -->
-                        <aside class="panel glass-panel controls-panel">
-                            <div class="panel-header">
-                                <h2>🎯 Azioni Rapide</h2>
-                            </div>
-                            <div style="padding: 15px;">
-                                <!-- Gestione Amministrativa -->
-                                <div class="actions-category">
-                                    <div class="actions-category-title">
-                                        <span>Gestione Amministrativa</span>
-                                    </div>
-                                    <div class="actions-grid">
-                                        <div class="action-tile" id="tile-fatture" onclick="openDocModal('Fatture & Pagamenti')">
-                                            <div class="notification-badge">1</div>
-                                            <span class="icon">💶</span>
-                                            <span class="label">Fatture</span>
-                                        </div>
-                                        <div class="action-tile" id="tile-documenti" onclick="openDocModal('Documenti Ordinari / Straordinari')">
-                                            <span class="icon">📄</span>
-                                            <span class="label">Documenti</span>
-                                        </div>
-                                        <div class="action-tile" id="tile-messaggi" onclick="openDocModal('Comunicazioni')">
-                                            <div class="notification-badge blue">3</div>
-                                            <span class="icon">💬</span>
-                                            <span class="label">Messaggi</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Gestione Tecnica -->
-                                <div class="actions-category">
-                                    <div class="actions-category-title">
-                                        <span>Gestione Tecnica & Cantiere</span>
-                                    </div>
-                                    <div class="actions-grid">
-                                        <div class="action-tile" id="tile-telecamere" onclick="openDocModal('Telecamere Live')">
-                                            <span class="icon">🎥</span>
-                                            <span class="label">Telecamere</span>
-                                        </div>
-                                        <div class="action-tile" id="tile-rapportini" onclick="openDocModal('Rapportini Intervento')">
-                                            <div class="notification-badge">2</div>
-                                            <span class="icon">📋</span>
-                                            <span class="label">Rapportini</span>
-                                        </div>
-                                        <div class="action-tile" id="tile-galleria" onclick="openDocModal('Galleria (Foto/Filmati)')">
-                                            <span class="icon">📸</span>
-                                            <span class="label">Galleria</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Legacy hidden elements -->
-                                <div style="display:none;" id="btn-pump"></div>
-                                <input type="checkbox" id="auto-irrigation" checked style="display:none;">
-                                <input type="range" id="soil-threshold" value="30" style="display:none;">
-                                <div id="threshold-val" style="display:none;"></div>
-                                <div id="btn-lights" style="display:none;"></div>
-                                <div id="btn-edit-mode" style="display:none;"></div>
-                                <div id="log-content" style="display:none;"></div>
-                            </div>
-                        </aside>
-                    </main>
-                </div>
-                <!-- Modals -->
-                <div id="spaziocliente-doc-modal" class="document-modal">
-                    <div class="document-modal-content">
-                        <div class="document-modal-header">
-                            <h3 id="spaziocliente-doc-title">Titolo Documento</h3>
-                            <button class="document-modal-close" onclick="closeDocModal()">&times;</button>
-                        </div>
-                        <div class="document-modal-body" id="spaziocliente-doc-body">
-                            <!-- Contenuto dinamico -->
-                        </div>
-                    </div>
-                </div>
-                <div id="device-modal" class="modal-overlay">
-                    <div class="modal-glass">
-                        <div class="modal-header">
-                            <h3 id="modal-title">Dettaglio Dispositivo</h3>
-                            <button class="modal-close" id="btn-close-modal">&times;</button>
-                        </div>
-                        <div class="modal-body" id="modal-content"></div>
-                    </div>
-                </div>
-                <div id="bms-modal" class="modal-overlay">
-                    <!-- BMS Modal HTML in Spazio Cliente -->
-                    <div class="bms-glass" style="max-width: 90%;">
-                        <div class="bms-header">
-                            <div>
-                                <h3 style="color:#fde047; margin:0; font-size:24px; text-transform:uppercase; letter-spacing:2px; font-family:'Courier New', Courier, monospace; text-shadow: 0 0 10px rgba(253, 224, 71, 0.5);">⚡ E-Panel BMS</h3>
-                                <span style="color:#94a3b8; font-size:12px; letter-spacing:1px;">Quadro Elettrico Generale - Sezione Illuminazione Esterna</span>
-                            </div>
-                            <button class="modal-close" id="btn-close-bms">&times;</button>
-                        </div>
-                        <div class="bms-body">
-                            <div class="bms-schematic">
-                                <div class="node source"><h4>Rete 230V AC</h4><div class="value led-text" id="bms-volt">230.1 V</div></div>
-                                <div class="wire" id="wire-main"></div>
-                                <div class="node breaker"><h4>Magnetotermico Q1</h4><div class="status led-text" id="bms-breaker" style="color:var(--danger)">OFF</div></div>
-                                <div class="wire" id="wire-sub"></div>
-                                <div class="branches">
-                                    <div class="branch"><div class="wire-v" id="wire-l1"></div><div class="node load">Linea 1 (Nord)</div></div>
-                                    <div class="branch"><div class="wire-v" id="wire-l2"></div><div class="node load">Linea 2 (Sud)</div></div>
-                                </div>
-                            </div>
-                            <div class="bms-dashboard">
-                                <div class="bms-card"><div class="bms-title">Assorbimento Corrente</div><div class="bms-value led-text"><span id="bms-amp">0.00</span> <span class="bms-unit">A</span></div><div class="bms-chart-bar"><div class="bms-chart-fill" id="bar-amp" style="width: 0%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8;"></div></div></div>
-                                <div class="bms-card"><div class="bms-title">Potenza Istantanea</div><div class="bms-value led-text" style="color:#fde047;"><span id="bms-watt">0.00</span> <span class="bms-unit">kW</span></div><div class="bms-chart-bar"><div class="bms-chart-fill" id="bar-watt" style="width: 0%; background: #fde047; box-shadow: 0 0 10px #fde047;"></div></div></div>
-                                <div class="bms-card"><div class="bms-title">Energia Consumata (Oggi)</div><div class="bms-value led-text" style="color:#10b981;"><span id="bms-kwh">12.4</span> <span class="bms-unit">kWh</span></div><div class="bms-chart-bar"><div class="bms-chart-fill" style="width: 45%; background: #10b981;"></div></div></div>
-                                <div class="bms-card"><div class="bms-title">Efficienza Cos(φ)</div><div class="bms-value led-text" style="color:#10b981;">0.98</div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div id="view-utenti" class="view-section">
             <div class="bi-header">
                 <h2 class="bi-title">⚙️ Amministratore Super - Gestione Utenti</h2>
@@ -20525,10 +20287,6 @@
     let barChart, doughChart, cashFlowChart;
 
     function show(id) {
-        const user = getLoggedUser();
-        if (user && user.role === 'cliente' && id !== 'spaziocliente') {
-            id = 'spaziocliente';
-        }
         document.querySelectorAll('.view-section').forEach(s => s.style.display='none');
         document.getElementById('view-'+id).style.display='block';
         if(id === 'planning') { renderAllCalendars(); renderPlanning(); }
@@ -20537,26 +20295,9 @@
         if(id === 'risorse') renderResources();
         if(id === 'preventivatore') renderPreventivi();
         if(id === 'fascicoli') renderFascicoli();
-        if(id === 'utenti') {
-            renderUsers();
-            renderClientLogs();
-        }
+        if(id === 'utenti') renderUsers();
         if(id === 'operativa') initGisMap();
         if(id === 'videomanager') renderCameraManager();
-        if(id === 'spaziocliente') {
-            if (typeof initSpazioCliente === 'function') initSpazioCliente();
-        }
-    }
-
-    function renderClientLogs() {
-        const container = document.getElementById('client-logs-container');
-        if (!container) return;
-        const logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
-        if (logs.length === 0) {
-            container.innerHTML = "Nessun accesso registrato.";
-            return;
-        }
-        container.innerHTML = logs.reverse().map(l => `<div>[${new Date(l.time).toLocaleString()}] Accesso effettuato da: <b>${l.username}</b></div>`).join('');
     }
 
     // ----------------------------------------------------
@@ -20568,8 +20309,7 @@
         { id: 2, username: 'Roberto', password: 'ares2026!', role: 'super_admin' },
         { id: 3, username: 'Utente 3', password: 'ares2026!', role: 'user' },
         { id: 4, username: 'Utente 4', password: 'ares2026!', role: 'user' },
-        { id: 5, username: 'Utente 5', password: 'ares2026!', role: 'user' },
-        { id: 6, username: 'ciciarelli', password: 'ares2026!', role: 'cliente' }
+        { id: 5, username: 'Utente 5', password: 'ares2026!', role: 'user' }
     ];
 
     async function initAuthSystem() {
@@ -20596,15 +20336,6 @@
                         password: row.password,
                         role: row.role
                     }));
-                    
-                    // Forza aggiunta di nuovi utenti predefiniti (come ciciarelli) se non esistono ancora nel DB
-                    DEFAULT_USERS.forEach(du => {
-                        if (!loadedUsers.find(u => u.username.toLowerCase() === du.username.toLowerCase())) {
-                            loadedUsers.push(du);
-                            supabaseClient.from('ares_users').insert(du).then();
-                        }
-                    });
-                    
                     console.log("Utenti caricati da Supabase con successo!");
                     return loadedUsers;
                 } else {
@@ -20743,54 +20474,11 @@
         if (nameSpan) nameSpan.innerText = user.username;
         
         const adminBtn = document.getElementById('btn-nav-utenti');
-        const btns = document.querySelectorAll('.btn-nav');
-        
-        // Pannelli globali ERP
-        const mainSidebar = document.getElementById('main-sidebar');
-        const rightSidebar = document.getElementById('right-sidebar');
-        const neonTabLeft = document.getElementById('sidebar-neon-tab');
-        const neonTabRight = document.getElementById('sidebar-neon-tab-right');
-        const mobileTabBar = document.querySelector('div[style*="bottom: 0; left: 0; width: 100vw; height: 65px;"]');
-        
-        if (user.role === 'cliente') {
-            if (mainSidebar) mainSidebar.style.display = 'none';
-            if (rightSidebar) rightSidebar.style.display = 'none';
-            if (neonTabLeft) neonTabLeft.style.display = 'none';
-            if (neonTabRight) neonTabRight.style.display = 'none';
-            if (mobileTabBar) mobileTabBar.style.display = 'none';
-            
-            document.body.classList.remove('sidebar-pinned', 'right-sidebar-pinned');
-            document.querySelector('.main-content').style.marginLeft = '0';
-            document.querySelector('.main-content').style.paddingLeft = '0';
-            document.querySelector('.main-content').style.width = '100%';
-            
-            btns.forEach(btn => btn.style.display = 'none');
-            const clientBtn = document.getElementById('btn-nav-spaziocliente');
-            if (clientBtn) clientBtn.style.display = 'block';
-            
-            // Forza la vista allo spazio cliente
-            setTimeout(() => show('spaziocliente'), 50);
-            
-            // Registra log locale accessi (Task storicizzazione)
-            let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
-            logs.push({ username: user.username, time: new Date().toISOString() });
-            localStorage.setItem('client_access_logs', JSON.stringify(logs));
-        } else {
-            if (mainSidebar) mainSidebar.style.display = 'flex'; // o block
-            if (rightSidebar) rightSidebar.style.display = 'block';
-            if (neonTabLeft) neonTabLeft.style.display = 'flex';
-            if (neonTabRight) neonTabRight.style.display = 'flex';
-            if (mobileTabBar) mobileTabBar.style.display = 'flex';
-            
-            document.querySelector('.main-content').style.marginLeft = '';
-            document.querySelector('.main-content').style.paddingLeft = '';
-            document.querySelector('.main-content').style.width = '';
-
-            btns.forEach(btn => {
-                if (btn.id !== 'btn-nav-utenti') btn.style.display = 'block';
-            });
-            if (adminBtn) {
-                adminBtn.style.display = (user.role === 'super_admin') ? 'block' : 'none';
+        if (adminBtn) {
+            if (user.role === 'super_admin') {
+                adminBtn.style.display = 'block';
+            } else {
+                adminBtn.style.display = 'none';
             }
         }
     }
@@ -28987,7 +28675,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 </script>
-    <script src="spazio_cliente.js?v=25"></script>
 </body>
 </html>
 
