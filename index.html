@@ -80,6 +80,8 @@
             overflow-y: auto;
             transform: translateX(-100%);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
+            display: flex;
+            flex-direction: column;
         }
         
         .sidebar::-webkit-scrollbar { width: 4px; }
@@ -1843,7 +1845,7 @@
     <!-- MapLibre GL CSS & JS per VERO 3D Interattivo -->
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="spazio_cliente.css?v=25">
+    <link rel="stylesheet" href="spazio_cliente.css">
 </head>
 <body>
     <!-- Floating Dramatic SOS Alert for PC -->
@@ -28987,7 +28989,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 </script>
-    <script src="spazio_cliente.js?v=25"></script>
+    <script src="spazio_cliente.js"></script>
 </body>
 </html>
 
