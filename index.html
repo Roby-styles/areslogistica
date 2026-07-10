@@ -20045,7 +20045,7 @@
                     </header>
 
                     <!-- Welcome Banner Personalizzato -->
-                    <div id="welcome-banner-cliente" style="display:none;">
+                    <div id="welcome-banner-cliente" style="opacity:0; visibility:hidden; pointer-events:none;">
                         <div class="wb-left">
                             <div class="wb-saluto" id="wb-saluto-testo">Buongiorno</div>
                             <div class="wb-nome" id="wb-nome-testo">Caricamento...</div>
@@ -20747,7 +20747,8 @@
         document.getElementById('wb-ultimo-accesso').textContent  = ultimoAccessoTesto;
 
         // Mostra il banner con fade-in
-        banner.style.display = 'flex';
+        banner.style.visibility = 'visible';
+        banner.style.pointerEvents = 'auto';
         banner.style.opacity = '0';
         banner.style.transform = 'translateY(-8px)';
         banner.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
@@ -20986,6 +20987,9 @@
             let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
             logs.push({ username: user.username, time: new Date().toISOString() });
             localStorage.setItem('client_access_logs', JSON.stringify(logs));
+
+            // Mostra il banner di benvenuto con leggero delay
+            setTimeout(() => renderWelcomeBanner(), 200);
         } else {
             if (mainSidebar) mainSidebar.style.display = 'flex'; // o block
             if (rightSidebar) rightSidebar.style.display = 'block';
