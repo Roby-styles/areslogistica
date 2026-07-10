@@ -269,6 +269,121 @@
             transition: all 0.2s ease; 
         }
         .btn-nav:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        /* ===== WELCOME BANNER SPAZIO CLIENTE ===== */
+        #welcome-banner-cliente {
+            position: relative;
+            margin: 0 0 28px 0;
+            padding: 22px 36px;
+            background: linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.88) 100%);
+            border: 1px solid rgba(180,140,60,0.35);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,220,100,0.08);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        #welcome-banner-cliente::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #d4a017 0%, #b8860b 50%, #8b6914 100%);
+            border-radius: 16px 0 0 16px;
+        }
+        #welcome-banner-cliente::after {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(212,160,23,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .wb-left {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .wb-saluto {
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #b8952a;
+        }
+        .wb-nome {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+        .wb-sottotitolo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 400;
+            color: #64748b;
+            margin-top: 2px;
+            letter-spacing: 0.2px;
+        }
+        .wb-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .wb-badge-stato {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 999px;
+            padding: 5px 14px 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #34d399;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .wb-stato-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: wbPulse 2s infinite;
+        }
+        @keyframes wbPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .wb-ultimo-accesso {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 400;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.2px;
+        }
+        .wb-separatore {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(180deg, transparent, rgba(180,140,60,0.3), transparent);
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 680px) {
+            #welcome-banner-cliente { flex-direction: column; align-items: flex-start; }
+            .wb-right { align-items: flex-start; }
+            .wb-separatore { display: none; }
+        }
         
         /* REGOLE DI ACCESSIBILITÀ PER INGRANDIRE I CARATTERI DI TUTTA L'INTERFACCIA */
         input, select, textarea {
@@ -19928,6 +20043,24 @@
                             <button onclick="logout()" style="margin-left: 20px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-weight: bold; border-radius: 8px; cursor: pointer; padding: 6px 12px; transition: all 0.2s;">🚪 Esci</button>
                         </div>
                     </header>
+
+                    <!-- Welcome Banner Personalizzato -->
+                    <div id="welcome-banner-cliente" style="display:none;">
+                        <div class="wb-left">
+                            <div class="wb-saluto" id="wb-saluto-testo">Buongiorno</div>
+                            <div class="wb-nome" id="wb-nome-testo">Caricamento...</div>
+                            <div class="wb-sottotitolo" id="wb-sottotitolo-testo">Il Suo portale dedicato è attivo e monitorato</div>
+                        </div>
+                        <div class="wb-separatore"></div>
+                        <div class="wb-right">
+                            <div class="wb-badge-stato">
+                                <div class="wb-stato-dot"></div>
+                                Proprietà Online
+                            </div>
+                            <div class="wb-ultimo-accesso" id="wb-ultimo-accesso"></div>
+                        </div>
+                    </div>
+
                     <!-- Main Dashboard -->
                     <main class="dashboard-grid">
                         
@@ -20547,7 +20680,83 @@
         if(id === 'videomanager') renderCameraManager();
         if(id === 'spaziocliente') {
             if (typeof initSpazioCliente === 'function') initSpazioCliente();
+            renderWelcomeBanner();
         }
+    }
+
+    function renderWelcomeBanner() {
+        const banner = document.getElementById('welcome-banner-cliente');
+        if (!banner) return;
+
+        const user = getLoggedUser();
+        if (!user) { banner.style.display = 'none'; return; }
+
+        // --- Saluto contestuale all'ora ---
+        const ora = new Date().getHours();
+        let saluto;
+        if (ora >= 5 && ora < 12)       saluto = 'Buongiorno';
+        else if (ora >= 12 && ora < 18) saluto = 'Buon pomeriggio';
+        else                             saluto = 'Buonasera';
+
+        // --- Formattazione nome elegante ---
+        // Trasforma "avvocato_rossi" → "Avv. Rossi" oppure "mario_bianchi" → "Mario Bianchi"
+        function formatUserName(raw) {
+            const prefissi = { 'avv': 'Avv.', 'avvocato': 'Avv.', 'ing': 'Ing.', 'ingegnere': 'Ing.',
+                                'dott': 'Dott.', 'dottore': 'Dott.', 'arch': 'Arch.', 'architetto': 'Arch.',
+                                'prof': 'Prof.', 'professore': 'Prof.', 'geom': 'Geom.', 'geometra': 'Geom.' };
+            const parti = raw.toLowerCase().replace(/[_\.\-]/g, ' ').trim().split(/\s+/);
+            const risultato = [];
+            for (let i = 0; i < parti.length; i++) {
+                const p = parti[i];
+                if (prefissi[p]) {
+                    risultato.push(prefissi[p]);
+                } else {
+                    risultato.push(p.charAt(0).toUpperCase() + p.slice(1));
+                }
+            }
+            return risultato.join(' ');
+        }
+
+        const nomeFormattato = formatUserName(user.username);
+
+        // --- Messaggio sotto il nome ---
+        const logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
+        // Il log corrente è già stato inserito, quindi l'ultimo accesso precedente è il penultimo
+        const ultimoAccesso = logs.length > 1 ? logs[logs.length - 2] : null;
+
+        let sottotitolo, ultimoAccessoTesto;
+        if (!ultimoAccesso) {
+            sottotitolo = 'Benvenuto nel Suo portale dedicato — configurato su misura per Lei';
+            ultimoAccessoTesto = 'Primo accesso registrato';
+        } else {
+            sottotitolo = 'Il Suo portale dedicato è attivo e monitorato in tempo reale';
+            const dataUltimo = new Date(ultimoAccesso.time);
+            const oggi = new Date();
+            const diffGiorni = Math.floor((oggi - dataUltimo) / (1000 * 60 * 60 * 24));
+            let dataFormattata;
+            if (diffGiorni === 0)      dataFormattata = 'Oggi alle ' + dataUltimo.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+            else if (diffGiorni === 1) dataFormattata = 'Ieri alle ' + dataUltimo.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+            else                       dataFormattata = dataUltimo.toLocaleDateString('it-IT', {day:'numeric', month:'long'}) + ' alle ' + dataUltimo.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+            ultimoAccessoTesto = 'Ultimo accesso: ' + dataFormattata;
+        }
+
+        // --- Popola il DOM ---
+        document.getElementById('wb-saluto-testo').textContent   = saluto;
+        document.getElementById('wb-nome-testo').textContent      = nomeFormattato;
+        document.getElementById('wb-sottotitolo-testo').textContent = sottotitolo;
+        document.getElementById('wb-ultimo-accesso').textContent  = ultimoAccessoTesto;
+
+        // Mostra il banner con fade-in
+        banner.style.display = 'flex';
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(-8px)';
+        banner.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                banner.style.opacity = '1';
+                banner.style.transform = 'translateY(0)';
+            });
+        });
     }
 
     function renderClientLogs() {
