@@ -517,64 +517,219 @@ function initSpazioCliente() {
 }
 
 // Funzioni globali per la pulsantiera Azioni Rapide
+// ─────────────────────────────────────────────────────────────
+// SISTEMA DOCUMENTI — Supabase Storage  (bucket: ares-documenti)
+// ─────────────────────────────────────────────────────────────
+
 window.openDocModal = function(title) {
-    const modal = document.getElementById('spaziocliente-doc-modal');
+    const modal   = document.getElementById('spaziocliente-doc-modal');
     const titleEl = document.getElementById('spaziocliente-doc-title');
-    const bodyEl = document.getElementById('spaziocliente-doc-body');
-    
-    if(!modal || !titleEl || !bodyEl) return;
-    
+    const bodyEl  = document.getElementById('spaziocliente-doc-body');
+    if (!modal || !titleEl || !bodyEl) return;
+
     titleEl.innerText = title;
-    
-    // Contenuto finto in attesa di Supabase
+    modal.style.display = 'flex';
+    setTimeout(() => { modal.classList.add('visible'); }, 10);
+
     if (title === 'Galleria (Foto/Filmati)') {
-        // Renderizza la Griglia della Galleria
         bodyEl.innerHTML = `
             <div style="padding: 10px; color: #94a3b8; height: 100%; display: flex; flex-direction: column;">
                 <p style="margin-bottom: 20px; color: white; text-align: center;">Seleziona un elemento per visualizzarlo.</p>
                 <div class="media-gallery-grid">
-                    <!-- Video Card -->
                     <div class="media-card" onclick="playMedia('https://ypjmouwytrubedowkjci.supabase.co/storage/v1/object/public/galleria-lavori/video1.mp4', 'Sopralluogo')">
-                        <div class="media-thumb">
-                            <span class="play-overlay">▶</span>
-                        </div>
-                        <div class="media-info">
-                            <h4>Sopralluogo</h4>
-                            <p>Caricato: Oggi, 18:30</p>
-                        </div>
+                        <div class="media-thumb"><span class="play-overlay">▶</span></div>
+                        <div class="media-info"><h4>Sopralluogo</h4><p>Caricato: Oggi, 18:30</p></div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
+    } else if (title === 'Documenti Ordinari / Straordinari') {
+        renderDocumentiPanel(bodyEl, 'Documenti');
+    } else if (title === 'Fatture & Pagamenti') {
+        renderDocumentiPanel(bodyEl, 'Fatture');
+    } else if (title === 'Rapportini Intervento') {
+        renderDocumentiPanel(bodyEl, 'Rapportini');
     } else {
-        bodyEl.innerHTML = `
-            <div style="padding: 20px; text-align: center; color: #94a3b8;">
-                <p style="margin-bottom: 25px;">Connessione al database in corso per recuperare: <b style="color:white;">${title}</b>...</p>
-                <div style="margin-top: 20px; text-align: left;">
-                    <div class="doc-list-item">
-                        <div class="doc-info">
-                            <h4>Documento di Esempio 1.pdf</h4>
-                            <p>Caricato il: 12 Maggio 2026</p>
-                        </div>
-                        <button class="doc-action-btn">📄 Leggi</button>
-                    </div>
-                    <div class="doc-list-item">
-                        <div class="doc-info">
-                            <h4>Documento di Esempio 2.docx</h4>
-                            <p>Caricato il: 15 Maggio 2026</p>
-                        </div>
-                        <button class="doc-action-btn">📄 Leggi</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        renderDocumentiPanel(bodyEl, title);
     }
-    
-    modal.style.display = 'flex';
-    setTimeout(() => {
-        modal.classList.add('visible');
-    }, 10);
 };
+
+// ── Helper: icona per estensione ──────────────────────────────
+function _docIcon(name) {
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf')                       return '#f43f5e';
+    if (['doc','docx'].includes(ext))        return '#3b82f6';
+    if (['xls','xlsx'].includes(ext))        return '#22c55e';
+    if (['jpg','jpeg','png','webp'].includes(ext)) return '#a855f7';
+    return '#64748b';
+}
+function _docEmoji(name) {
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    if (ext === 'pdf')                       return '📄';
+    if (['doc','docx'].includes(ext))        return '📝';
+    if (['xls','xlsx'].includes(ext))        return '📊';
+    if (['jpg','jpeg','png','webp'].includes(ext)) return '🖼️';
+    return '📎';
+}
+function _fmtSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(2) + ' MB';
+}
+
+// ── Render pannello documenti ─────────────────────────────────
+async function renderDocumentiPanel(bodyEl, categoria) {
+    const sb = window.supabaseClient;
+    const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
+    const isAdmin = !!sessionStorage.getItem('ares_admin_origin');
+
+    // --- Stato di caricamento ---
+    bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:160px;gap:14px;color:#94a3b8;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <span style="font-size:14px;">Recupero documenti...</span>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+
+    if (!user || !sb) {
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Connessione non disponibile. Riprova tra qualche secondo.</div>`;
+        return;
+    }
+
+    const folderPath = `${user.username}/${categoria}`;
+
+    const { data: rawFiles, error } = await sb.storage
+        .from('ares-documenti')
+        .list(folderPath, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+
+    if (error) {
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Errore: ${error.message}</div>`;
+        return;
+    }
+
+    // filtra solo i file reali (non le cartelle placeholder)
+    const files = (rawFiles || []).filter(f => f.id && f.metadata);
+
+    // ── Pulsante upload (solo admin) ──
+    const uploadBtnHtml = isAdmin ? `
+        <div style="margin-bottom:18px;">
+            <label for="sc-doc-file-input" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Carica documento
+            </label>
+            <input type="file" id="sc-doc-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                style="display:none"
+                onchange="uploadDocumento(this, '${categoria}', '${user.username}')">
+            <span id="sc-upload-status" style="margin-left:12px;font-size:12px;color:#94a3b8;"></span>
+        </div>` : '';
+
+    // ── Lista file ──
+    let listHtml;
+    if (files.length === 0) {
+        listHtml = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:#4a5568;gap:12px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div style="font-size:14px;color:#64748b;font-weight:600;">Nessun documento presente</div>
+                ${isAdmin ? '<div style="font-size:12px;color:#475569;">Carica il primo documento con il pulsante sopra</div>' : '<div style="font-size:12px;color:#475569;">I Suoi documenti appariranno qui non appena caricati</div>'}
+            </div>`;
+    } else {
+        listHtml = `<div style="display:flex;flex-direction:column;gap:10px;">` +
+            files.map(f => {
+                const path = `${folderPath}/${f.name}`;
+                const pubUrl = sb.storage.from('ares-documenti').getPublicUrl(path).data.publicUrl;
+                const size  = _fmtSize(f.metadata?.size);
+                const dateStr = f.created_at
+                    ? new Date(f.created_at).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'})
+                    : '';
+                const color = _docIcon(f.name);
+                const emoji = _docEmoji(f.name);
+                const deleteBtnHtml = isAdmin ? `
+                    <button onclick="deleteDocumento('${path.replace(/'/g,"\\'")}', '${categoria}', '${user.username}')"
+                        style="padding:7px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;white-space:nowrap;"
+                        onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+                        Elimina
+                    </button>` : '';
+                return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+                            <div style="width:40px;height:40px;border-radius:10px;background:${color}20;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">${emoji}</div>
+                            <div style="min-width:0;">
+                                <div style="font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="${f.name}">${f.name}</div>
+                                <div style="font-size:11px;color:#64748b;margin-top:2px;">${dateStr}${size ? ' · ' + size : ''}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                            <a href="${pubUrl}" target="_blank" download="${f.name}"
+                                style="padding:7px 16px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.2s;white-space:nowrap;"
+                                onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">
+                                Scarica
+                            </a>
+                            ${deleteBtnHtml}
+                        </div>
+                    </div>`;
+            }).join('') + `</div>`;
+    }
+
+    bodyEl.innerHTML = `
+        <div style="padding:4px 2px;">
+            ${uploadBtnHtml}
+            ${listHtml}
+        </div>`;
+}
+
+// ── Upload documento ──────────────────────────────────────────
+window.uploadDocumento = async function(inputEl, categoria, username) {
+    const file = inputEl.files[0];
+    if (!file) return;
+
+    const sb = window.supabaseClient;
+    const statusEl = document.getElementById('sc-upload-status');
+    if (statusEl) statusEl.textContent = 'Caricamento in corso...';
+
+    // Sanitizza il nome: rimuovi caratteri problematici
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_àèéìòùÀÈÉÌÒÙ ]/g, '_');
+    const path = `${username}/${categoria}/${Date.now()}_${safeName}`;
+
+    const { error } = await sb.storage.from('ares-documenti').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+    });
+
+    // Reset input per permettere di caricare lo stesso file di nuovo
+    inputEl.value = '';
+
+    if (error) {
+        if (statusEl) statusEl.textContent = '⚠️ Errore: ' + error.message;
+        console.error('Upload error:', error);
+        return;
+    }
+
+    if (statusEl) statusEl.textContent = '✓ Caricato!';
+    setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+
+    // Aggiorna la lista
+    const bodyEl = document.getElementById('spaziocliente-doc-body');
+    if (bodyEl) renderDocumentiPanel(bodyEl, categoria);
+};
+
+// ── Elimina documento ─────────────────────────────────────────
+window.deleteDocumento = async function(path, categoria, username) {
+    if (!confirm('Eliminare definitivamente questo documento?')) return;
+
+    const sb = window.supabaseClient;
+    const { error } = await sb.storage.from('ares-documenti').remove([path]);
+
+    if (error) {
+        alert('Errore eliminazione: ' + error.message);
+        return;
+    }
+
+    const bodyEl = document.getElementById('spaziocliente-doc-body');
+    if (bodyEl) renderDocumentiPanel(bodyEl, categoria);
+};
+
 
 window.playMedia = function(url, title, type = 'video') {
     const bodyEl = document.getElementById('spaziocliente-doc-body');

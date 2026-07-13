@@ -20177,11 +20177,7 @@
                                             <span class="icon">📄</span>
                                             <span class="label">Documenti</span>
                                         </div>
-                                        <div class="action-tile" id="tile-messaggi" onclick="openDocModal('Comunicazioni')">
-                                            <div class="notification-badge blue">3</div>
-                                            <span class="icon">💬</span>
-                                            <span class="label">Messaggi</span>
-                                        </div>
+
                                     </div>
                                 </div>
 
@@ -20460,6 +20456,7 @@
     try {
         if (window.supabase) {
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+            window.supabaseClient = supabaseClient; // Esposto globalmente per spazio_cliente.js
             // Test diagnostico di connessione immediato
             supabaseClient.from('ares_presence').select('username').limit(1).then(({data, error}) => {
                 if (error) {
