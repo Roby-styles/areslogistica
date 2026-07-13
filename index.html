@@ -311,19 +311,20 @@
         }
         .wb-saluto {
             font-family: 'Outfit', sans-serif;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: #b8952a;
-        }
-        .wb-nome {
-            font-family: 'Outfit', sans-serif;
             font-size: 22px;
             font-weight: 800;
             color: #f8fafc;
             letter-spacing: -0.3px;
             line-height: 1.2;
+        }
+        .wb-nome {
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #b8952a;
+            display: none;
         }
         .wb-sottotitolo {
             font-family: 'Outfit', sans-serif;
@@ -20192,7 +20193,6 @@
                                             <span class="label">Telecamere</span>
                                         </div>
                                         <div class="action-tile" id="tile-rapportini" onclick="openDocModal('Rapportini Intervento')">
-                                            <div class="notification-badge">2</div>
                                             <span class="icon">📋</span>
                                             <span class="label">Rapportini</span>
                                         </div>
@@ -20744,9 +20744,9 @@
         // --- Formattazione nome elegante ---
         // Trasforma "avvocato_rossi" → "Avv. Rossi" oppure "mario_bianchi" → "Mario Bianchi"
         function formatUserName(raw) {
-            const prefissi = { 'avv': 'Avv.', 'avvocato': 'Avv.', 'ing': 'Ing.', 'ingegnere': 'Ing.',
-                                'dott': 'Dott.', 'dottore': 'Dott.', 'arch': 'Arch.', 'architetto': 'Arch.',
-                                'prof': 'Prof.', 'professore': 'Prof.', 'geom': 'Geom.', 'geometra': 'Geom.' };
+            const prefissi = { 'avv': 'Avvocato', 'avvocato': 'Avvocato', 'ing': 'Ingegnere', 'ingegnere': 'Ingegnere',
+                                'dott': 'Dottore', 'dottore': 'Dottore', 'arch': 'Architetto', 'architetto': 'Architetto',
+                                'prof': 'Professore', 'professore': 'Professore', 'geom': 'Geometra', 'geometra': 'Geometra' };
             const parti = raw.toLowerCase().replace(/[_\.\-]/g, ' ').trim().split(/\s+/);
             const risultato = [];
             for (let i = 0; i < parti.length; i++) {
@@ -20784,8 +20784,8 @@
         }
 
         // --- Popola il DOM ---
-        document.getElementById('wb-saluto-testo').textContent   = saluto;
-        document.getElementById('wb-nome-testo').textContent      = nomeFormattato;
+        document.getElementById('wb-saluto-testo').textContent   = saluto + ', ' + nomeFormattato;
+        document.getElementById('wb-nome-testo').textContent      = '';
         document.getElementById('wb-sottotitolo-testo').textContent = sottotitolo;
         document.getElementById('wb-ultimo-accesso').textContent  = ultimoAccessoTesto;
 
@@ -21008,7 +21008,19 @@
         newPwEl.value = '';
         confirmEl.value = '';
         successEl.style.display = 'block';
-        setTimeout(() => { successEl.style.display = 'none'; }, 5000);
+
+        // Nasconde l'intera sezione cambio password dopo aggiornamento riuscito
+        setTimeout(() => {
+            const pwSection = document.getElementById('client-change-pw-form');
+            if (pwSection) {
+                const parentAside = pwSection.closest('aside');
+                if (parentAside) {
+                    parentAside.style.transition = 'opacity 0.5s ease, max-height 0.5s ease';
+                    parentAside.style.opacity = '0';
+                    setTimeout(() => { parentAside.style.display = 'none'; }, 500);
+                }
+            }
+        }, 2000);
     }
 
     async function handleLogin() {
@@ -21144,6 +21156,8 @@
 
             // Mostra il banner di benvenuto con leggero delay
             setTimeout(() => renderWelcomeBanner(), 200);
+            // Controlla file nuovi e aggiorna i badge reali
+            setTimeout(() => { if (typeof checkNewDocs === 'function') checkNewDocs(); }, 800);
         } else {
             if (mainSidebar) mainSidebar.style.display = 'flex'; // o block
             if (rightSidebar) rightSidebar.style.display = 'block';

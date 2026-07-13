@@ -531,17 +531,18 @@ window.openDocModal = function(title) {
     modal.style.display = 'flex';
     setTimeout(() => { modal.classList.add('visible'); }, 10);
 
+    // Segna la categoria come letta → rimuove il badge
+    const catMap = {
+        'Galleria (Foto/Filmati)':            'Galleria',
+        'Documenti Ordinari / Straordinari':  'Documenti',
+        'Fatture & Pagamenti':                'Fatture',
+        'Rapportini Intervento':              'Rapportini'
+    };
+    const catKey = catMap[title];
+    if (catKey) markCategoryRead(catKey);
+
     if (title === 'Galleria (Foto/Filmati)') {
-        bodyEl.innerHTML = `
-            <div style="padding: 10px; color: #94a3b8; height: 100%; display: flex; flex-direction: column;">
-                <p style="margin-bottom: 20px; color: white; text-align: center;">Seleziona un elemento per visualizzarlo.</p>
-                <div class="media-gallery-grid">
-                    <div class="media-card" onclick="playMedia('https://ypjmouwytrubedowkjci.supabase.co/storage/v1/object/public/galleria-lavori/video1.mp4', 'Sopralluogo')">
-                        <div class="media-thumb"><span class="play-overlay">▶</span></div>
-                        <div class="media-info"><h4>Sopralluogo</h4><p>Caricato: Oggi, 18:30</p></div>
-                    </div>
-                </div>
-            </div>`;
+        renderGalleriaPanel(bodyEl);
     } else if (title === 'Documenti Ordinari / Straordinari') {
         renderDocumentiPanel(bodyEl, 'Documenti');
     } else if (title === 'Fatture & Pagamenti') {
@@ -550,6 +551,179 @@ window.openDocModal = function(title) {
         renderDocumentiPanel(bodyEl, 'Rapportini');
     } else {
         renderDocumentiPanel(bodyEl, title);
+    }
+};
+
+// ── Galleria dinamica da Supabase (bucket: galleria-lavori) ────
+async function renderGalleriaPanel(bodyEl) {
+    const sb   = window.supabaseClient;
+    const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
+
+    bodyEl.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:160px;gap:14px;color:#94a3b8;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <span style="font-size:14px;">Caricamento galleria...</span>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+
+    if (!sb || !user) {
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Connessione non disponibile.</div>`;
+        return;
+    }
+
+    // Elenca la cartella dell'utente nel bucket galleria-lavori
+    const folderPath = user.username;
+    const { data: rawFiles, error } = await sb.storage
+        .from('galleria-lavori')
+        .list(folderPath, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+
+    const files = (rawFiles || []).filter(f => f.id && f.metadata);
+
+    if (error || files.length === 0) {
+        // Fallback: mostra i file nella root del bucket (compatibilità con caricamenti precedenti)
+        const { data: rootFiles } = await sb.storage
+            .from('galleria-lavori')
+            .list('', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+        const rootMedia = (rootFiles || []).filter(f => f.id && f.metadata);
+        if (rootMedia.length === 0) {
+            bodyEl.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:#4a5568;gap:12px;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <div style="font-size:14px;color:#64748b;font-weight:600;">Nessun file multimediale presente</div>
+                </div>`;
+            return;
+        }
+        _buildGalleryHTML(bodyEl, rootMedia, sb, '');
+        return;
+    }
+
+    _buildGalleryHTML(bodyEl, files, sb, folderPath);
+}
+
+function _buildGalleryHTML(bodyEl, files, sb, folder) {
+    const videoExts = ['mp4','mov','avi','webm','mkv'];
+    const imgExts   = ['jpg','jpeg','png','webp','gif'];
+
+    const items = files.map(f => {
+        const ext  = (f.name.split('.').pop() || '').toLowerCase();
+        const path = folder ? `${folder}/${f.name}` : f.name;
+        const url  = sb.storage.from('galleria-lavori').getPublicUrl(path).data.publicUrl;
+        const isVideo = videoExts.includes(ext);
+        const isImg   = imgExts.includes(ext);
+
+        // Data reale dal metadata di Supabase
+        let dateStr = '';
+        if (f.created_at) {
+            const d    = new Date(f.created_at);
+            const oggi = new Date();
+            const diff = Math.floor((oggi - d) / (1000 * 60 * 60 * 24));
+            const ora  = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            if (diff === 0)      dateStr = `Oggi alle ${ora}`;
+            else if (diff === 1) dateStr = `Ieri alle ${ora}`;
+            else                 dateStr = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        const thumbHtml = isVideo
+            ? `<div class="media-thumb" style="background:rgba(99,102,241,0.15);"><span class="play-overlay">▶</span></div>`
+            : isImg
+                ? `<div class="media-thumb" style="background-image:url('${url}');background-size:cover;background-position:center;"></div>`
+                : `<div class="media-thumb" style="background:rgba(100,116,139,0.15);"><span style="font-size:28px;">📎</span></div>`;
+
+        const onClick = isVideo
+            ? `playMedia('${url}', '${f.name.replace(/'/g,"\\'")}')`
+            : isImg
+                ? `playMedia('${url}', '${f.name.replace(/'/g,"\\'")}',' image')`
+                : `window.open('${url}','_blank')`;
+
+        return `
+            <div class="media-card" onclick="${onClick}">
+                ${thumbHtml}
+                <div class="media-info">
+                    <h4 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${f.name}">${f.name}</h4>
+                    <p>${dateStr}</p>
+                </div>
+            </div>`;
+    }).join('');
+
+    bodyEl.innerHTML = `
+        <div style="padding:10px;color:#94a3b8;height:100%;display:flex;flex-direction:column;">
+            <p style="margin-bottom:20px;color:white;text-align:center;">Seleziona un elemento per visualizzarlo.</p>
+            <div class="media-gallery-grid">${items}</div>
+        </div>`;
+}
+
+// ── Sistema Badge Reali ────────────────────────────────────────
+// Chiave localStorage: ares_last_seen_<username>_<categoria>
+function _badgeKey(username, cat) {
+    return `ares_last_seen_${username}_${cat}`;
+}
+
+function markCategoryRead(cat) {
+    const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
+    if (!user) return;
+    localStorage.setItem(_badgeKey(user.username, cat), new Date().toISOString());
+    // Rimuove il badge dalla tile corrispondente
+    const tileMap = {
+        'Fatture':    'tile-fatture',
+        'Documenti':  'tile-documenti',
+        'Rapportini': 'tile-rapportini',
+        'Galleria':   'tile-galleria'
+    };
+    const tileId = tileMap[cat];
+    if (tileId) {
+        const tile = document.getElementById(tileId);
+        if (tile) {
+            const badge = tile.querySelector('.notification-badge');
+            if (badge) badge.remove();
+        }
+    }
+}
+
+// Controlla nuovi file e aggiorna i badge al caricamento
+window.checkNewDocs = async function() {
+    const sb   = window.supabaseClient;
+    const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
+    if (!sb || !user) return;
+
+    const categorie = [
+        { cat: 'Fatture',    tileId: 'tile-fatture',    bucket: 'ares-documenti', folder: `${user.username}/Fatture` },
+        { cat: 'Documenti',  tileId: 'tile-documenti',  bucket: 'ares-documenti', folder: `${user.username}/Documenti` },
+        { cat: 'Rapportini', tileId: 'tile-rapportini', bucket: 'ares-documenti', folder: `${user.username}/Rapportini` },
+        { cat: 'Galleria',   tileId: 'tile-galleria',   bucket: 'galleria-lavori', folder: user.username }
+    ];
+
+    for (const { cat, tileId, bucket, folder } of categorie) {
+        try {
+            const lastSeenStr = localStorage.getItem(_badgeKey(user.username, cat));
+            const lastSeen    = lastSeenStr ? new Date(lastSeenStr) : null;
+
+            const { data: files } = await sb.storage
+                .from(bucket)
+                .list(folder, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+
+            const realFiles = (files || []).filter(f => f.id && f.metadata);
+
+            // Conta solo i file più recenti dell'ultima visita
+            const nuovi = lastSeen
+                ? realFiles.filter(f => f.created_at && new Date(f.created_at) > lastSeen).length
+                : realFiles.length; // Prima visita: tutti sono "nuovi"
+
+            const tile = document.getElementById(tileId);
+            if (!tile) continue;
+
+            // Rimuovi badge precedente (se c'era)
+            const old = tile.querySelector('.notification-badge');
+            if (old) old.remove();
+
+            if (nuovi > 0) {
+                const badge = document.createElement('div');
+                badge.className = 'notification-badge';
+                badge.textContent = nuovi > 9 ? '9+' : nuovi;
+                tile.insertBefore(badge, tile.firstChild);
+            }
+        } catch(e) {
+            console.warn(`Badge check failed for ${cat}:`, e);
+        }
     }
 };
 
