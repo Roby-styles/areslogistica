@@ -20217,6 +20217,51 @@
                                 <div id="log-content" style="display:none;"></div>
                             </div>
                         </aside>
+
+                        <!-- SEZIONE CAMBIA PASSWORD CLIENTE -->
+                        <aside class="panel glass-panel" style="grid-column: 1 / -1; border: 1px solid rgba(99,102,241,0.2);">
+                            <div class="panel-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; margin-bottom: 20px;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:38px; height:38px; border-radius:10px; background:rgba(99,102,241,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    </div>
+                                    <div>
+                                        <h2 style="margin:0; font-size:16px; color:#fff; font-weight:700;">Cambia Password</h2>
+                                        <div style="font-size:12px; color:#64748b; margin-top:2px;">Aggiorna le credenziali di accesso al Suo portale</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="client-change-pw-form" style="max-width:480px; display:flex; flex-direction:column; gap:14px;">
+                                <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:7px;">Password Attuale</label>
+                                    <input type="password" id="client-pw-current" placeholder="Inserisci la password corrente..." autocomplete="current-password"
+                                        style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; transition:border-color 0.2s;"
+                                        onfocus="this.style.borderColor='rgba(99,102,241,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:7px;">Nuova Password</label>
+                                    <input type="password" id="client-pw-new" placeholder="Almeno 6 caratteri..." autocomplete="new-password"
+                                        style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; transition:border-color 0.2s;"
+                                        onfocus="this.style.borderColor='rgba(99,102,241,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:7px;">Conferma Nuova Password</label>
+                                    <input type="password" id="client-pw-confirm" placeholder="Ripeti la nuova password..." autocomplete="new-password"
+                                        style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; transition:border-color 0.2s;"
+                                        onfocus="this.style.borderColor='rgba(99,102,241,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                </div>
+                                <div id="client-pw-error" style="color:#f43f5e; font-size:12px; min-height:16px; font-weight:600;"></div>
+                                <button onclick="changeClientPassword()"
+                                    style="align-self:flex-start; padding:12px 28px; background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:opacity 0.2s; letter-spacing:0.02em;"
+                                    onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                    Aggiorna Password
+                                </button>
+                                <div id="client-pw-success" style="display:none; color:#10b981; font-size:13px; font-weight:700; padding:12px 16px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:10px;">
+                                    Password aggiornata con successo!
+                                </div>
+                            </div>
+                        </aside>
+
                     </main>
                 </div>
                 <!-- Modals -->
@@ -20306,14 +20351,15 @@
                         <input type="text" id="u-username" placeholder="Es. Massimo">
                     </div>
                     <div class="form-group">
-                        <label for="u-password">Password</label>
-                        <input type="text" id="u-password" placeholder="Es. ares2026!">
+                        <label for="u-password">Password <span id="u-password-hint" style="font-size:11px; color:#64748b; font-weight:400;"> (lascia vuoto per non modificare)</span></label>
+                        <input type="password" id="u-password" placeholder="Nuova password..." autocomplete="new-password">
                     </div>
                     <div class="form-group">
                         <label for="u-role">Ruolo Utente</label>
                         <select id="u-role" style="background: rgba(30, 30, 45, 0.6); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 8px; font-family: inherit; font-size: 13px; outline: none;">
-                            <option value="user">Standard User 👤</option>
-                            <option value="super_admin">Super Admin 👑</option>
+                            <option value="user">Standard User</option>
+                            <option value="cliente">Portale Cliente</option>
+                            <option value="super_admin">Super Admin</option>
                         </select>
                     </div>
                 </div>
@@ -20885,6 +20931,89 @@
         return null;
     }
 
+    // ---------------------------------------------------
+    // HASHING PASSWORD (SHA-256 Web Crypto API nativa)
+    // ---------------------------------------------------
+    async function hashPassword(plain) {
+        if (!plain) return '';
+        // Se sembra già un hash SHA-256 (64 hex chars) non hashare di nuovo
+        if (/^[0-9a-f]{64}$/.test(plain)) return plain;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function isHashed(str) {
+        return /^[0-9a-f]{64}$/.test(str);
+    }
+
+    // --------------------------------------------------------
+    // CAMBIO PASSWORD (Lato Cliente — dal proprio portale)
+    // --------------------------------------------------------
+    async function changeClientPassword() {
+        const currentPwEl = document.getElementById('client-pw-current');
+        const newPwEl     = document.getElementById('client-pw-new');
+        const confirmEl   = document.getElementById('client-pw-confirm');
+        const errEl       = document.getElementById('client-pw-error');
+        const successEl   = document.getElementById('client-pw-success');
+
+        if (!currentPwEl || !newPwEl || !confirmEl) return;
+
+        errEl.textContent = '';
+        successEl.style.display = 'none';
+
+        const currentPwRaw = currentPwEl.value;
+        const newPwRaw     = newPwEl.value;
+        const confirmRaw   = confirmEl.value;
+
+        if (!currentPwRaw) { errEl.textContent = 'Inserisci la password attuale.'; return; }
+        if (!newPwRaw)     { errEl.textContent = 'Inserisci la nuova password.'; return; }
+        if (newPwRaw.length < 6) { errEl.textContent = 'La nuova password deve essere di almeno 6 caratteri.'; return; }
+        if (newPwRaw !== confirmRaw) { errEl.textContent = 'Le due password non coincidono.'; return; }
+
+        const loggedUser = getLoggedUser();
+        if (!loggedUser) { errEl.textContent = 'Sessione scaduta. Effettua nuovamente il login.'; return; }
+
+        // Verifica password attuale
+        const currentHashed = await hashPassword(currentPwRaw);
+        const storedUser = usersList.find(u => u.id === loggedUser.id || u.username.toLowerCase() === loggedUser.username.toLowerCase());
+        if (!storedUser) { errEl.textContent = 'Utente non trovato. Riprova.'; return; }
+
+        const storedPw = storedUser.password;
+        // Confronto: la password salvata potrebbe essere già hashed o in chiaro
+        const matches = isHashed(storedPw) ? (storedPw === currentHashed) : (storedPw === currentPwRaw);
+        if (!matches) { errEl.textContent = 'La password attuale non è corretta.'; return; }
+
+        // Salva la nuova password
+        const newHashed = await hashPassword(newPwRaw);
+        storedUser.password = newHashed;
+        usersList = usersList.map(u => (u.id === storedUser.id ? storedUser : u));
+        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
+
+        // Aggiorna anche la sessione corrente
+        const updatedSession = { ...loggedUser, password: newHashed };
+        sessionStorage.setItem('ares_logged_user', JSON.stringify(updatedSession));
+        localStorage.setItem('ares_logged_user', JSON.stringify(updatedSession));
+
+        // Salva su Supabase
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('ares_users').update({ password: newHashed }).eq('id', storedUser.id);
+            } catch (err) {
+                console.error('Errore aggiornamento password su Supabase:', err);
+            }
+        }
+
+        // Feedback visivo
+        currentPwEl.value = '';
+        newPwEl.value = '';
+        confirmEl.value = '';
+        successEl.style.display = 'block';
+        setTimeout(() => { successEl.style.display = 'none'; }, 5000);
+    }
+
     async function handleLogin() {
         const usernameInput = document.getElementById('login-username');
         const passwordInput = document.getElementById('login-password');
@@ -20900,20 +21029,45 @@
             return;
         }
         
-        const user = usersList.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
-        
+        const user = usersList.find(u => u.username.toLowerCase() === username.toLowerCase());
+
         if (user) {
-            sessionStorage.setItem('ares_logged_user', JSON.stringify(user));
-            localStorage.setItem('ares_logged_user', JSON.stringify(user));
-            
-            showLoginError("");
-            usernameInput.value = "";
-            passwordInput.value = "";
-            
-            setupUserSessionUI();
-            await completeAppInitialization();
+            // Migrazione automatica: supporta sia password in chiaro che hashate
+            let loginOk = false;
+            const inputHash = await hashPassword(password);
+
+            if (isHashed(user.password)) {
+                // Password già hashata: confronto hash
+                loginOk = (inputHash === user.password);
+            } else {
+                // Password in chiaro (legacy): confronto diretto
+                loginOk = (user.password === password);
+                if (loginOk && supabaseClient) {
+                    // Migrazione silenziosa: hasherà e aggiornerà Supabase
+                    const hashed = inputHash;
+                    user.password = hashed;
+                    usersList = usersList.map(u => u.id === user.id ? user : u);
+                    localStorage.setItem('ares_local_users', JSON.stringify(usersList));
+                    supabaseClient.from('ares_users').update({ password: hashed }).eq('id', user.id).then();
+                    console.log('Password migrata a hash SHA-256 per:', user.username);
+                }
+            }
+
+            if (loginOk) {
+                sessionStorage.setItem('ares_logged_user', JSON.stringify(user));
+                localStorage.setItem('ares_logged_user', JSON.stringify(user));
+                
+                showLoginError('');
+                usernameInput.value = '';
+                passwordInput.value = '';
+                
+                setupUserSessionUI();
+                await completeAppInitialization();
+            } else {
+                showLoginError('Credenziali errate! Riprova.');
+            }
         } else {
-            showLoginError("Credenziali errate! Riprova.");
+            showLoginError('Credenziali errate! Riprova.');
         }
     }
 
@@ -20983,10 +21137,13 @@
             // Forza la vista allo spazio cliente
             setTimeout(() => show('spaziocliente'), 50);
             
-            // Registra log locale accessi (Task storicizzazione)
-            let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
-            logs.push({ username: user.username, time: new Date().toISOString() });
-            localStorage.setItem('client_access_logs', JSON.stringify(logs));
+            // Registra log locale accessi SOLO se è un accesso reale del cliente
+            // (non durante l'impersonazione admin — ares_admin_origin è presente in quel caso)
+            if (!sessionStorage.getItem('ares_admin_origin')) {
+                let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
+                logs.push({ username: user.username, time: new Date().toISOString() });
+                localStorage.setItem('client_access_logs', JSON.stringify(logs));
+            }
 
             // Mostra il banner di benvenuto con leggero delay
             setTimeout(() => renderWelcomeBanner(), 200);
@@ -22452,43 +22609,53 @@
     function renderUsers() {
         const listBody = document.getElementById('utenti-list-body');
         if (!listBody) return;
-        
-        listBody.innerHTML = "";
-        
+
+        listBody.innerHTML = '';
+
         const totalSpan = document.getElementById('kpi-users-total');
         const adminsSpan = document.getElementById('kpi-users-admins');
         const standardSpan = document.getElementById('kpi-users-standard');
-        
-        let total = usersList.length;
-        let admins = usersList.filter(u => u.role === 'super_admin').length;
-        let standard = total - admins;
-        
+
+        const total = usersList.length;
+        const admins = usersList.filter(u => u.role === 'super_admin').length;
+        const clients = usersList.filter(u => u.role === 'cliente').length;
+        const standard = total - admins - clients;
+
         if (totalSpan) totalSpan.innerText = total;
         if (adminsSpan) adminsSpan.innerText = admins;
-        if (standardSpan) standardSpan.innerText = standard;
-        
+        if (standardSpan) standardSpan.innerText = standard + ' std / ' + clients + ' clienti';
+
         usersList.forEach(u => {
-            const isSuper = u.role === 'super_admin';
-            const roleBadge = isSuper 
-                ? `<span class="crm-status status-scheduled" style="background:rgba(99, 102, 241, 0.15); color:#818cf8; border-color:rgba(99,102,241,0.25);">👑 Super Admin</span>`
-                : `<span class="crm-status status-prospect" style="background:rgba(148, 163, 184, 0.1); color:#94a3b8; border-color:rgba(148, 163, 184, 0.2);">👤 Standard User</span>`;
-            
+            let roleBadge = '';
+            if (u.role === 'super_admin') {
+                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.25);">Super Admin</span>`;
+            } else if (u.role === 'cliente') {
+                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);">Portale Cliente</span>`;
+            } else {
+                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(148,163,184,0.10); color:#94a3b8; border:1px solid rgba(148,163,184,0.20);">Standard User</span>`;
+            }
+
+            const pwStatus = isHashed(u.password)
+                ? `<span style="font-size:11px; color:#10b981; font-weight:600;">Protetta (hash)</span>`
+                : `<span style="font-size:11px; color:#f59e0b; font-weight:600;">Non ancora hashed</span>`;
+
+            const clientBtn = u.role === 'cliente'
+                ? `<button onclick="enterAsClient(${u.id})" style="color:#10b981; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Entra nel portale</button>`
+                : '';
+
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
             tr.innerHTML = `
-                <td style="padding:12px 8px; color: #94a3b8; font-weight: 600;">#${u.id}</td>
-                <td style="padding:12px 8px; font-weight: 700; color:#fff;">${u.username}</td>
-                <td style="padding:12px 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="password" id="pw-field-${u.id}" value="${u.password}" readonly style="background:transparent; border:none; color:#cbd5e1; font-family: inherit; font-size:13px; width: 120px; outline:none; padding:0;">
-                        <button onclick="togglePasswordVisibility(${u.id})" style="background: transparent; border: none; color: #818cf8; font-size: 11px; cursor: pointer; padding: 2px 6px; font-weight:600;">👁️ Mostra</button>
-                    </div>
-                </td>
+                <td style="padding:12px 8px; color:#94a3b8; font-weight:600;">#${u.id}</td>
+                <td style="padding:12px 8px; font-weight:700; color:#fff;">${u.username}</td>
+                <td style="padding:12px 8px;">${pwStatus}</td>
                 <td style="padding:12px 8px;">${roleBadge}</td>
                 <td style="padding:12px 8px; text-align:right;">
-                    <div style="display:flex; gap:6px; justify-content:flex-end;">
-                        <button class="btn-delete-appt" onclick="editUser(${u.id})" style="color: #818cf8; background: rgba(99, 102, 241, 0.1); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight:600;">✏️ Modifica</button>
-                        <button class="btn-delete-appt" onclick="deleteUser(${u.id})" style="color: #f43f5e; background: rgba(244, 63, 94, 0.1); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight:600;">✖ Elimina</button>
+                    <div style="display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;">
+                        ${clientBtn}
+                        <button onclick="openResetPasswordModal(${u.id})" style="color:#f59e0b; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Reset Password</button>
+                        <button onclick="editUser(${u.id})" style="color:#818cf8; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Modifica</button>
+                        <button onclick="deleteUser(${u.id})" style="color:#f43f5e; background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Elimina</button>
                     </div>
                 </td>
             `;
@@ -22496,19 +22663,166 @@
         });
     }
 
-    function togglePasswordVisibility(userId) {
-        const field = document.getElementById(`pw-field-${userId}`);
-        const btn = event.target;
-        if (!field || !btn) return;
-        
-        if (field.type === 'password') {
-            field.type = 'text';
-            btn.innerText = '🙈 Nascondi';
-        } else {
-            field.type = 'password';
-            btn.innerText = '👁️ Mostra';
-        }
+    // --------------------------------------------------------
+    // MODAL RESET PASSWORD (Super Admin)
+    // --------------------------------------------------------
+    function openResetPasswordModal(userId) {
+        const user = usersList.find(u => u.id === userId);
+        if (!user) return;
+
+        // Rimuovi modal precedente se esiste
+        const existing = document.getElementById('reset-pw-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'reset-pw-modal';
+        modal.style.cssText = `
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+        `;
+        modal.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, rgba(15,15,30,0.98), rgba(20,22,45,0.98));
+                border: 1px solid rgba(245,158,11,0.3);
+                border-radius: 20px;
+                padding: 36px;
+                width: 100%;
+                max-width: 420px;
+                box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(245,158,11,0.08);
+                animation: modalIn 0.25s cubic-bezier(.4,0,.2,1);
+            ">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size:16px; font-weight:800; color:#fff;">Reset Password</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">Utente: <strong style="color:#f59e0b;">${user.username}</strong></div>
+                    </div>
+                </div>
+                <label style="display:block; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Nuova password temporanea</label>
+                <input type="password" id="reset-pw-input" placeholder="Es. Temp2024!" autocomplete="new-password"
+                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; margin-bottom:8px;">
+                <input type="password" id="reset-pw-confirm" placeholder="Conferma password" autocomplete="new-password"
+                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; margin-bottom:6px;">
+                <div id="reset-pw-error" style="color:#f43f5e; font-size:12px; min-height:18px; margin-bottom:18px;"></div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="confirmResetPassword(${userId})"
+                        style="flex:1; padding:13px; background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                        Conferma Reset
+                    </button>
+                    <button onclick="document.getElementById('reset-pw-modal').remove()"
+                        style="padding:13px 20px; background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                        Annulla
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => document.getElementById('reset-pw-input')?.focus(), 100);
     }
+
+    async function confirmResetPassword(userId) {
+        const newPw = document.getElementById('reset-pw-input').value;
+        const confirm = document.getElementById('reset-pw-confirm').value;
+        const errEl = document.getElementById('reset-pw-error');
+
+        if (!newPw) { errEl.textContent = 'Inserisci una nuova password.'; return; }
+        if (newPw.length < 6) { errEl.textContent = 'La password deve essere di almeno 6 caratteri.'; return; }
+        if (newPw !== confirm) { errEl.textContent = 'Le due password non coincidono.'; return; }
+
+        errEl.textContent = '';
+        const hashed = await hashPassword(newPw);
+
+        const user = usersList.find(u => u.id === userId);
+        if (!user) return;
+
+        user.password = hashed;
+        usersList = usersList.map(u => u.id === userId ? user : u);
+        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
+
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('ares_users').update({ password: hashed }).eq('id', userId);
+            } catch (err) {
+                console.error('Errore reset password su Supabase:', err);
+            }
+        }
+
+        document.getElementById('reset-pw-modal').remove();
+        renderUsers();
+        alert(`Password di "${user.username}" resettata con successo!`);
+    }
+
+    // --------------------------------------------------------
+    // IMPERSONAZIONE CLIENTE (Entra nel portale)
+    // --------------------------------------------------------
+    function enterAsClient(userId) {
+        const client = usersList.find(u => u.id === userId);
+        if (!client) return;
+        if (!confirm(`Vuoi entrare nel portale di "${client.username}"?\nVerrai reindirizzato al suo Spazio Cliente.`)) return;
+
+        // Salva admin originale per poter tornare
+        const currentAdmin = getLoggedUser();
+        sessionStorage.setItem('ares_admin_origin', JSON.stringify(currentAdmin));
+
+        // Imposta il client come utente attivo
+        const clientSession = { ...client };
+        sessionStorage.setItem('ares_logged_user', JSON.stringify(clientSession));
+        localStorage.setItem('ares_logged_user', JSON.stringify(clientSession));
+
+        setupUserSessionUI();
+        show('spaziocliente');
+        renderImpersonationBanner(client.username);
+    }
+
+    function renderImpersonationBanner(clientName) {
+        const existing = document.getElementById('impersonation-banner');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.id = 'impersonation-banner';
+        banner.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; z-index: 99990;
+            background: linear-gradient(90deg, #d97706, #f59e0b);
+            color: #000;
+            padding: 10px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 13px; font-weight: 700;
+            box-shadow: 0 2px 20px rgba(245,158,11,0.4);
+            animation: slideDown 0.3s cubic-bezier(.4,0,.2,1);
+        `;
+        banner.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Stai gestendo il portale di: <strong style="margin-left:4px;">${clientName}</strong>
+            </div>
+            <button onclick="exitClientImpersonation()" style="
+                background: rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.3);
+                color: #000; padding: 6px 16px; border-radius: 8px;
+                font-size: 12px; font-weight: 800; cursor: pointer;
+            ">Torna al tuo account</button>
+        `;
+        document.body.appendChild(banner);
+    }
+
+    function exitClientImpersonation() {
+        const adminData = sessionStorage.getItem('ares_admin_origin');
+        if (!adminData) { logout(); return; }
+
+        const admin = JSON.parse(adminData);
+        sessionStorage.setItem('ares_logged_user', JSON.stringify(admin));
+        localStorage.setItem('ares_logged_user', JSON.stringify(admin));
+        sessionStorage.removeItem('ares_admin_origin');
+
+        const banner = document.getElementById('impersonation-banner');
+        if (banner) banner.remove();
+
+        setupUserSessionUI();
+        show('utenti');
+    }
+
 
     function editUser(userId) {
         const user = usersList.find(u => u.id === userId);
@@ -22537,51 +22851,58 @@
     async function saveUser() {
         const editId = document.getElementById('user-edit-id').value;
         const username = document.getElementById('u-username').value.trim();
-        const password = document.getElementById('u-password').value.trim();
+        const passwordRaw = document.getElementById('u-password').value.trim();
         const role = document.getElementById('u-role').value;
-        
-        if (!username || !password) {
-            alert("Nome Utente e Password sono obbligatori!");
+
+        if (!username) {
+            alert('Il Nome Utente è obbligatorio!');
             return;
         }
-        
+        if (!editId && !passwordRaw) {
+            alert('La Password è obbligatoria per un nuovo utente!');
+            return;
+        }
+
         let targetId = editId ? Number(editId) : Date.now();
-        
+
         if (!editId) {
             const dup = usersList.find(u => u.username.toLowerCase() === username.toLowerCase());
-            if (dup) {
-                alert("Questo Nome Utente è già esistente!");
-                return;
-            }
+            if (dup) { alert('Questo Nome Utente è già esistente!'); return; }
         }
-        
-        const userObj = {
-            id: targetId,
-            username: username,
-            password: password,
-            role: role
-        };
-        
+
+        // Hasherà solo se viene fornita una nuova password; altrimenti mantiene quella esistente
+        let finalPassword;
+        if (passwordRaw) {
+            finalPassword = await hashPassword(passwordRaw);
+        } else if (editId) {
+            const existing = usersList.find(u => u.id === Number(editId));
+            finalPassword = existing ? existing.password : '';
+        } else {
+            finalPassword = '';
+        }
+
+        const userObj = { id: targetId, username, password: finalPassword, role };
+
         if (editId) {
             usersList = usersList.map(u => u.id === targetId ? userObj : u);
         } else {
             usersList.push(userObj);
         }
-        
+
         localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-        
+
         if (supabaseClient) {
             try {
                 const { error } = await supabaseClient.from('ares_users').upsert(userObj);
                 if (error) throw error;
             } catch (err) {
-                console.error("Impossibile salvare utente su Supabase:", err);
+                console.error('Impossibile salvare utente su Supabase:', err);
             }
         }
-        
+
         resetUserForm();
         renderUsers();
-        alert("Utente salvato correttamente!");
+        alert('Utente salvato correttamente!');
     }
 
     async function deleteUser(userId) {
