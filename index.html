@@ -1014,6 +1014,9 @@
         .btn-danger:hover { box-shadow: 0 4px 15px rgba(244,63,94,0.4) !important; }
         .btn-secondary { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.05); }
         .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        #view-utenti input, #view-utenti select { background: rgba(30,30,45,.72); color: #fff; border: 1px solid rgba(255,255,255,.09); padding: 11px 13px; border-radius: 9px; font-family: inherit; font-size: 13px; outline: none; }
+        #view-utenti input:focus, #view-utenti select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+        #view-utenti button:disabled { opacity: .55; cursor: wait; transform: none; }
         
         .resources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
         .resource-card { background: rgba(30, 30, 45, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
@@ -2013,8 +2016,8 @@
     <!-- Recupero password aperto esclusivamente da una sessione recovery Supabase -->
     <div id="password-recovery-overlay" style="position: fixed; inset: 0; background: linear-gradient(135deg, #0c0d12, #181922); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; font-family: 'Outfit', sans-serif;">
         <div style="background: rgba(30, 30, 45, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); padding: 36px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); width: 100%; max-width: 420px; text-align: center;">
-            <div style="color: #6366f1; font-weight: 800; font-size: 28px; margin-bottom: 8px;">Nuova password</div>
-            <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin: 0 0 22px;">Scegli una nuova password per il tuo account ARES.</p>
+            <div id="password-recovery-title" style="color: #6366f1; font-weight: 800; font-size: 28px; margin-bottom: 8px;">Nuova password</div>
+            <p id="password-recovery-subtitle" style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin: 0 0 22px;">Scegli una nuova password per il tuo account ARES.</p>
             <div id="password-recovery-error" style="display: none; color: #fda4af; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;"></div>
             <div id="password-recovery-success" style="display: none; color: #86efac; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Password aggiornata correttamente.</div>
             <div style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
@@ -20320,25 +20323,104 @@
             </div>
             
             <div class="card-ui" style="background: rgba(20, 22, 35, 0.45); padding: 25px;">
-                <h3 style="margin-top:0; margin-bottom:12px; font-size:18px; color:#fff;">🔐 Account protetti da Supabase Auth</h3>
-                <p style="margin:0; color:#94a3b8; line-height:1.6; font-size:13px;">
-                    Le password non sono piu visibili o modificabili da questa pagina. Gli account vengono creati in
-                    <strong style="color:#c7d2fe;">Supabase → Authentication → Users</strong>; qui ARES mostra soltanto
-                    il profilo e il ruolo registrati nel database.
-                </p>
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+                    <div>
+                        <h3 style="margin:0 0 8px; font-size:20px; color:#fff;">✉️ Invita un nuovo utente</h3>
+                        <p style="margin:0; color:#94a3b8; line-height:1.6; font-size:13px; max-width:720px;">
+                            ARES invia un collegamento personale: l'utente sceglie la propria password senza comunicarla
+                            all'amministratore. L'operazione e consentita soltanto al Super Amministratore e viene registrata.
+                        </p>
+                    </div>
+                    <span class="bi-badge" style="background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25);">🔐 INVITO SICURO</span>
+                </div>
+
+                <div id="admin-users-message" style="display:none; margin-top:18px; padding:13px 15px; border-radius:10px; font-size:13px; font-weight:700;"></div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; margin-top:22px;">
+                    <div>
+                        <label for="admin-user-full-name" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">NOME E COGNOME</label>
+                        <input id="admin-user-full-name" type="text" maxlength="120" autocomplete="off" placeholder="Es. Mario Rossi" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label for="admin-user-username" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">NOME UTENTE</label>
+                        <input id="admin-user-username" type="text" maxlength="80" autocomplete="off" placeholder="Es. mario.rossi" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label for="admin-user-email" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">EMAIL</label>
+                        <input id="admin-user-email" type="email" maxlength="254" autocomplete="off" placeholder="nome@azienda.it" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label for="admin-user-role" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">RUOLO</label>
+                        <select id="admin-user-role" onchange="toggleAdminClientFields()" style="width:100%;box-sizing:border-box;">
+                            <option value="operatore">Operatore</option>
+                            <option value="user">Utente standard</option>
+                            <option value="admin">Amministratore</option>
+                            <option value="cliente">Cliente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="admin-client-fields" style="display:none; margin-top:20px; padding:18px; border:1px solid rgba(129,140,248,.22); border-radius:14px; background:rgba(15,23,42,.5);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+                        <div>
+                            <strong style="color:#fff;">Cliente e cantiere assegnati</strong>
+                            <div style="color:#94a3b8;font-size:12px;margin-top:4px;">Il cliente vedra soltanto le informazioni collegate a questa organizzazione.</div>
+                        </div>
+                        <select id="admin-client-mode" onchange="toggleAdminClientMode()" style="min-width:220px;">
+                            <option value="existing">Cliente esistente</option>
+                            <option value="new">Nuovo cliente e cantiere</option>
+                        </select>
+                    </div>
+
+                    <div id="admin-existing-client-fields" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+                        <div>
+                            <label for="admin-user-client" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">CLIENTE</label>
+                            <select id="admin-user-client" onchange="refreshAdminSiteOptions()" style="width:100%;box-sizing:border-box;"><option value="">Seleziona cliente</option></select>
+                        </div>
+                        <div>
+                            <label for="admin-user-site" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">CANTIERE</label>
+                            <select id="admin-user-site" style="width:100%;box-sizing:border-box;"><option value="">Nessun cantiere specifico</option></select>
+                        </div>
+                    </div>
+
+                    <div id="admin-new-client-fields" style="display:none;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;">
+                        <div>
+                            <label for="admin-new-client-code" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">CODICE CLIENTE</label>
+                            <input id="admin-new-client-code" type="text" maxlength="40" autocomplete="off" placeholder="Es. CLIENTE-001" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label for="admin-new-client-name" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">RAGIONE SOCIALE / NOME</label>
+                            <input id="admin-new-client-name" type="text" maxlength="160" autocomplete="off" placeholder="Es. Condominio Aurora" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label for="admin-new-site-name" style="display:block;color:#a5b4fc;font-size:12px;font-weight:800;margin-bottom:7px;">NOME CANTIERE</label>
+                            <input id="admin-new-site-name" type="text" maxlength="160" autocomplete="off" placeholder="Es. Sede principale" style="width:100%;box-sizing:border-box;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px;">
+                    <button id="admin-user-invite-button" class="btn-action" onclick="inviteAresUser()" style="padding:12px 20px;">✉️ Invia invito</button>
+                    <button class="btn-action btn-secondary" onclick="resetUserForm()" style="padding:12px 20px;">Pulisci campi</button>
+                    <span style="color:#64748b;font-size:12px;">ARES non conosce e non mostra mai la password dell'utente.</span>
+                </div>
             </div>
             
             <div class="card-ui" style="background: rgba(20, 22, 35, 0.45);">
-                <h3 style="margin-top:0; margin-bottom:15px; font-size:18px; color:#fff;">Elenco account attivi</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:18px; color:#fff;">Elenco account</h3>
+                    <button class="btn-action btn-secondary" onclick="refreshAdminUsers()" style="padding:9px 14px;font-size:12px;">↻ Aggiorna elenco</button>
+                </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px; color:#cbd5e1;">
                         <thead>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:8px;">
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 12%;">ID</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 22%;">Utente</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 34%;">Email</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 20%;">Ruolo</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; text-align:right; width: 12%;">Stato</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8;">ID</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8;">Utente</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8;">Email</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8;">Ruolo</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; text-align:right;">Stato</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; text-align:right;">Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="utenti-list-body">
@@ -20346,6 +20428,12 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="card-ui" style="background: rgba(20, 22, 35, 0.45);">
+                <h3 style="margin-top:0;margin-bottom:6px;font-size:18px;color:#fff;">🧾 Ultime operazioni amministrative</h3>
+                <p style="margin:0 0 14px;color:#64748b;font-size:12px;">Inviti, attivazioni e disattivazioni vengono conservati nel registro protetto.</p>
+                <div id="admin-audit-list" style="display:grid;gap:8px;"><div style="color:#64748b;font-size:13px;">Nessuna operazione caricata.</div></div>
             </div>
         </div>
     </div>
@@ -20684,7 +20772,7 @@
         if(id === 'preventivatore') renderPreventivi();
         if(id === 'fascicoli') renderFascicoli();
         if(id === 'utenti') {
-            renderUsers();
+            refreshAdminUsers();
             renderClientLogs();
         }
         if(id === 'operativa') initGisMap();
@@ -20789,6 +20877,9 @@
     // ----------------------------------------------------
     let usersList = [];
     let currentAresUser = null;
+    let adminClientsList = [];
+    let adminSitesList = [];
+    let adminAuditList = [];
     // Lista legacy intenzionalmente vuota: nessuna password deve essere inclusa nel codice.
     // Gli account e le password legacy non vengono piu caricati dal browser.
     function showLoginError(msg, tone = 'error') {
@@ -22307,11 +22398,18 @@
     // compatibili le altre sezioni del gestionale durante la migrazione.
     // --------------------------------------------------------
     let aresAuthListener = null;
-    let aresPasswordRecoveryMode = initialAuthCallbackType === 'recovery';
+    let aresPasswordRecoveryMode = ['recovery', 'invite'].includes(initialAuthCallbackType);
+    let aresPasswordSetupType = initialAuthCallbackType === 'invite' ? 'invite' : 'recovery';
 
     function showPasswordRecoveryOverlay() {
         const loginOverlay = document.getElementById('login-overlay');
         const recoveryOverlay = document.getElementById('password-recovery-overlay');
+        const title = document.getElementById('password-recovery-title');
+        const subtitle = document.getElementById('password-recovery-subtitle');
+        if (title) title.textContent = aresPasswordSetupType === 'invite' ? 'Crea la tua password' : 'Nuova password';
+        if (subtitle) subtitle.textContent = aresPasswordSetupType === 'invite'
+            ? 'Completa l’attivazione del tuo account ARES.'
+            : 'Scegli una nuova password per il tuo account ARES.';
         clearAuthCallbackUrl();
         if (loginOverlay) loginOverlay.style.display = 'none';
         if (recoveryOverlay) recoveryOverlay.style.display = 'flex';
@@ -22460,6 +22558,7 @@
         const { data: listenerData } = supabaseClient.auth.onAuthStateChange((event, session) => {
             if (event === 'PASSWORD_RECOVERY' && session) {
                 aresPasswordRecoveryMode = true;
+                aresPasswordSetupType = 'recovery';
                 setTimeout(showPasswordRecoveryOverlay, 0);
                 return;
             }
@@ -22506,12 +22605,12 @@
     }
 
     async function loadUsersFromCloud() {
-        const allowedRoles = ['super_admin', 'admin'];
+        const allowedRoles = ['super_admin'];
         if (!supabaseClient || !currentAresUser || !allowedRoles.includes(currentAresUser.role)) return [];
 
         const { data, error } = await supabaseClient
             .from('ares_profiles')
-            .select('id,email,username,full_name,role,client_id,active,created_at')
+            .select('id,email,username,full_name,role,client_id,default_site_id,active,created_at')
             .order('username', { ascending: true });
 
         if (error) {
@@ -22577,7 +22676,7 @@
         const currentPassword = currentPwEl.value;
         const newPassword = newPwEl.value;
         if (!currentPassword) { errEl.textContent = 'Inserisci la password attuale.'; return; }
-        if (newPassword.length < 8) { errEl.textContent = 'La nuova password deve avere almeno 8 caratteri.'; return; }
+        if (newPassword.length < 12) { errEl.textContent = 'La nuova password deve avere almeno 12 caratteri.'; return; }
         if (newPassword !== confirmEl.value) { errEl.textContent = 'Le due password non coincidono.'; return; }
 
         const verified = await supabaseClient.auth.signInWithPassword({
@@ -22617,6 +22716,205 @@
         window.location.reload();
     }
 
+    function showAdminUsersMessage(message, tone = 'success') {
+        const element = document.getElementById('admin-users-message');
+        if (!element) return;
+        if (!message) {
+            element.style.display = 'none';
+            element.textContent = '';
+            return;
+        }
+        const isError = tone === 'error';
+        const isInfo = tone === 'info';
+        element.textContent = message;
+        element.style.display = 'block';
+        element.style.color = isError ? '#fda4af' : (isInfo ? '#bfdbfe' : '#86efac');
+        element.style.background = isError ? 'rgba(244,63,94,.1)' : (isInfo ? 'rgba(59,130,246,.1)' : 'rgba(34,197,94,.1)');
+        element.style.border = `1px solid ${isError ? 'rgba(244,63,94,.25)' : (isInfo ? 'rgba(59,130,246,.25)' : 'rgba(34,197,94,.25)')}`;
+    }
+
+    async function loadAdminReferenceData() {
+        if (!supabaseClient || currentAresUser?.role !== 'super_admin') return;
+        const [clientsResult, sitesResult] = await Promise.all([
+            supabaseClient.from('ares_clients').select('id,code,name,active').eq('active', true).order('name'),
+            supabaseClient.from('ares_sites').select('id,client_id,name,active').eq('active', true).order('name')
+        ]);
+        if (clientsResult.error) console.error('Elenco clienti non disponibile:', clientsResult.error);
+        if (sitesResult.error) console.error('Elenco cantieri non disponibile:', sitesResult.error);
+        adminClientsList = clientsResult.data || [];
+        adminSitesList = sitesResult.data || [];
+
+        const clientSelect = document.getElementById('admin-user-client');
+        const modeSelect = document.getElementById('admin-client-mode');
+        if (clientSelect) {
+            const selected = clientSelect.value;
+            clientSelect.innerHTML = '<option value="">Seleziona cliente</option>' + adminClientsList.map(client =>
+                `<option value="${escapeAresHtml(client.id)}">${escapeAresHtml(client.name)} (${escapeAresHtml(client.code)})</option>`
+            ).join('');
+            if (adminClientsList.some(client => client.id === selected)) clientSelect.value = selected;
+        }
+        if (modeSelect && adminClientsList.length === 0) modeSelect.value = 'new';
+        refreshAdminSiteOptions();
+        toggleAdminClientMode();
+    }
+
+    function refreshAdminSiteOptions() {
+        const clientId = document.getElementById('admin-user-client')?.value || '';
+        const siteSelect = document.getElementById('admin-user-site');
+        if (!siteSelect) return;
+        const selected = siteSelect.value;
+        const sites = adminSitesList.filter(site => site.client_id === clientId);
+        siteSelect.innerHTML = '<option value="">Nessun cantiere specifico</option>' + sites.map(site =>
+            `<option value="${escapeAresHtml(site.id)}">${escapeAresHtml(site.name)}</option>`
+        ).join('');
+        if (sites.some(site => site.id === selected)) siteSelect.value = selected;
+    }
+
+    function toggleAdminClientMode() {
+        const mode = document.getElementById('admin-client-mode')?.value || 'existing';
+        const existingFields = document.getElementById('admin-existing-client-fields');
+        const newFields = document.getElementById('admin-new-client-fields');
+        if (existingFields) existingFields.style.display = mode === 'existing' ? 'grid' : 'none';
+        if (newFields) newFields.style.display = mode === 'new' ? 'grid' : 'none';
+    }
+
+    function toggleAdminClientFields() {
+        const isClient = document.getElementById('admin-user-role')?.value === 'cliente';
+        const fields = document.getElementById('admin-client-fields');
+        if (fields) fields.style.display = isClient ? 'block' : 'none';
+        if (isClient) toggleAdminClientMode();
+    }
+
+    async function loadAdminAudit() {
+        if (!supabaseClient || currentAresUser?.role !== 'super_admin') return [];
+        const { data, error } = await supabaseClient
+            .from('ares_admin_audit')
+            .select('id,target_email,action,details,created_at')
+            .order('created_at', { ascending: false })
+            .limit(12);
+        if (error) {
+            console.error('Registro amministrativo non disponibile:', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    function renderAdminAudit() {
+        const container = document.getElementById('admin-audit-list');
+        if (!container) return;
+        if (!adminAuditList.length) {
+            container.innerHTML = '<div style="color:#64748b;font-size:13px;">Nessuna operazione registrata.</div>';
+            return;
+        }
+        const actionLabels = {
+            invite_user: 'Invito inviato',
+            activate_user: 'Account riattivato',
+            deactivate_user: 'Account disattivato'
+        };
+        container.innerHTML = adminAuditList.map(item => `
+            <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:rgba(15,23,42,.45);border:1px solid rgba(255,255,255,.05);">
+                <span style="color:#cbd5e1;font-size:13px;"><strong style="color:#a5b4fc;">${escapeAresHtml(actionLabels[item.action] || item.action)}</strong> · ${escapeAresHtml(item.target_email || 'utente')}</span>
+                <span style="color:#64748b;font-size:12px;">${escapeAresHtml(new Date(item.created_at).toLocaleString('it-IT'))}</span>
+            </div>`).join('');
+    }
+
+    async function refreshAdminUsers() {
+        if (currentAresUser?.role !== 'super_admin') return;
+        const [profiles, audit] = await Promise.all([
+            loadUsersFromCloud(),
+            loadAdminAudit(),
+            loadAdminReferenceData()
+        ]);
+        usersList = profiles;
+        adminAuditList = audit;
+        renderUsers();
+        renderAdminAudit();
+        toggleAdminClientFields();
+    }
+
+    async function getAdminFunctionError(error, data) {
+        if (data?.error) return data.error;
+        try {
+            if (error?.context && typeof error.context.json === 'function') {
+                const payload = await error.context.json();
+                if (payload?.error) return payload.error;
+            }
+        } catch (parseError) {
+            console.warn('Risposta Edge Function non leggibile:', parseError);
+        }
+        return error?.message || 'Operazione non riuscita. Riprova.';
+    }
+
+    async function inviteAresUser() {
+        if (!supabaseClient || currentAresUser?.role !== 'super_admin') return;
+        const fullName = document.getElementById('admin-user-full-name')?.value.trim() || '';
+        const email = document.getElementById('admin-user-email')?.value.trim().toLowerCase() || '';
+        const usernameInput = document.getElementById('admin-user-username')?.value.trim() || '';
+        const username = usernameInput || email.split('@')[0] || '';
+        const role = document.getElementById('admin-user-role')?.value || 'operatore';
+        const button = document.getElementById('admin-user-invite-button');
+
+        if (fullName.length < 2 || username.length < 2 || !email.includes('@')) {
+            showAdminUsersMessage('Completa nome, nome utente ed email.', 'error');
+            return;
+        }
+
+        const client = { mode: 'none' };
+        if (role === 'cliente') {
+            client.mode = document.getElementById('admin-client-mode')?.value || 'existing';
+            if (client.mode === 'existing') {
+                client.clientId = document.getElementById('admin-user-client')?.value || '';
+                client.siteId = document.getElementById('admin-user-site')?.value || '';
+                if (!client.clientId) {
+                    showAdminUsersMessage('Seleziona il cliente da assegnare.', 'error');
+                    return;
+                }
+            } else {
+                client.code = document.getElementById('admin-new-client-code')?.value.trim() || '';
+                client.name = document.getElementById('admin-new-client-name')?.value.trim() || '';
+                client.siteName = document.getElementById('admin-new-site-name')?.value.trim() || '';
+                if (!client.code || !client.name || !client.siteName) {
+                    showAdminUsersMessage('Completa codice cliente, nome cliente e cantiere.', 'error');
+                    return;
+                }
+            }
+        }
+
+        if (button) button.disabled = true;
+        showAdminUsersMessage('Invio dell’invito in corso…', 'info');
+        const { data, error } = await supabaseClient.functions.invoke('ares-admin-users', {
+            body: { action: 'invite_user', email, username, fullName, role, client }
+        });
+        if (button) button.disabled = false;
+        if (error || data?.ok !== true) {
+            showAdminUsersMessage(await getAdminFunctionError(error, data), 'error');
+            return;
+        }
+
+        resetUserForm();
+        showAdminUsersMessage(data.message || 'Invito inviato correttamente.');
+        await refreshAdminUsers();
+    }
+
+    async function setAresUserActive(userId, active) {
+        if (!supabaseClient || currentAresUser?.role !== 'super_admin') return;
+        const target = usersList.find(user => user.id === userId);
+        if (!target) return;
+        const actionLabel = active ? 'riattivare' : 'disattivare';
+        if (!window.confirm(`Vuoi ${actionLabel} l'account ${target.email}?`)) return;
+
+        showAdminUsersMessage(`${active ? 'Riattivazione' : 'Disattivazione'} in corso…`, 'info');
+        const { data, error } = await supabaseClient.functions.invoke('ares-admin-users', {
+            body: { action: 'set_active', userId, active }
+        });
+        if (error || data?.ok !== true) {
+            showAdminUsersMessage(await getAdminFunctionError(error, data), 'error');
+            return;
+        }
+        showAdminUsersMessage(data.message || 'Account aggiornato.');
+        await refreshAdminUsers();
+    }
+
     function renderUsers() {
         const listBody = document.getElementById('utenti-list-body');
         if (!listBody) return;
@@ -22635,19 +22933,23 @@
         if (standardSpan) standardSpan.textContent = `${standard} std / ${clients} clienti`;
 
         if (usersList.length === 0) {
-            listBody.innerHTML = '<tr><td colspan="5" style="padding:22px 8px;text-align:center;color:#64748b;">Nessun profilo visibile oppure migrazione Auth non ancora eseguita.</td></tr>';
+            listBody.innerHTML = '<tr><td colspan="6" style="padding:22px 8px;text-align:center;color:#64748b;">Nessun profilo disponibile.</td></tr>';
             return;
         }
 
         usersList.forEach(user => {
             const roleLabels = {
                 super_admin: 'Super Admin', admin: 'Admin', operatore: 'Operatore',
-                user: 'Standard User', cliente: 'Portale Cliente'
+                user: 'Utente standard', cliente: 'Portale Cliente'
             };
             const roleLabel = roleLabels[user.role] || 'Profilo';
             const roleColor = ['super_admin', 'admin'].includes(user.role) ? '#818cf8' : (user.role === 'cliente' ? '#10b981' : '#94a3b8');
             const statusLabel = user.active === false ? 'Disabilitato' : 'Attivo';
             const statusColor = user.active === false ? '#f43f5e' : '#10b981';
+            const protectedAccount = user.id === currentAresUser?.id || user.role === 'super_admin';
+            const actionButton = protectedAccount
+                ? '<span style="color:#475569;font-size:12px;">Protetto</span>'
+                : `<button type="button" onclick="setAresUserActive('${user.id}', ${user.active === false})" style="border:1px solid ${user.active === false ? 'rgba(34,197,94,.35)' : 'rgba(244,63,94,.3)'};background:${user.active === false ? 'rgba(34,197,94,.1)' : 'rgba(244,63,94,.08)'};color:${user.active === false ? '#86efac' : '#fda4af'};padding:7px 10px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px;">${user.active === false ? 'Riattiva' : 'Disattiva'}</button>`;
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
             tr.innerHTML = `
@@ -22655,28 +22957,35 @@
                 <td style="padding:12px 8px;font-weight:700;color:#fff;">${escapeAresHtml(user.username)}</td>
                 <td style="padding:12px 8px;color:#cbd5e1;">${escapeAresHtml(user.email)}</td>
                 <td style="padding:12px 8px;"><span style="color:${roleColor};font-weight:700;">${roleLabel}</span></td>
-                <td style="padding:12px 8px;text-align:right;color:${statusColor};font-weight:700;">${statusLabel}</td>`;
+                <td style="padding:12px 8px;text-align:right;color:${statusColor};font-weight:700;">${statusLabel}</td>
+                <td style="padding:12px 8px;text-align:right;">${actionButton}</td>`;
             listBody.appendChild(tr);
         });
+    }
+
+    function resetUserForm() {
+        ['admin-user-full-name', 'admin-user-username', 'admin-user-email', 'admin-new-client-code', 'admin-new-client-name', 'admin-new-site-name']
+            .forEach(id => { const element = document.getElementById(id); if (element) element.value = ''; });
+        const role = document.getElementById('admin-user-role');
+        const client = document.getElementById('admin-user-client');
+        const site = document.getElementById('admin-user-site');
+        if (role) role.value = 'operatore';
+        if (client) client.value = '';
+        if (site) site.value = '';
+        toggleAdminClientFields();
+        return false;
     }
 
     function enterAsClient() {
         alert('Per sicurezza il cambio di identita dal browser e stato disattivato. Il portale cliente va collaudato con un account cliente dedicato.');
     }
     function openResetPasswordModal() {
-        alert('Le password sono gestite da Supabase Authentication e non sono leggibili da ARES.');
+        alert('Le password non sono leggibili da ARES. L’utente puo usare “Password dimenticata?” nella schermata di accesso.');
     }
     function confirmResetPassword() { return false; }
-    function editUser() {
-        alert('Modifica il profilo dal Table Editor e l account da Authentication → Users.');
-    }
-    function resetUserForm() { return false; }
-    function saveUser() {
-        alert('Crea prima l account in Supabase Authentication → Users.');
-    }
-    function deleteUser() {
-        alert('Disabilita o elimina l account da Supabase Authentication → Users.');
-    }
+    function editUser() { return false; }
+    function saveUser() { return inviteAresUser(); }
+    function deleteUser() { return false; }
     function exitClientImpersonation() { return false; }
 
     // DETTAGLIO FESTIVITA ITALIANE E PASQUA
