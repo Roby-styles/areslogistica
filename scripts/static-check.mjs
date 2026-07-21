@@ -9,6 +9,8 @@ const assert = (condition, message) => {
 const html = read('index.html');
 const clientScript = read('spazio_cliente.js');
 const serviceWorker = read('service-worker.js');
+const adminFunction = read('supabase/functions/ares-admin-users/index.ts');
+const adminMigration = read('supabase/migrations/003_admin_user_management.sql');
 
 new vm.Script(clientScript, { filename: 'spazio_cliente.js' });
 new vm.Script(serviceWorker, { filename: 'service-worker.js' });
@@ -45,7 +47,15 @@ JSON.parse(manifestBytes.toString('utf8'));
 const browserCode = `${html}\n${clientScript}`;
 assert(html.includes("event === 'PASSWORD_RECOVERY'"), 'gestione callback recupero password mancante');
 assert(html.includes('resetPasswordForEmail'), 'richiesta recupero password mancante');
+assert(html.includes("['recovery', 'invite'].includes(initialAuthCallbackType)"), 'gestione callback invito mancante');
+assert(html.includes("functions.invoke('ares-admin-users'"), 'collegamento gestione utenti protetta mancante');
 assert(!html.includes('http://localhost:3000'), 'redirect localhost presente nel sorgente');
+assert(!browserCode.includes('SUPABASE_SERVICE_ROLE_KEY'), 'riferimento service-role presente nel codice browser');
+assert(adminFunction.includes('.auth.getUser('), 'verifica server-side del token mancante');
+assert(/callerProfile\?\.role\s*!==\s*["']super_admin["']/.test(adminFunction), 'controllo server-side Super Admin mancante');
+assert(adminFunction.includes('inviteUserByEmail'), 'invito email server-side mancante');
+assert(adminMigration.includes('alter table public.ares_admin_audit enable row level security'), 'RLS registro amministrativo mancante');
+assert(!/eyJ[A-Za-z0-9_-]{80,}/.test(adminFunction), 'possibile chiave JWT inclusa nella Edge Function');
 for (const [pattern, description] of [
   [/ares2026/i, 'password predefinita nel sorgente'],
   [/from\(['"]ares_users['"]\)/, 'lettura browser della tabella password legacy'],
