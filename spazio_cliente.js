@@ -1,6 +1,9 @@
 let spazioClienteInizializzato = false;
 function initSpazioCliente() {
-    if(spazioClienteInizializzato) return;
+    if (spazioClienteInizializzato) {
+        if (typeof window.initTelemetryMap === 'function') window.initTelemetryMap();
+        return;
+    }
     spazioClienteInizializzato = true;
 
 // Simulatore IoT - Ares Smart Green
@@ -167,6 +170,8 @@ function initSpazioCliente() {
             logMsg("Elettrovalvola CHIUSA. Innaffiatori fermati.", "info");
         }
     }
+    // Il pulsante nel modal viene generato dinamicamente e richiama una funzione globale.
+    window.togglePump = togglePump;
     
     function toggleLights() {
         state.controls.lightsActive = !state.controls.lightsActive;
@@ -513,6 +518,10 @@ function initSpazioCliente() {
             }
         });
     }
+
+    if (typeof window.initTelemetryMap === 'function') {
+        setTimeout(window.initTelemetryMap, 50);
+    }
     
 }
 
@@ -570,44 +579,62 @@ async function renderGalleriaPanel(bodyEl) {
         bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Connessione non disponibile.</div>`;
         return;
     }
+    if (!user.client_id) {
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f59e0b;font-size:13px;">⚠️ Questo profilo non è ancora collegato a un cliente.</div>`;
+        return;
+    }
 
-    // Elenca la cartella dell'utente nel bucket galleria-lavori
-    const folderPath = user.username;
+    // L'UUID del cliente e verificato dalle policy RLS di Supabase Storage.
+    const folderPath = user.client_id;
     const { data: rawFiles, error } = await sb.storage
         .from('galleria-lavori')
         .list(folderPath, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
 
     const files = (rawFiles || []).filter(f => f.id && f.metadata);
 
-    if (error || files.length === 0) {
-        // Fallback: mostra i file nella root del bucket (compatibilità con caricamenti precedenti)
-        const { data: rootFiles } = await sb.storage
-            .from('galleria-lavori')
-            .list('', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
-        const rootMedia = (rootFiles || []).filter(f => f.id && f.metadata);
-        if (rootMedia.length === 0) {
-            bodyEl.innerHTML = `
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:#4a5568;gap:12px;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <div style="font-size:14px;color:#64748b;font-weight:600;">Nessun file multimediale presente</div>
-                </div>`;
-            return;
-        }
-        _buildGalleryHTML(bodyEl, rootMedia, sb, '');
+    if (error) {
+        console.error('Errore lettura galleria:', error);
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Impossibile leggere la galleria.</div>`;
+        return;
+    }
+    if (files.length === 0) {
+        bodyEl.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:#4a5568;gap:12px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:14px;color:#64748b;font-weight:600;">Nessun file multimediale presente</div>
+            </div>`;
         return;
     }
 
-    _buildGalleryHTML(bodyEl, files, sb, folderPath);
+    await _buildGalleryHTML(bodyEl, files, sb, folderPath);
 }
 
-function _buildGalleryHTML(bodyEl, files, sb, folder) {
+function _scEscape(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+async function _buildGalleryHTML(bodyEl, files, sb, folder) {
     const videoExts = ['mp4','mov','avi','webm','mkv'];
     const imgExts   = ['jpg','jpeg','png','webp','gif'];
 
-    const items = files.map(f => {
+    const signedFiles = await Promise.all(files.map(async f => {
+        const path = `${folder}/${f.name}`;
+        const { data, error } = await sb.storage.from('galleria-lavori').createSignedUrl(path, 3600);
+        if (error) {
+            console.warn('Link galleria non creato:', path, error);
+            return null;
+        }
+        return { ...f, signedUrl: data.signedUrl };
+    }));
+
+    const items = signedFiles.filter(Boolean).map(f => {
         const ext  = (f.name.split('.').pop() || '').toLowerCase();
-        const path = folder ? `${folder}/${f.name}` : f.name;
-        const url  = sb.storage.from('galleria-lavori').getPublicUrl(path).data.publicUrl;
+        const url  = f.signedUrl;
         const isVideo = videoExts.includes(ext);
         const isImg   = imgExts.includes(ext);
 
@@ -626,20 +653,20 @@ function _buildGalleryHTML(bodyEl, files, sb, folder) {
         const thumbHtml = isVideo
             ? `<div class="media-thumb" style="background:rgba(99,102,241,0.15);"><span class="play-overlay">▶</span></div>`
             : isImg
-                ? `<div class="media-thumb" style="background-image:url('${url}');background-size:cover;background-position:center;"></div>`
+                ? `<div class="media-thumb" style="background-image:url('${_scEscape(url)}');background-size:cover;background-position:center;"></div>`
                 : `<div class="media-thumb" style="background:rgba(100,116,139,0.15);"><span style="font-size:28px;">📎</span></div>`;
 
         const onClick = isVideo
-            ? `playMedia('${url}', '${f.name.replace(/'/g,"\\'")}')`
+            ? `playMedia('${_scEscape(url)}', '${_scEscape(f.name)}')`
             : isImg
-                ? `playMedia('${url}', '${f.name.replace(/'/g,"\\'")}',' image')`
-                : `window.open('${url}','_blank')`;
+                ? `playMedia('${_scEscape(url)}', '${_scEscape(f.name)}','image')`
+                : `window.open('${_scEscape(url)}','_blank','noopener')`;
 
         return `
             <div class="media-card" onclick="${onClick}">
                 ${thumbHtml}
                 <div class="media-info">
-                    <h4 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${f.name}">${f.name}</h4>
+                    <h4 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${_scEscape(f.name)}">${_scEscape(f.name)}</h4>
                     <p>${dateStr}</p>
                 </div>
             </div>`;
@@ -660,8 +687,8 @@ function _badgeKey(username, cat) {
 
 function markCategoryRead(cat) {
     const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
-    if (!user) return;
-    localStorage.setItem(_badgeKey(user.username, cat), new Date().toISOString());
+    if (!user || !user.client_id) return;
+    localStorage.setItem(_badgeKey(user.client_id, cat), new Date().toISOString());
     // Rimuove il badge dalla tile corrispondente
     const tileMap = {
         'Fatture':    'tile-fatture',
@@ -683,18 +710,18 @@ function markCategoryRead(cat) {
 window.checkNewDocs = async function() {
     const sb   = window.supabaseClient;
     const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
-    if (!sb || !user) return;
+    if (!sb || !user || !user.client_id) return;
 
     const categorie = [
-        { cat: 'Fatture',    tileId: 'tile-fatture',    bucket: 'ares-documenti', folder: `${user.username}/Fatture` },
-        { cat: 'Documenti',  tileId: 'tile-documenti',  bucket: 'ares-documenti', folder: `${user.username}/Documenti` },
-        { cat: 'Rapportini', tileId: 'tile-rapportini', bucket: 'ares-documenti', folder: `${user.username}/Rapportini` },
-        { cat: 'Galleria',   tileId: 'tile-galleria',   bucket: 'galleria-lavori', folder: user.username }
+        { cat: 'Fatture',    tileId: 'tile-fatture',    bucket: 'ares-documenti', folder: `${user.client_id}/Fatture` },
+        { cat: 'Documenti',  tileId: 'tile-documenti',  bucket: 'ares-documenti', folder: `${user.client_id}/Documenti` },
+        { cat: 'Rapportini', tileId: 'tile-rapportini', bucket: 'ares-documenti', folder: `${user.client_id}/Rapportini` },
+        { cat: 'Galleria',   tileId: 'tile-galleria',   bucket: 'galleria-lavori', folder: user.client_id }
     ];
 
     for (const { cat, tileId, bucket, folder } of categorie) {
         try {
-            const lastSeenStr = localStorage.getItem(_badgeKey(user.username, cat));
+            const lastSeenStr = localStorage.getItem(_badgeKey(user.client_id, cat));
             const lastSeen    = lastSeenStr ? new Date(lastSeenStr) : null;
 
             const { data: files } = await sb.storage
@@ -755,7 +782,7 @@ function _fmtSize(bytes) {
 async function renderDocumentiPanel(bodyEl, categoria) {
     const sb = window.supabaseClient;
     const user = typeof getLoggedUser === 'function' ? getLoggedUser() : null;
-    const isAdmin = !!sessionStorage.getItem('ares_admin_origin');
+    const isAdmin = !!user && ['super_admin', 'admin'].includes(user.role);
 
     // --- Stato di caricamento ---
     bodyEl.innerHTML = `
@@ -771,8 +798,12 @@ async function renderDocumentiPanel(bodyEl, categoria) {
         bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f43f5e;font-size:13px;">⚠️ Connessione non disponibile. Riprova tra qualche secondo.</div>`;
         return;
     }
+    if (!user.client_id) {
+        bodyEl.innerHTML = `<div style="padding:30px;text-align:center;color:#f59e0b;font-size:13px;">⚠️ Questo profilo non è ancora collegato a un cliente.</div>`;
+        return;
+    }
 
-    const folderPath = `${user.username}/${categoria}`;
+    const folderPath = `${user.client_id}/${categoria}`;
 
     const { data: rawFiles, error } = await sb.storage
         .from('ares-documenti')
@@ -795,7 +826,7 @@ async function renderDocumentiPanel(bodyEl, categoria) {
             </label>
             <input type="file" id="sc-doc-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
                 style="display:none"
-                onchange="uploadDocumento(this, '${categoria}', '${user.username}')">
+                onchange="uploadDocumento(this, '${categoria}', '${user.client_id}')">
             <span id="sc-upload-status" style="margin-left:12px;font-size:12px;color:#94a3b8;"></span>
         </div>` : '';
 
@@ -809,10 +840,20 @@ async function renderDocumentiPanel(bodyEl, categoria) {
                 ${isAdmin ? '<div style="font-size:12px;color:#475569;">Carica il primo documento con il pulsante sopra</div>' : '<div style="font-size:12px;color:#475569;">I Suoi documenti appariranno qui non appena caricati</div>'}
             </div>`;
     } else {
+        const signedFiles = await Promise.all(files.map(async file => {
+            const path = `${folderPath}/${file.name}`;
+            const { data, error: signedError } = await sb.storage.from('ares-documenti').createSignedUrl(path, 3600);
+            if (signedError) {
+                console.warn('Link documento non creato:', path, signedError);
+                return null;
+            }
+            return { ...file, path, signedUrl: data.signedUrl };
+        }));
+
         listHtml = `<div style="display:flex;flex-direction:column;gap:10px;">` +
-            files.map(f => {
-                const path = `${folderPath}/${f.name}`;
-                const pubUrl = sb.storage.from('ares-documenti').getPublicUrl(path).data.publicUrl;
+            signedFiles.filter(Boolean).map(f => {
+                const path = f.path;
+                const signedUrl = f.signedUrl;
                 const size  = _fmtSize(f.metadata?.size);
                 const dateStr = f.created_at
                     ? new Date(f.created_at).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'})
@@ -820,7 +861,7 @@ async function renderDocumentiPanel(bodyEl, categoria) {
                 const color = _docIcon(f.name);
                 const emoji = _docEmoji(f.name);
                 const deleteBtnHtml = isAdmin ? `
-                    <button onclick="deleteDocumento('${path.replace(/'/g,"\\'")}', '${categoria}', '${user.username}')"
+                    <button onclick="deleteDocumento('${_scEscape(path)}', '${_scEscape(categoria)}')"
                         style="padding:7px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;white-space:nowrap;"
                         onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
                         Elimina
@@ -830,12 +871,12 @@ async function renderDocumentiPanel(bodyEl, categoria) {
                         <div style="display:flex;align-items:center;gap:14px;min-width:0;">
                             <div style="width:40px;height:40px;border-radius:10px;background:${color}20;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">${emoji}</div>
                             <div style="min-width:0;">
-                                <div style="font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="${f.name}">${f.name}</div>
+                                <div style="font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="${_scEscape(f.name)}">${_scEscape(f.name)}</div>
                                 <div style="font-size:11px;color:#64748b;margin-top:2px;">${dateStr}${size ? ' · ' + size : ''}</div>
                             </div>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                            <a href="${pubUrl}" target="_blank" download="${f.name}"
+                            <a href="${_scEscape(signedUrl)}" target="_blank" rel="noopener" download="${_scEscape(f.name)}"
                                 style="padding:7px 16px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;text-decoration:none;transition:all 0.2s;white-space:nowrap;"
                                 onmouseover="this.style.background='rgba(99,102,241,0.3)'" onmouseout="this.style.background='rgba(99,102,241,0.15)'">
                                 Scarica
@@ -854,7 +895,7 @@ async function renderDocumentiPanel(bodyEl, categoria) {
 }
 
 // ── Upload documento ──────────────────────────────────────────
-window.uploadDocumento = async function(inputEl, categoria, username) {
+window.uploadDocumento = async function(inputEl, categoria, clientId) {
     const file = inputEl.files[0];
     if (!file) return;
 
@@ -864,7 +905,7 @@ window.uploadDocumento = async function(inputEl, categoria, username) {
 
     // Sanitizza il nome: rimuovi caratteri problematici
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_àèéìòùÀÈÉÌÒÙ ]/g, '_');
-    const path = `${username}/${categoria}/${Date.now()}_${safeName}`;
+    const path = `${clientId}/${categoria}/${Date.now()}_${safeName}`;
 
     const { error } = await sb.storage.from('ares-documenti').upload(path, file, {
         cacheControl: '3600',
@@ -889,7 +930,7 @@ window.uploadDocumento = async function(inputEl, categoria, username) {
 };
 
 // ── Elimina documento ─────────────────────────────────────────
-window.deleteDocumento = async function(path, categoria, username) {
+window.deleteDocumento = async function(path, categoria) {
     if (!confirm('Eliminare definitivamente questo documento?')) return;
 
     const sb = window.supabaseClient;
@@ -952,59 +993,85 @@ window.closeDocModal = function() {
     }
 };
 
-// Inizializzazione Mappa Telemetrica 3D Nativa (MapLibre GL)
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        if(typeof maplibregl !== 'undefined' && document.getElementById('telemetry-map')) {
-            const map = new maplibregl.Map({
-                container: 'telemetry-map',
-                style: {
-                    version: 8,
-                    sources: {
-                        'esri-satellite': {
-                            type: 'raster',
-                            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-                            tileSize: 256,
-                            maxzoom: 19 // Permette l'overzoom (non fa sparire la mappa se zoomi troppo)
-                        }
-                    },
-                    layers: [{
-                        id: 'satellite-layer',
+// La mappa viene creata soltanto quando si apre lo Spazio Cliente. In questo
+// modo un browser privo di WebGL puo comunque usare tutto il gestionale.
+let telemetryMapInstance = null;
+
+function showTelemetryMapFallback(message) {
+    const container = document.getElementById('telemetry-map');
+    if (!container) return;
+    container.innerHTML = `
+        <div style="height:100%;min-height:260px;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(135deg,#111827,#1e293b);color:#94a3b8;font-size:13px;line-height:1.6;">
+            <div><div style="font-size:34px;margin-bottom:10px;">🗺️</div>${_scEscape(message)}</div>
+        </div>`;
+}
+
+window.initTelemetryMap = function() {
+    const container = document.getElementById('telemetry-map');
+    if (!container) return;
+
+    if (telemetryMapInstance) {
+        setTimeout(() => telemetryMapInstance.resize(), 50);
+        return;
+    }
+
+    if (typeof maplibregl === 'undefined' || typeof maplibregl.supported !== 'function' || !maplibregl.supported()) {
+        showTelemetryMapFallback('La mappa 3D non è supportata da questo browser. Le altre funzioni restano disponibili.');
+        return;
+    }
+
+    try {
+        telemetryMapInstance = new maplibregl.Map({
+            container,
+            style: {
+                version: 8,
+                sources: {
+                    'esri-satellite': {
                         type: 'raster',
-                        source: 'esri-satellite',
-                        minzoom: 0,
-                        maxzoom: 22
-                    }]
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        maxzoom: 19
+                    }
                 },
-                center: [12.376391, 42.495363], // [lng, lat]
-                zoom: 18,
-                pitch: 60, // Inclinazione 3D
-                bearing: -20, // Rotazione
-                dragRotate: true,
-                pitchWithRotate: true,
-                attributionControl: false
-            });
+                layers: [{
+                    id: 'satellite-layer',
+                    type: 'raster',
+                    source: 'esri-satellite',
+                    minzoom: 0,
+                    maxzoom: 22
+                }]
+            },
+            center: [12.376391, 42.495363],
+            zoom: 18,
+            pitch: 60,
+            bearing: -20,
+            dragRotate: true,
+            pitchWithRotate: true,
+            attributionControl: false
+        });
 
-            // Controlli di navigazione (Zoom e Bussola)
-            map.addControl(new maplibregl.NavigationControl({
-                visualizePitch: true
-            }), 'top-right');
+        telemetryMapInstance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+        telemetryMapInstance.on('error', event => {
+            console.warn('MapLibre non disponibile:', event?.error || event);
+        });
+        telemetryMapInstance.on('load', () => {
+            const lat = 42.495363;
+            const lng = 12.376391;
+            const marker = document.createElement('div');
+            marker.className = 'map-crosshair';
+            marker.style.position = 'relative';
+            marker.style.top = '0';
+            marker.style.left = '0';
+            marker.style.transform = 'none';
 
-            map.on('load', () => {
-                const lat = 42.495363;
-                const lng = 12.376391;
-
-                // Esempio POI Interattivo (Sensore/Telecamera)
-                const el = document.createElement('div');
-                el.className = 'map-crosshair'; // Usiamo il mirino come marker di prova
-                el.style.position = 'relative'; // Sovrascriviamo l'absolute del CSS
-                el.style.top = '0'; el.style.left = '0'; el.style.transform = 'none';
-                
-                new maplibregl.Marker(el)
-                    .setLngLat([lng, lat])
-                    .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<div style="color: black; font-family: sans-serif;"><h3>Telecamera PTZ</h3><p>Sensore attivo.</p></div>'))
-                    .addTo(map);
-            });
-        }
-    }, 500); 
-});
+            new maplibregl.Marker(marker)
+                .setLngLat([lng, lat])
+                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<div style="color:black;font-family:sans-serif;"><h3>Telecamera PTZ</h3><p>Sensore attivo.</p></div>'))
+                .addTo(telemetryMapInstance);
+        });
+    } catch (error) {
+        console.error('Inizializzazione MapLibre fallita:', error);
+        telemetryMapInstance = null;
+        showTelemetryMapFallback('La mappa 3D non può essere avviata su questo dispositivo.');
+    }
+};

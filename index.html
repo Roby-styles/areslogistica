@@ -17,16 +17,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7"></script>
     <!-- Leaflet.js Cartografia GIS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- html2canvas per salvataggio mappa reale -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- hls.js per supporto flussi HLS (telecamere IP / streaming) -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js"></script>
     <style>
         :root {
             --base-font-size: 19px;
@@ -1957,7 +1957,7 @@
             pointer-events: none;
         }
     </style>
-    <script src="https://unpkg.com/force-graph"></script>
+    <script src="https://unpkg.com/force-graph@1.51.4/dist/force-graph.min.js"></script>
     <!-- MapLibre GL CSS & JS per VERO 3D Interattivo -->
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
@@ -1991,20 +1991,43 @@
             
             <div style="display: flex; flex-direction: column; gap: 16px; text-align: left;">
                 <div class="form-group" style="margin:0; display:flex; flex-direction:column; gap:6px;">
-                    <label style="font-size: 11px; font-weight: 700; color: #a5b4fc; letter-spacing: 0.8px; text-transform: uppercase;">Nome Utente</label>
-                    <input type="text" id="login-username" placeholder="Es. Massimo" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                    <label style="font-size: 11px; font-weight: 700; color: #a5b4fc; letter-spacing: 0.8px; text-transform: uppercase;">Email</label>
+                    <input type="email" id="login-username" placeholder="nome@azienda.it" autocomplete="username" inputmode="email" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
                 </div>
                 <div class="form-group" style="margin:0; display:flex; flex-direction:column; gap:6px;">
                     <label style="font-size: 11px; font-weight: 700; color: #a5b4fc; letter-spacing: 0.8px; text-transform: uppercase;">Password</label>
-                    <input type="password" id="login-password" placeholder="Inserisci password..." style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                    <input type="password" id="login-password" placeholder="Inserisci password..." autocomplete="current-password" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
                 </div>
                 
                 <div style="margin-top: 10px;">
                     <button onclick="handleLogin()" style="width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #3b82f6); border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-size: 15px; box-shadow: 0 4px 15px rgba(99,102,241,0.3); font-family: inherit;">Entra nel Sistema 🚪</button>
                 </div>
+                <button id="login-recovery-button" type="button" onclick="requestPasswordRecovery()" style="align-self: center; background: transparent; border: none; color: #a5b4fc; padding: 2px 8px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: inherit;">Password dimenticata?</button>
             </div>
             <div style="margin-top: 25px; font-size: 11px; color: #64748b; font-weight: 500;">
                 © 2026 ARES LOGISTICA - Tutti i diritti riservati
+            </div>
+        </div>
+    </div>
+
+    <!-- Recupero password aperto esclusivamente da una sessione recovery Supabase -->
+    <div id="password-recovery-overlay" style="position: fixed; inset: 0; background: linear-gradient(135deg, #0c0d12, #181922); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; font-family: 'Outfit', sans-serif;">
+        <div style="background: rgba(30, 30, 45, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); padding: 36px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); width: 100%; max-width: 420px; text-align: center;">
+            <div style="color: #6366f1; font-weight: 800; font-size: 28px; margin-bottom: 8px;">Nuova password</div>
+            <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin: 0 0 22px;">Scegli una nuova password per il tuo account ARES.</p>
+            <div id="password-recovery-error" style="display: none; color: #fda4af; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;"></div>
+            <div id="password-recovery-success" style="display: none; color: #86efac; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Password aggiornata correttamente.</div>
+            <div style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                    Nuova password
+                    <input type="password" id="password-recovery-new" autocomplete="new-password" minlength="12" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                    Conferma password
+                    <input type="password" id="password-recovery-confirm" autocomplete="new-password" minlength="12" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                </label>
+                <button id="password-recovery-save" type="button" onclick="completePasswordRecovery()" style="margin-top: 6px; width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #3b82f6); border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; font-size: 15px; font-family: inherit;">Salva nuova password</button>
+                <button id="password-recovery-login" type="button" onclick="returnToLoginAfterRecovery()" style="display: none; margin-top: 6px; width: 100%; padding: 12px 20px; background: #22c55e; border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; font-size: 15px; font-family: inherit;">Torna all'accesso</button>
             </div>
         </div>
     </div>
@@ -20297,43 +20320,25 @@
             </div>
             
             <div class="card-ui" style="background: rgba(20, 22, 35, 0.45); padding: 25px;">
-                <h3 style="margin-top:0; margin-bottom:20px; font-size:18px; color:#fff;" id="form-user-title">👤 Nuovo Utente / Modifica Password</h3>
-                <input type="hidden" id="user-edit-id" value="">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="u-username">Nome Utente</label>
-                        <input type="text" id="u-username" placeholder="Es. Massimo">
-                    </div>
-                    <div class="form-group">
-                        <label for="u-password">Password <span id="u-password-hint" style="font-size:11px; color:#64748b; font-weight:400;"> (lascia vuoto per non modificare)</span></label>
-                        <input type="password" id="u-password" placeholder="Nuova password..." autocomplete="new-password">
-                    </div>
-                    <div class="form-group">
-                        <label for="u-role">Ruolo Utente</label>
-                        <select id="u-role" style="background: rgba(30, 30, 45, 0.6); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 8px; font-family: inherit; font-size: 13px; outline: none;">
-                            <option value="user">Standard User</option>
-                            <option value="cliente">Portale Cliente</option>
-                            <option value="super_admin">Super Admin</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="margin-top:20px; display: flex; gap: 10px;">
-                    <button class="btn-action" onclick="saveUser()">Aggiungi / Salva Utente 💾</button>
-                    <button class="btn-action btn-secondary" id="btn-cancel-user-edit" onclick="resetUserForm()" style="display: none;">Annulla</button>
-                </div>
+                <h3 style="margin-top:0; margin-bottom:12px; font-size:18px; color:#fff;">🔐 Account protetti da Supabase Auth</h3>
+                <p style="margin:0; color:#94a3b8; line-height:1.6; font-size:13px;">
+                    Le password non sono piu visibili o modificabili da questa pagina. Gli account vengono creati in
+                    <strong style="color:#c7d2fe;">Supabase → Authentication → Users</strong>; qui ARES mostra soltanto
+                    il profilo e il ruolo registrati nel database.
+                </p>
             </div>
             
             <div class="card-ui" style="background: rgba(20, 22, 35, 0.45);">
-                <h3 style="margin-top:0; margin-bottom:15px; font-size:18px; color:#fff;">Elenco Credenziali Attive</h3>
+                <h3 style="margin-top:0; margin-bottom:15px; font-size:18px; color:#fff;">Elenco account attivi</h3>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px; color:#cbd5e1;">
                         <thead>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:8px;">
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 10%;">ID</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 25%;">Utente</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 30%;">Password</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 12%;">ID</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 22%;">Utente</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 34%;">Email</th>
                                 <th style="padding:12px 8px; font-weight:700; color:#818cf8; width: 20%;">Ruolo</th>
-                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; text-align:right; width: 15%;">Azioni</th>
+                                <th style="padding:12px 8px; font-weight:700; color:#818cf8; text-align:right; width: 12%;">Stato</th>
                             </tr>
                         </thead>
                         <tbody id="utenti-list-body">
@@ -20408,6 +20413,9 @@
     // ----------------------------------------------------
     // INIZIALIZZAZIONE SUPABASE CLOUD SYNC ENGINE
     // ----------------------------------------------------
+    const initialAuthCallbackType = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type');
+    const initialAuthErrorCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('error_code');
+
     const supabaseUrl = 'https://ypjmouwytrubedowkjci.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwam1vdXd5dHJ1YmVkb3dramNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDAzNDIsImV4cCI6MjA5NjU3NjM0Mn0.-dmyNf08xQqR3gbeCbptqat0Bl-4SlTZ5YnmSUspU9I';
     let supabaseClient = null;
@@ -20415,13 +20423,12 @@
         if (window.supabase) {
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             window.supabaseClient = supabaseClient; // Esposto globalmente per spazio_cliente.js
-            // Test diagnostico di connessione immediato
-            supabaseClient.from('ares_presence').select('username').limit(1).then(({data, error}) => {
+            // Il controllo della connessione avviene tramite Auth. Non interroghiamo
+            // tabelle protette prima che l'utente abbia effettuato l'accesso.
+            supabaseClient.auth.getSession().then(({ error }) => {
                 if (error) {
-                    console.error("Test di connessione Supabase fallito:", error);
-                    showCloudStatus("Errore Connessione Cloud: " + error.message, "error");
-                } else {
-                    console.log("Test di connessione Supabase riuscito!");
+                    console.error("Test Auth Supabase fallito:", error);
+                    showCloudStatus("Errore Connessione Cloud", "error");
                 }
             });
         }
@@ -20461,6 +20468,9 @@
 
     async function syncLocalToCloud() {
         if (!supabaseClient) return;
+        const currentUser = getLoggedUser();
+        const staffRoles = ['super_admin', 'admin', 'operatore', 'user'];
+        if (!currentUser || !staffRoles.includes(currentUser.role)) return;
         if (localStorage.getItem('ares_cloud_synced') === 'true') return;
         
         try {
@@ -20769,303 +20779,31 @@
             container.innerHTML = "Nessun accesso registrato.";
             return;
         }
-        container.innerHTML = logs.reverse().map(l => `<div>[${new Date(l.time).toLocaleString()}] Accesso effettuato da: <b>${l.username}</b></div>`).join('');
+        container.innerHTML = logs.reverse().map(l =>
+            `<div>[${escapeAresHtml(new Date(l.time).toLocaleString())}] Accesso effettuato da: <b>${escapeAresHtml(l.username)}</b></div>`
+        ).join('');
     }
 
     // ----------------------------------------------------
     // SISTEMA DI AUTENTICAZIONE E SICUREZZA (CLOUD + LOCAL)
     // ----------------------------------------------------
     let usersList = [];
-    const DEFAULT_USERS = [
-        { id: 1, username: 'Massimo', password: 'ares2026!', role: 'super_admin' },
-        { id: 2, username: 'Roberto', password: 'ares2026!', role: 'super_admin' },
-        { id: 3, username: 'Utente 3', password: 'ares2026!', role: 'user' },
-        { id: 4, username: 'Utente 4', password: 'ares2026!', role: 'user' },
-        { id: 5, username: 'Utente 5', password: 'ares2026!', role: 'user' },
-        { id: 6, username: 'ciciarelli', password: 'ares2026!', role: 'cliente' }
-    ];
-
-    async function initAuthSystem() {
-        usersList = await loadUsersFromCloud();
-        
-        if (checkSessionActive()) {
-            setupUserSessionUI();
-            await completeAppInitialization();
-        } else {
-            const overlay = document.getElementById('login-overlay');
-            if (overlay) overlay.style.display = 'flex';
-        }
-    }
-
-    async function loadUsersFromCloud() {
-        let loadedUsers = [];
-        if (supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient.from('ares_users').select('*');
-                if (!error && data && data.length > 0) {
-                    loadedUsers = data.map(row => ({
-                        id: Number(row.id),
-                        username: row.username,
-                        password: row.password,
-                        role: row.role
-                    }));
-                    
-                    // Forza aggiunta di nuovi utenti predefiniti (come ciciarelli) se non esistono ancora nel DB
-                    DEFAULT_USERS.forEach(du => {
-                        if (!loadedUsers.find(u => u.username.toLowerCase() === du.username.toLowerCase())) {
-                            loadedUsers.push(du);
-                            supabaseClient.from('ares_users').insert(du).then();
-                        }
-                    });
-                    
-                    console.log("Utenti caricati da Supabase con successo!");
-                    return loadedUsers;
-                } else {
-                    console.warn("Tabella ares_users vuota o errore. Tenta l'inserimento degli utenti di default.");
-                    await createUsersTableAndInsertDefaults();
-                }
-            } catch (err) {
-                console.error("Errore lettura utenti da Supabase:", err);
-            }
-        }
-        
-        const localUsers = localStorage.getItem('ares_local_users');
-        if (localUsers) {
-            try {
-                return JSON.parse(localUsers);
-            } catch (e) {
-                console.error("Errore parsing utenti locali:", e);
-            }
-        }
-        
-        localStorage.setItem('ares_local_users', JSON.stringify(DEFAULT_USERS));
-        return DEFAULT_USERS;
-    }
-
-    async function createUsersTableAndInsertDefaults() {
-        if (!supabaseClient) return;
-        try {
-            const rowsToInsert = DEFAULT_USERS.map(u => ({
-                id: u.id,
-                username: u.username,
-                password: u.password,
-                role: u.role
-            }));
-            const { error } = await supabaseClient.from('ares_users').insert(rowsToInsert);
-            if (!error) {
-                console.log("Utenti di default inseriti con successo su Supabase!");
-            }
-        } catch (err) {
-            console.error("Errore nell'inserimento degli utenti di default in cloud:", err);
-        }
-    }
-
-    function checkSessionActive() {
-        const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-        if (loggedUserStr) {
-            try {
-                const loggedUser = JSON.parse(loggedUserStr);
-                const exists = usersList.find(u => u.username === loggedUser.username);
-                if (exists) {
-                    return true;
-                }
-            } catch (e) {
-                console.error("Errore lettura sessione:", e);
-            }
-        }
-        return false;
-    }
-
-    function getLoggedUser() {
-        const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-        if (loggedUserStr) {
-            try {
-                return JSON.parse(loggedUserStr);
-            } catch (e) {}
-        }
-        return null;
-    }
-
-    // ---------------------------------------------------
-    // HASHING PASSWORD (SHA-256 Web Crypto API nativa)
-    // ---------------------------------------------------
-    async function hashPassword(plain) {
-        if (!plain) return '';
-        // Se sembra già un hash SHA-256 (64 hex chars) non hashare di nuovo
-        if (/^[0-9a-f]{64}$/.test(plain)) return plain;
-        const encoder = new TextEncoder();
-        const data = encoder.encode(plain);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function isHashed(str) {
-        return /^[0-9a-f]{64}$/.test(str);
-    }
-
-    // --------------------------------------------------------
-    // CAMBIO PASSWORD (Lato Cliente — dal proprio portale)
-    // --------------------------------------------------------
-    async function changeClientPassword() {
-        const currentPwEl = document.getElementById('client-pw-current');
-        const newPwEl     = document.getElementById('client-pw-new');
-        const confirmEl   = document.getElementById('client-pw-confirm');
-        const errEl       = document.getElementById('client-pw-error');
-        const successEl   = document.getElementById('client-pw-success');
-
-        if (!currentPwEl || !newPwEl || !confirmEl) return;
-
-        errEl.textContent = '';
-        successEl.style.display = 'none';
-
-        const currentPwRaw = currentPwEl.value;
-        const newPwRaw     = newPwEl.value;
-        const confirmRaw   = confirmEl.value;
-
-        if (!currentPwRaw) { errEl.textContent = 'Inserisci la password attuale.'; return; }
-        if (!newPwRaw)     { errEl.textContent = 'Inserisci la nuova password.'; return; }
-        if (newPwRaw.length < 6) { errEl.textContent = 'La nuova password deve essere di almeno 6 caratteri.'; return; }
-        if (newPwRaw !== confirmRaw) { errEl.textContent = 'Le due password non coincidono.'; return; }
-
-        const loggedUser = getLoggedUser();
-        if (!loggedUser) { errEl.textContent = 'Sessione scaduta. Effettua nuovamente il login.'; return; }
-
-        // Verifica password attuale
-        const currentHashed = await hashPassword(currentPwRaw);
-        const storedUser = usersList.find(u => u.id === loggedUser.id || u.username.toLowerCase() === loggedUser.username.toLowerCase());
-        if (!storedUser) { errEl.textContent = 'Utente non trovato. Riprova.'; return; }
-
-        const storedPw = storedUser.password;
-        // Confronto: la password salvata potrebbe essere già hashed o in chiaro
-        const matches = isHashed(storedPw) ? (storedPw === currentHashed) : (storedPw === currentPwRaw);
-        if (!matches) { errEl.textContent = 'La password attuale non è corretta.'; return; }
-
-        // Salva la nuova password
-        const newHashed = await hashPassword(newPwRaw);
-        storedUser.password = newHashed;
-        usersList = usersList.map(u => (u.id === storedUser.id ? storedUser : u));
-        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-
-        // Aggiorna anche la sessione corrente
-        const updatedSession = { ...loggedUser, password: newHashed };
-        sessionStorage.setItem('ares_logged_user', JSON.stringify(updatedSession));
-        localStorage.setItem('ares_logged_user', JSON.stringify(updatedSession));
-
-        // Salva su Supabase
-        if (supabaseClient) {
-            try {
-                await supabaseClient.from('ares_users').update({ password: newHashed }).eq('id', storedUser.id);
-            } catch (err) {
-                console.error('Errore aggiornamento password su Supabase:', err);
-            }
-        }
-
-        // Feedback visivo
-        currentPwEl.value = '';
-        newPwEl.value = '';
-        confirmEl.value = '';
-        successEl.style.display = 'block';
-
-        // Nasconde l'intera sezione cambio password dopo aggiornamento riuscito
-        setTimeout(() => {
-            const pwSection = document.getElementById('client-change-pw-form');
-            if (pwSection) {
-                const parentAside = pwSection.closest('aside');
-                if (parentAside) {
-                    parentAside.style.transition = 'opacity 0.5s ease, max-height 0.5s ease';
-                    parentAside.style.opacity = '0';
-                    setTimeout(() => { parentAside.style.display = 'none'; }, 500);
-                }
-            }
-        }, 2000);
-    }
-
-    async function handleLogin() {
-        const usernameInput = document.getElementById('login-username');
-        const passwordInput = document.getElementById('login-password');
-        const errorMsg = document.getElementById('login-error-msg');
-        
-        if (!usernameInput || !passwordInput) return;
-        
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value;
-        
-        if (!username || !password) {
-            showLoginError("Inserisci sia il nome utente che la password!");
-            return;
-        }
-        
-        const user = usersList.find(u => u.username.toLowerCase() === username.toLowerCase());
-
-        if (user) {
-            // Migrazione automatica: supporta sia password in chiaro che hashate
-            let loginOk = false;
-            const inputHash = await hashPassword(password);
-
-            if (isHashed(user.password)) {
-                // Password già hashata: confronto hash
-                loginOk = (inputHash === user.password);
-            } else {
-                // Password in chiaro (legacy): confronto diretto
-                loginOk = (user.password === password);
-                if (loginOk && supabaseClient) {
-                    // Migrazione silenziosa: hasherà e aggiornerà Supabase
-                    const hashed = inputHash;
-                    user.password = hashed;
-                    usersList = usersList.map(u => u.id === user.id ? user : u);
-                    localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-                    supabaseClient.from('ares_users').update({ password: hashed }).eq('id', user.id).then();
-                    console.log('Password migrata a hash SHA-256 per:', user.username);
-                }
-            }
-
-            if (loginOk) {
-                sessionStorage.setItem('ares_logged_user', JSON.stringify(user));
-                localStorage.setItem('ares_logged_user', JSON.stringify(user));
-                
-                showLoginError('');
-                usernameInput.value = '';
-                passwordInput.value = '';
-                
-                setupUserSessionUI();
-                await completeAppInitialization();
-            } else {
-                showLoginError('Credenziali errate! Riprova.');
-            }
-        } else {
-            showLoginError('Credenziali errate! Riprova.');
-        }
-    }
-
-    function showLoginError(msg) {
+    let currentAresUser = null;
+    // Lista legacy intenzionalmente vuota: nessuna password deve essere inclusa nel codice.
+    // Gli account e le password legacy non vengono piu caricati dal browser.
+    function showLoginError(msg, tone = 'error') {
         const errorMsg = document.getElementById('login-error-msg');
         if (!errorMsg) return;
         if (msg) {
             errorMsg.innerText = msg;
+            const isSuccess = tone === 'success';
+            errorMsg.style.color = isSuccess ? '#86efac' : '#f43f5e';
+            errorMsg.style.background = isSuccess ? 'rgba(34, 197, 94, 0.1)' : 'rgba(244, 63, 94, 0.1)';
+            errorMsg.style.borderColor = isSuccess ? 'rgba(34, 197, 94, 0.2)' : 'rgba(244, 63, 94, 0.2)';
             errorMsg.style.display = 'block';
         } else {
             errorMsg.style.display = 'none';
         }
-    }
-
-    async function logout() {
-        const user = getLoggedUser();
-        if (user && user.username && supabaseClient) {
-            try {
-                // Segnala offline istantaneo nel cloud
-                await supabaseClient.from('ares_presence').upsert({
-                    username: user.username,
-                    last_seen: new Date(0).toISOString(),
-                    device: 'Offline'
-                }, { onConflict: 'username' });
-            } catch (e) {
-                console.error("Errore disconnessione presenza:", e);
-            }
-        }
-        localStorage.removeItem('ares_logged_user');
-        sessionStorage.removeItem('ares_logged_user');
-        window.location.reload();
     }
 
     function setupUserSessionUI() {
@@ -21104,13 +20842,10 @@
             // Forza la vista allo spazio cliente
             setTimeout(() => show('spaziocliente'), 50);
             
-            // Registra log locale accessi SOLO se è un accesso reale del cliente
-            // (non durante l'impersonazione admin — ares_admin_origin è presente in quel caso)
-            if (!sessionStorage.getItem('ares_admin_origin')) {
-                let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
-                logs.push({ username: user.username, time: new Date().toISOString() });
-                localStorage.setItem('client_access_logs', JSON.stringify(logs));
-            }
+            // Registra localmente l'accesso reale dell'account cliente autenticato.
+            let logs = JSON.parse(localStorage.getItem('client_access_logs') || '[]');
+            logs.push({ username: user.username, time: new Date().toISOString() });
+            localStorage.setItem('client_access_logs', JSON.stringify(logs));
 
             // Mostra il banner di benvenuto con leggero delay
             setTimeout(() => renderWelcomeBanner(), 200);
@@ -21341,13 +21076,10 @@
     }
 
     async function sendHeartbeat() {
-        const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-        if (!loggedUserStr) return;
-        
+        const user = getLoggedUser();
+        if (!user || !user.username) return;
+
         try {
-            const user = JSON.parse(loggedUserStr);
-            if (!user || !user.username) return;
-            
             if (supabaseClient) {
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 let deviceType = isMobile ? "📱 Mobile" : "💻 PC";
@@ -21356,6 +21088,8 @@
                 }
                 
                 const payload = {
+                    user_id: user.id,
+                    client_id: user.client_id || null,
                     username: user.username,
                     last_seen: new Date().toISOString(),
                     device: deviceType,
@@ -21413,8 +21147,8 @@
         const usersListEl = document.getElementById('online-users-list');
         const activeCount = document.getElementById('active-count');
         
-        const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-        if (!loggedUserStr) {
+        const loggedUser = getLoggedUser();
+        if (!loggedUser) {
             if (presenceSection) presenceSection.style.display = 'none';
             return;
         }
@@ -21430,28 +21164,23 @@
                 
                 if (data) {
                     // Controlla se la sala operativa ha risolto il nostro SOS (mobile)
-                    const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-                    if (loggedUserStr) {
-                        try {
-                            const currentUserObj = JSON.parse(loggedUserStr);
-                            if (currentUserObj && currentUserObj.username) {
-                                const myDbRecord = data.find(row => row.username === currentUserObj.username);
-                                if (myDbRecord) {
-                                    const hasSosInDb = myDbRecord.device && myDbRecord.device.includes("🚨 SOS");
-                                    const elapsed = Date.now() - lastSosActivationTime;
-                                    // Evita falsi positivi nei primi 15 secondi (latenza di propagazione del database)
-                                    if (typeof isSosActive !== 'undefined' && isSosActive && !hasSosInDb && elapsed > 15000) {
-                                        isSosActive = false;
-                                        const btn = document.getElementById('mobile-btn-sos');
-                                        if (btn) {
-                                            btn.innerHTML = "🆘 INVIA SOS EMERGENZA";
-                                            btn.classList.remove('btn-sos-active');
-                                        }
-                                        alert("L'allarme SOS è stato contrassegnato come RISOLTO dalla sala operativa.");
-                                    }
+                    const currentUserObj = getLoggedUser();
+                    if (currentUserObj && currentUserObj.username) {
+                        const myDbRecord = data.find(row => row.user_id === currentUserObj.id || row.username === currentUserObj.username);
+                        if (myDbRecord) {
+                            const hasSosInDb = myDbRecord.device && myDbRecord.device.includes("🚨 SOS");
+                            const elapsed = Date.now() - lastSosActivationTime;
+                            // Evita falsi positivi nei primi 15 secondi (latenza di propagazione del database)
+                            if (typeof isSosActive !== 'undefined' && isSosActive && !hasSosInDb && elapsed > 15000) {
+                                isSosActive = false;
+                                const btn = document.getElementById('mobile-btn-sos');
+                                if (btn) {
+                                    btn.innerHTML = "🆘 INVIA SOS EMERGENZA";
+                                    btn.classList.remove('btn-sos-active');
                                 }
+                                alert("L'allarme SOS è stato contrassegnato come RISOLTO dalla sala operativa.");
                             }
-                        } catch (err) { console.error(err); }
+                        }
                     }
 
                     // --- GESTIONE SOS GLOBALE (LATO PC / SALA OPERATIVA) ---
@@ -22572,332 +22301,383 @@
         });
     }
 
-    // ----------------------------------------------------
-    // FUNZIONI DI GESTIONE UTENTI (SUPER ADMIN VIEW)
-    // ----------------------------------------------------
+    // --------------------------------------------------------
+    // AUTENTICAZIONE SICURA SUPABASE AUTH
+    // Queste definizioni sostituiscono il vecchio login locale mantenendo
+    // compatibili le altre sezioni del gestionale durante la migrazione.
+    // --------------------------------------------------------
+    let aresAuthListener = null;
+    let aresPasswordRecoveryMode = initialAuthCallbackType === 'recovery';
+
+    function showPasswordRecoveryOverlay() {
+        const loginOverlay = document.getElementById('login-overlay');
+        const recoveryOverlay = document.getElementById('password-recovery-overlay');
+        clearAuthCallbackUrl();
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        if (recoveryOverlay) recoveryOverlay.style.display = 'flex';
+        setTimeout(() => document.getElementById('password-recovery-new')?.focus(), 0);
+    }
+
+    function clearAuthCallbackUrl() {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    async function requestPasswordRecovery() {
+        const emailInput = document.getElementById('login-username');
+        const button = document.getElementById('login-recovery-button');
+        const email = emailInput?.value.trim() || '';
+
+        if (!email || !email.includes('@')) {
+            showLoginError('Inserisci prima il tuo indirizzo email.');
+            return;
+        }
+        if (!supabaseClient) {
+            showLoginError('Connessione sicura non disponibile. Ricarica la pagina.');
+            return;
+        }
+
+        if (button) button.disabled = true;
+        const redirectTo = new URL('./', window.location.href).href;
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+        if (button) button.disabled = false;
+
+        if (error) {
+            console.error('Invio recupero password non riuscito:', error);
+            showLoginError('Invio non riuscito. Attendi qualche minuto e riprova.');
+            return;
+        }
+        showLoginError('Se l’indirizzo e valido, riceverai a breve un’email di recupero.', 'success');
+    }
+
+    async function completePasswordRecovery() {
+        const newPasswordEl = document.getElementById('password-recovery-new');
+        const confirmEl = document.getElementById('password-recovery-confirm');
+        const errorEl = document.getElementById('password-recovery-error');
+        const successEl = document.getElementById('password-recovery-success');
+        const saveButton = document.getElementById('password-recovery-save');
+        const loginButton = document.getElementById('password-recovery-login');
+        const newPassword = newPasswordEl?.value || '';
+
+        if (!errorEl || !newPasswordEl || !confirmEl || !supabaseClient) return;
+        errorEl.style.display = 'none';
+        if (newPassword.length < 12) {
+            errorEl.textContent = 'La password deve contenere almeno 12 caratteri.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (newPassword !== confirmEl.value) {
+            errorEl.textContent = 'Le due password non coincidono.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (saveButton) saveButton.disabled = true;
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (saveButton) saveButton.disabled = false;
+        if (error) {
+            console.error('Aggiornamento password recovery non riuscito:', error);
+            errorEl.textContent = 'Il collegamento non e valido o e scaduto. Richiedine uno nuovo.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        newPasswordEl.value = '';
+        confirmEl.value = '';
+        if (successEl) successEl.style.display = 'block';
+        if (saveButton) saveButton.style.display = 'none';
+        if (loginButton) loginButton.style.display = 'block';
+        clearAuthCallbackUrl();
+    }
+
+    async function returnToLoginAfterRecovery() {
+        if (supabaseClient) await supabaseClient.auth.signOut();
+        aresPasswordRecoveryMode = false;
+        clearAuthCallbackUrl();
+        const recoveryOverlay = document.getElementById('password-recovery-overlay');
+        const loginOverlay = document.getElementById('login-overlay');
+        if (recoveryOverlay) recoveryOverlay.style.display = 'none';
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        showLoginError('Password aggiornata. Ora puoi accedere.', 'success');
+    }
+
+    function escapeAresHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    async function loadCurrentAresProfile(authUser) {
+        if (!supabaseClient || !authUser) return null;
+
+        const { data, error } = await supabaseClient
+            .from('ares_profiles')
+            .select('id,email,username,full_name,role,client_id,default_site_id,active')
+            .eq('id', authUser.id)
+            .single();
+
+        if (error) {
+            console.error('Profilo ARES non disponibile:', error);
+            return null;
+        }
+        if (!data || data.active !== true) return null;
+
+        return {
+            id: data.id,
+            email: data.email || authUser.email || '',
+            username: data.username || data.full_name || authUser.email || 'Utente',
+            full_name: data.full_name || '',
+            role: data.role || 'cliente',
+            client_id: data.client_id || null,
+            default_site_id: data.default_site_id || null,
+            active: data.active
+        };
+    }
+
+    async function initAuthSystem() {
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) overlay.style.display = 'flex';
+
+        // Elimina soltanto le vecchie copie insicure del profilo. La sessione
+        // Supabase resta gestita dalla libreria Auth con token firmati.
+        localStorage.removeItem('ares_logged_user');
+        sessionStorage.removeItem('ares_logged_user');
+        sessionStorage.removeItem('ares_admin_origin');
+
+        if (!supabaseClient) {
+            showLoginError('Connessione sicura non disponibile. Ricarica la pagina.');
+            return;
+        }
+
+        if (initialAuthErrorCode === 'otp_expired') {
+            clearAuthCallbackUrl();
+            showLoginError('Il collegamento di recupero e scaduto. Richiedine uno nuovo.');
+        }
+
+        if (aresAuthListener) aresAuthListener.unsubscribe();
+        const { data: listenerData } = supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY' && session) {
+                aresPasswordRecoveryMode = true;
+                setTimeout(showPasswordRecoveryOverlay, 0);
+                return;
+            }
+            if (event === 'SIGNED_OUT') {
+                currentAresUser = null;
+                usersList = [];
+                if (!aresPasswordRecoveryMode && overlay) overlay.style.display = 'flex';
+                return;
+            }
+            if (event === 'USER_UPDATED' && session?.user && !aresPasswordRecoveryMode) {
+                setTimeout(async () => {
+                    currentAresUser = await loadCurrentAresProfile(session.user);
+                    setupUserSessionUI();
+                }, 0);
+            }
+        });
+        aresAuthListener = listenerData.subscription;
+
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) {
+            console.error('Errore lettura sessione Supabase:', error);
+            showLoginError('Impossibile verificare la sessione. Riprova.');
+            return;
+        }
+
+        if (aresPasswordRecoveryMode && data.session) {
+            showPasswordRecoveryOverlay();
+            return;
+        }
+
+        if (data.session?.user) {
+            currentAresUser = await loadCurrentAresProfile(data.session.user);
+        }
+
+        if (!currentAresUser) {
+            if (data.session) await supabaseClient.auth.signOut();
+            showLoginError(data.session ? 'Profilo ARES non configurato o disabilitato.' : '');
+            return;
+        }
+
+        usersList = await loadUsersFromCloud();
+        setupUserSessionUI();
+        await completeAppInitialization();
+    }
+
+    async function loadUsersFromCloud() {
+        const allowedRoles = ['super_admin', 'admin'];
+        if (!supabaseClient || !currentAresUser || !allowedRoles.includes(currentAresUser.role)) return [];
+
+        const { data, error } = await supabaseClient
+            .from('ares_profiles')
+            .select('id,email,username,full_name,role,client_id,active,created_at')
+            .order('username', { ascending: true });
+
+        if (error) {
+            console.error('Errore lettura profili ARES:', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    function checkSessionActive() {
+        return Boolean(currentAresUser);
+    }
+
+    function getLoggedUser() {
+        return currentAresUser;
+    }
+
+    async function handleLogin() {
+        const emailInput = document.getElementById('login-username');
+        const passwordInput = document.getElementById('login-password');
+        if (!emailInput || !passwordInput || !supabaseClient) return;
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        if (!email || !password) {
+            showLoginError('Inserisci email e password.');
+            return;
+        }
+
+        showLoginError('');
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+            console.warn('Accesso Supabase rifiutato:', error?.message);
+            showLoginError('Credenziali errate oppure account non ancora attivo.');
+            return;
+        }
+
+        currentAresUser = await loadCurrentAresProfile(data.user);
+        if (!currentAresUser) {
+            await supabaseClient.auth.signOut();
+            showLoginError('Profilo ARES non configurato o disabilitato.');
+            return;
+        }
+
+        emailInput.value = '';
+        passwordInput.value = '';
+        usersList = await loadUsersFromCloud();
+        setupUserSessionUI();
+        await completeAppInitialization();
+    }
+
+    async function changeClientPassword() {
+        const currentPwEl = document.getElementById('client-pw-current');
+        const newPwEl = document.getElementById('client-pw-new');
+        const confirmEl = document.getElementById('client-pw-confirm');
+        const errEl = document.getElementById('client-pw-error');
+        const successEl = document.getElementById('client-pw-success');
+        if (!currentPwEl || !newPwEl || !confirmEl || !currentAresUser) return;
+
+        errEl.textContent = '';
+        if (successEl) successEl.style.display = 'none';
+
+        const currentPassword = currentPwEl.value;
+        const newPassword = newPwEl.value;
+        if (!currentPassword) { errEl.textContent = 'Inserisci la password attuale.'; return; }
+        if (newPassword.length < 8) { errEl.textContent = 'La nuova password deve avere almeno 8 caratteri.'; return; }
+        if (newPassword !== confirmEl.value) { errEl.textContent = 'Le due password non coincidono.'; return; }
+
+        const verified = await supabaseClient.auth.signInWithPassword({
+            email: currentAresUser.email,
+            password: currentPassword
+        });
+        if (verified.error) { errEl.textContent = 'La password attuale non e corretta.'; return; }
+
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (error) { errEl.textContent = 'Aggiornamento non riuscito. Riprova.'; return; }
+
+        currentPwEl.value = '';
+        newPwEl.value = '';
+        confirmEl.value = '';
+        if (successEl) successEl.style.display = 'block';
+    }
+
+    async function logout() {
+        const user = currentAresUser;
+        if (user && supabaseClient) {
+            try {
+                await supabaseClient
+                    .from('ares_presence')
+                    .update({ last_seen: new Date(0).toISOString(), device: 'Offline' })
+                    .eq('user_id', user.id);
+            } catch (error) {
+                console.warn('Presenza offline non aggiornata:', error);
+            }
+            await supabaseClient.auth.signOut();
+        }
+
+        currentAresUser = null;
+        usersList = [];
+        localStorage.removeItem('ares_logged_user');
+        sessionStorage.removeItem('ares_logged_user');
+        sessionStorage.removeItem('ares_admin_origin');
+        window.location.reload();
+    }
+
     function renderUsers() {
         const listBody = document.getElementById('utenti-list-body');
         if (!listBody) return;
-
         listBody.innerHTML = '';
+
+        const activeUsers = usersList.filter(user => user.active !== false);
+        const admins = activeUsers.filter(user => ['super_admin', 'admin'].includes(user.role)).length;
+        const clients = activeUsers.filter(user => user.role === 'cliente').length;
+        const standard = activeUsers.length - admins - clients;
 
         const totalSpan = document.getElementById('kpi-users-total');
         const adminsSpan = document.getElementById('kpi-users-admins');
         const standardSpan = document.getElementById('kpi-users-standard');
+        if (totalSpan) totalSpan.textContent = activeUsers.length;
+        if (adminsSpan) adminsSpan.textContent = admins;
+        if (standardSpan) standardSpan.textContent = `${standard} std / ${clients} clienti`;
 
-        const total = usersList.length;
-        const admins = usersList.filter(u => u.role === 'super_admin').length;
-        const clients = usersList.filter(u => u.role === 'cliente').length;
-        const standard = total - admins - clients;
+        if (usersList.length === 0) {
+            listBody.innerHTML = '<tr><td colspan="5" style="padding:22px 8px;text-align:center;color:#64748b;">Nessun profilo visibile oppure migrazione Auth non ancora eseguita.</td></tr>';
+            return;
+        }
 
-        if (totalSpan) totalSpan.innerText = total;
-        if (adminsSpan) adminsSpan.innerText = admins;
-        if (standardSpan) standardSpan.innerText = standard + ' std / ' + clients + ' clienti';
-
-        usersList.forEach(u => {
-            let roleBadge = '';
-            if (u.role === 'super_admin') {
-                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.25);">Super Admin</span>`;
-            } else if (u.role === 'cliente') {
-                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);">Portale Cliente</span>`;
-            } else {
-                roleBadge = `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(148,163,184,0.10); color:#94a3b8; border:1px solid rgba(148,163,184,0.20);">Standard User</span>`;
-            }
-
-            const pwStatus = isHashed(u.password)
-                ? `<span style="font-size:11px; color:#10b981; font-weight:600;">Protetta (hash)</span>`
-                : `<span style="font-size:11px; color:#f59e0b; font-weight:600;">Non ancora hashed</span>`;
-
-            const clientBtn = u.role === 'cliente'
-                ? `<button onclick="enterAsClient(${u.id})" style="color:#10b981; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Entra nel portale</button>`
-                : '';
-
+        usersList.forEach(user => {
+            const roleLabels = {
+                super_admin: 'Super Admin', admin: 'Admin', operatore: 'Operatore',
+                user: 'Standard User', cliente: 'Portale Cliente'
+            };
+            const roleLabel = roleLabels[user.role] || 'Profilo';
+            const roleColor = ['super_admin', 'admin'].includes(user.role) ? '#818cf8' : (user.role === 'cliente' ? '#10b981' : '#94a3b8');
+            const statusLabel = user.active === false ? 'Disabilitato' : 'Attivo';
+            const statusColor = user.active === false ? '#f43f5e' : '#10b981';
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
             tr.innerHTML = `
-                <td style="padding:12px 8px; color:#94a3b8; font-weight:600;">#${u.id}</td>
-                <td style="padding:12px 8px; font-weight:700; color:#fff;">${u.username}</td>
-                <td style="padding:12px 8px;">${pwStatus}</td>
-                <td style="padding:12px 8px;">${roleBadge}</td>
-                <td style="padding:12px 8px; text-align:right;">
-                    <div style="display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;">
-                        ${clientBtn}
-                        <button onclick="openResetPasswordModal(${u.id})" style="color:#f59e0b; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Reset Password</button>
-                        <button onclick="editUser(${u.id})" style="color:#818cf8; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Modifica</button>
-                        <button onclick="deleteUser(${u.id})" style="color:#f43f5e; background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.2); padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">Elimina</button>
-                    </div>
-                </td>
-            `;
+                <td style="padding:12px 8px;color:#94a3b8;font-family:monospace;">${escapeAresHtml(String(user.id).slice(0, 8))}</td>
+                <td style="padding:12px 8px;font-weight:700;color:#fff;">${escapeAresHtml(user.username)}</td>
+                <td style="padding:12px 8px;color:#cbd5e1;">${escapeAresHtml(user.email)}</td>
+                <td style="padding:12px 8px;"><span style="color:${roleColor};font-weight:700;">${roleLabel}</span></td>
+                <td style="padding:12px 8px;text-align:right;color:${statusColor};font-weight:700;">${statusLabel}</td>`;
             listBody.appendChild(tr);
         });
     }
 
-    // --------------------------------------------------------
-    // MODAL RESET PASSWORD (Super Admin)
-    // --------------------------------------------------------
-    function openResetPasswordModal(userId) {
-        const user = usersList.find(u => u.id === userId);
-        if (!user) return;
-
-        // Rimuovi modal precedente se esiste
-        const existing = document.getElementById('reset-pw-modal');
-        if (existing) existing.remove();
-
-        const modal = document.createElement('div');
-        modal.id = 'reset-pw-modal';
-        modal.style.cssText = `
-            position: fixed; inset: 0; z-index: 99999;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-        `;
-        modal.innerHTML = `
-            <div style="
-                background: linear-gradient(135deg, rgba(15,15,30,0.98), rgba(20,22,45,0.98));
-                border: 1px solid rgba(245,158,11,0.3);
-                border-radius: 20px;
-                padding: 36px;
-                width: 100%;
-                max-width: 420px;
-                box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(245,158,11,0.08);
-                animation: modalIn 0.25s cubic-bezier(.4,0,.2,1);
-            ">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </div>
-                    <div>
-                        <div style="font-size:16px; font-weight:800; color:#fff;">Reset Password</div>
-                        <div style="font-size:12px; color:#64748b; margin-top:2px;">Utente: <strong style="color:#f59e0b;">${user.username}</strong></div>
-                    </div>
-                </div>
-                <label style="display:block; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Nuova password temporanea</label>
-                <input type="password" id="reset-pw-input" placeholder="Es. Temp2024!" autocomplete="new-password"
-                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; margin-bottom:8px;">
-                <input type="password" id="reset-pw-confirm" placeholder="Conferma password" autocomplete="new-password"
-                    style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 16px; color:#fff; font-size:14px; outline:none; font-family:inherit; margin-bottom:6px;">
-                <div id="reset-pw-error" style="color:#f43f5e; font-size:12px; min-height:18px; margin-bottom:18px;"></div>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="confirmResetPassword(${userId})"
-                        style="flex:1; padding:13px; background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
-                        Conferma Reset
-                    </button>
-                    <button onclick="document.getElementById('reset-pw-modal').remove()"
-                        style="padding:13px 20px; background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
-                        Annulla
-                    </button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        setTimeout(() => document.getElementById('reset-pw-input')?.focus(), 100);
+    function enterAsClient() {
+        alert('Per sicurezza il cambio di identita dal browser e stato disattivato. Il portale cliente va collaudato con un account cliente dedicato.');
     }
-
-    async function confirmResetPassword(userId) {
-        const newPw = document.getElementById('reset-pw-input').value;
-        const confirm = document.getElementById('reset-pw-confirm').value;
-        const errEl = document.getElementById('reset-pw-error');
-
-        if (!newPw) { errEl.textContent = 'Inserisci una nuova password.'; return; }
-        if (newPw.length < 6) { errEl.textContent = 'La password deve essere di almeno 6 caratteri.'; return; }
-        if (newPw !== confirm) { errEl.textContent = 'Le due password non coincidono.'; return; }
-
-        errEl.textContent = '';
-        const hashed = await hashPassword(newPw);
-
-        const user = usersList.find(u => u.id === userId);
-        if (!user) return;
-
-        user.password = hashed;
-        usersList = usersList.map(u => u.id === userId ? user : u);
-        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-
-        if (supabaseClient) {
-            try {
-                await supabaseClient.from('ares_users').update({ password: hashed }).eq('id', userId);
-            } catch (err) {
-                console.error('Errore reset password su Supabase:', err);
-            }
-        }
-
-        document.getElementById('reset-pw-modal').remove();
-        renderUsers();
-        alert(`Password di "${user.username}" resettata con successo!`);
+    function openResetPasswordModal() {
+        alert('Le password sono gestite da Supabase Authentication e non sono leggibili da ARES.');
     }
-
-    // --------------------------------------------------------
-    // IMPERSONAZIONE CLIENTE (Entra nel portale)
-    // --------------------------------------------------------
-    function enterAsClient(userId) {
-        const client = usersList.find(u => u.id === userId);
-        if (!client) return;
-        if (!confirm(`Vuoi entrare nel portale di "${client.username}"?\nVerrai reindirizzato al suo Spazio Cliente.`)) return;
-
-        // Salva admin originale per poter tornare
-        const currentAdmin = getLoggedUser();
-        sessionStorage.setItem('ares_admin_origin', JSON.stringify(currentAdmin));
-
-        // Imposta il client come utente attivo
-        const clientSession = { ...client };
-        sessionStorage.setItem('ares_logged_user', JSON.stringify(clientSession));
-        localStorage.setItem('ares_logged_user', JSON.stringify(clientSession));
-
-        setupUserSessionUI();
-        show('spaziocliente');
-        renderImpersonationBanner(client.username);
+    function confirmResetPassword() { return false; }
+    function editUser() {
+        alert('Modifica il profilo dal Table Editor e l account da Authentication → Users.');
     }
-
-    function renderImpersonationBanner(clientName) {
-        const existing = document.getElementById('impersonation-banner');
-        if (existing) existing.remove();
-
-        const banner = document.createElement('div');
-        banner.id = 'impersonation-banner';
-        banner.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; z-index: 99990;
-            background: linear-gradient(90deg, #d97706, #f59e0b);
-            color: #000;
-            padding: 10px 24px;
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 13px; font-weight: 700;
-            box-shadow: 0 2px 20px rgba(245,158,11,0.4);
-            animation: slideDown 0.3s cubic-bezier(.4,0,.2,1);
-        `;
-        banner.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Stai gestendo il portale di: <strong style="margin-left:4px;">${clientName}</strong>
-            </div>
-            <button onclick="exitClientImpersonation()" style="
-                background: rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.3);
-                color: #000; padding: 6px 16px; border-radius: 8px;
-                font-size: 12px; font-weight: 800; cursor: pointer;
-            ">Torna al tuo account</button>
-        `;
-        document.body.appendChild(banner);
+    function resetUserForm() { return false; }
+    function saveUser() {
+        alert('Crea prima l account in Supabase Authentication → Users.');
     }
-
-    function exitClientImpersonation() {
-        const adminData = sessionStorage.getItem('ares_admin_origin');
-        if (!adminData) { logout(); return; }
-
-        const admin = JSON.parse(adminData);
-        sessionStorage.setItem('ares_logged_user', JSON.stringify(admin));
-        localStorage.setItem('ares_logged_user', JSON.stringify(admin));
-        sessionStorage.removeItem('ares_admin_origin');
-
-        const banner = document.getElementById('impersonation-banner');
-        if (banner) banner.remove();
-
-        setupUserSessionUI();
-        show('utenti');
+    function deleteUser() {
+        alert('Disabilita o elimina l account da Supabase Authentication → Users.');
     }
-
-
-    function editUser(userId) {
-        const user = usersList.find(u => u.id === userId);
-        if (!user) return;
-        
-        document.getElementById('user-edit-id').value = user.id;
-        document.getElementById('u-username').value = user.username;
-        document.getElementById('u-password').value = user.password;
-        document.getElementById('u-role').value = user.role;
-        
-        document.getElementById('form-user-title').innerText = `✏️ Modifica Utente #${user.id}`;
-        document.getElementById('btn-cancel-user-edit').style.display = 'inline-block';
-        document.getElementById('form-user-title').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function resetUserForm() {
-        document.getElementById('user-edit-id').value = "";
-        document.getElementById('u-username').value = "";
-        document.getElementById('u-password').value = "";
-        document.getElementById('u-role').value = "user";
-        
-        document.getElementById('form-user-title').innerText = `👤 Nuovo Utente / Modifica Password`;
-        document.getElementById('btn-cancel-user-edit').style.display = 'none';
-    }
-
-    async function saveUser() {
-        const editId = document.getElementById('user-edit-id').value;
-        const username = document.getElementById('u-username').value.trim();
-        const passwordRaw = document.getElementById('u-password').value.trim();
-        const role = document.getElementById('u-role').value;
-
-        if (!username) {
-            alert('Il Nome Utente è obbligatorio!');
-            return;
-        }
-        if (!editId && !passwordRaw) {
-            alert('La Password è obbligatoria per un nuovo utente!');
-            return;
-        }
-
-        let targetId = editId ? Number(editId) : Date.now();
-
-        if (!editId) {
-            const dup = usersList.find(u => u.username.toLowerCase() === username.toLowerCase());
-            if (dup) { alert('Questo Nome Utente è già esistente!'); return; }
-        }
-
-        // Hasherà solo se viene fornita una nuova password; altrimenti mantiene quella esistente
-        let finalPassword;
-        if (passwordRaw) {
-            finalPassword = await hashPassword(passwordRaw);
-        } else if (editId) {
-            const existing = usersList.find(u => u.id === Number(editId));
-            finalPassword = existing ? existing.password : '';
-        } else {
-            finalPassword = '';
-        }
-
-        const userObj = { id: targetId, username, password: finalPassword, role };
-
-        if (editId) {
-            usersList = usersList.map(u => u.id === targetId ? userObj : u);
-        } else {
-            usersList.push(userObj);
-        }
-
-        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-
-        if (supabaseClient) {
-            try {
-                const { error } = await supabaseClient.from('ares_users').upsert(userObj);
-                if (error) throw error;
-            } catch (err) {
-                console.error('Impossibile salvare utente su Supabase:', err);
-            }
-        }
-
-        resetUserForm();
-        renderUsers();
-        alert('Utente salvato correttamente!');
-    }
-
-    async function deleteUser(userId) {
-        const currentUser = getLoggedUser();
-        if (currentUser && currentUser.id === userId) {
-            alert("Non puoi eliminare l'utente con cui sei attualmente connesso!");
-            return;
-        }
-        
-        if (!confirm("Sei sicuro di voler eliminare questo utente? L'accesso gli verrà negato immediatamente.")) return;
-        
-        usersList = usersList.filter(u => u.id !== userId);
-        localStorage.setItem('ares_local_users', JSON.stringify(usersList));
-        
-        if (supabaseClient) {
-            try {
-                const { error } = await supabaseClient.from('ares_users').delete().eq('id', userId);
-                if (error) throw error;
-            } catch (err) {
-                console.error("Errore eliminazione utente da Supabase:", err);
-            }
-        }
-        
-        renderUsers();
-        alert("Utente eliminato correttamente!");
-    }
+    function exitClientImpersonation() { return false; }
 
     // DETTAGLIO FESTIVITA ITALIANE E PASQUA
     function getEaster(year) {
@@ -26300,7 +26080,7 @@
                         lat: Number(row.lat),
                         lng: Number(row.lng),
                         status: row.status
-                    }));
+                    })).filter(camera => !isMissingLocalDemoCamera(camera));
                     localStorage.setItem('ares_cameras', JSON.stringify(list));
                     if (typeof camerasList !== 'undefined') {
                         camerasList = list;
@@ -26666,13 +26446,8 @@
     }
 
     function updateMobileInterface() {
-        const loggedUserStr = localStorage.getItem('ares_logged_user') || sessionStorage.getItem('ares_logged_user');
-        if (!loggedUserStr) return;
-        
-        let user;
-        try {
-            user = JSON.parse(loggedUserStr);
-        } catch(e) { return; }
+        const user = getLoggedUser();
+        if (!user) return;
         
         const username = user.username;
         const loggedEl = document.getElementById('mobile-logged-username');
@@ -26926,10 +26701,12 @@
     // Demo cameras preloaded
     const DEFAULT_CAMERAS = [
         { id: 'cam_demo_1', name: 'Ingresso Cantiere Nord', sourceType: 'mp4_locale', url: './video_telecamere/demo1.mov', lat: 41.9109, lng: 12.4818, status: 'active' },
-        { id: 'cam_demo_2', name: 'Deposito Materiali Est', sourceType: 'mp4_locale', url: './video_telecamere/demo2.mov', lat: 41.8986, lng: 12.5133, status: 'active' },
-        { id: 'cam_demo_4', name: 'Varco Uscita Sud', sourceType: 'mp4_locale', url: './video_telecamere/demo4.mov', lat: 41.8850, lng: 12.4850, status: 'maintenance' },
-        { id: 'cam_demo_6', name: 'Telecamera Perimetrale Ovest', sourceType: 'mp4_locale', url: './video_telecamere/demo6.mov', lat: 41.9140, lng: 12.4700, status: 'offline' }
+        { id: 'cam_demo_2', name: 'Deposito Materiali Est', sourceType: 'mp4_locale', url: './video_telecamere/demo2.mov', lat: 41.8986, lng: 12.5133, status: 'active' }
     ];
+
+    function isMissingLocalDemoCamera(camera) {
+        return camera && ['./video_telecamere/demo4.mov', './video_telecamere/demo6.mov'].includes(camera.url);
+    }
 
     function loadCameras() {
         const stored = localStorage.getItem('ares_cameras');
@@ -26937,7 +26714,7 @@
             try {
                 const parsed = JSON.parse(stored);
                 if (Array.isArray(parsed)) {
-                    camerasList = parsed.filter(c => c && typeof c === 'object');
+                    camerasList = parsed.filter(c => c && typeof c === 'object' && !isMissingLocalDemoCamera(c));
                 } else {
                     camerasList = [];
                 }
@@ -28087,23 +27864,6 @@
     // ==========================================
     let aresFascicoli = [];
     
-    // Generatore sonoro "Swoosh" per sfoglio pagina (usando Web Audio API, per non scaricare file)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playFlipSound() {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    }
-
     async function fetchFascicoli() {
         if (!supabaseClient) return;
         const { data, error } = await supabaseClient.from('ares_fascicoli').select('*').order('created_at', { ascending: false });
@@ -29495,5 +29255,3 @@ document.addEventListener('DOMContentLoaded', () => {
     <script src="spazio_cliente.js"></script>
 </body>
 </html>
-
-
