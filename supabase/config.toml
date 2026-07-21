@@ -1,0 +1,4 @@
+project_id = "ypjmouwytrubedowkjci"
+
+[functions.ares-admin-users]
+verify_jwt = true
