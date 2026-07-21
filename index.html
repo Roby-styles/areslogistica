@@ -2002,9 +2002,32 @@
                 <div style="margin-top: 10px;">
                     <button onclick="handleLogin()" style="width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #3b82f6); border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-size: 15px; box-shadow: 0 4px 15px rgba(99,102,241,0.3); font-family: inherit;">Entra nel Sistema 🚪</button>
                 </div>
+                <button id="login-recovery-button" type="button" onclick="requestPasswordRecovery()" style="align-self: center; background: transparent; border: none; color: #a5b4fc; padding: 2px 8px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: inherit;">Password dimenticata?</button>
             </div>
             <div style="margin-top: 25px; font-size: 11px; color: #64748b; font-weight: 500;">
                 © 2026 ARES LOGISTICA - Tutti i diritti riservati
+            </div>
+        </div>
+    </div>
+
+    <!-- Recupero password aperto esclusivamente da una sessione recovery Supabase -->
+    <div id="password-recovery-overlay" style="position: fixed; inset: 0; background: linear-gradient(135deg, #0c0d12, #181922); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; font-family: 'Outfit', sans-serif;">
+        <div style="background: rgba(30, 30, 45, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); padding: 36px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); width: 100%; max-width: 420px; text-align: center;">
+            <div style="color: #6366f1; font-weight: 800; font-size: 28px; margin-bottom: 8px;">Nuova password</div>
+            <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin: 0 0 22px;">Scegli una nuova password per il tuo account ARES.</p>
+            <div id="password-recovery-error" style="display: none; color: #fda4af; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;"></div>
+            <div id="password-recovery-success" style="display: none; color: #86efac; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Password aggiornata correttamente.</div>
+            <div style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                    Nuova password
+                    <input type="password" id="password-recovery-new" autocomplete="new-password" minlength="12" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #a5b4fc; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
+                    Conferma password
+                    <input type="password" id="password-recovery-confirm" autocomplete="new-password" minlength="12" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit;">
+                </label>
+                <button id="password-recovery-save" type="button" onclick="completePasswordRecovery()" style="margin-top: 6px; width: 100%; padding: 12px 20px; background: linear-gradient(135deg, #6366f1, #3b82f6); border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; font-size: 15px; font-family: inherit;">Salva nuova password</button>
+                <button id="password-recovery-login" type="button" onclick="returnToLoginAfterRecovery()" style="display: none; margin-top: 6px; width: 100%; padding: 12px 20px; background: #22c55e; border: none; color: #fff; font-weight: 700; border-radius: 10px; cursor: pointer; font-size: 15px; font-family: inherit;">Torna all'accesso</button>
             </div>
         </div>
     </div>
@@ -20390,6 +20413,9 @@
     // ----------------------------------------------------
     // INIZIALIZZAZIONE SUPABASE CLOUD SYNC ENGINE
     // ----------------------------------------------------
+    const initialAuthCallbackType = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type');
+    const initialAuthErrorCode = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('error_code');
+
     const supabaseUrl = 'https://ypjmouwytrubedowkjci.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwam1vdXd5dHJ1YmVkb3dramNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDAzNDIsImV4cCI6MjA5NjU3NjM0Mn0.-dmyNf08xQqR3gbeCbptqat0Bl-4SlTZ5YnmSUspU9I';
     let supabaseClient = null;
@@ -20765,11 +20791,15 @@
     let currentAresUser = null;
     // Lista legacy intenzionalmente vuota: nessuna password deve essere inclusa nel codice.
     // Gli account e le password legacy non vengono piu caricati dal browser.
-    function showLoginError(msg) {
+    function showLoginError(msg, tone = 'error') {
         const errorMsg = document.getElementById('login-error-msg');
         if (!errorMsg) return;
         if (msg) {
             errorMsg.innerText = msg;
+            const isSuccess = tone === 'success';
+            errorMsg.style.color = isSuccess ? '#86efac' : '#f43f5e';
+            errorMsg.style.background = isSuccess ? 'rgba(34, 197, 94, 0.1)' : 'rgba(244, 63, 94, 0.1)';
+            errorMsg.style.borderColor = isSuccess ? 'rgba(34, 197, 94, 0.2)' : 'rgba(244, 63, 94, 0.2)';
             errorMsg.style.display = 'block';
         } else {
             errorMsg.style.display = 'none';
@@ -22277,6 +22307,98 @@
     // compatibili le altre sezioni del gestionale durante la migrazione.
     // --------------------------------------------------------
     let aresAuthListener = null;
+    let aresPasswordRecoveryMode = initialAuthCallbackType === 'recovery';
+
+    function showPasswordRecoveryOverlay() {
+        const loginOverlay = document.getElementById('login-overlay');
+        const recoveryOverlay = document.getElementById('password-recovery-overlay');
+        clearAuthCallbackUrl();
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        if (recoveryOverlay) recoveryOverlay.style.display = 'flex';
+        setTimeout(() => document.getElementById('password-recovery-new')?.focus(), 0);
+    }
+
+    function clearAuthCallbackUrl() {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    async function requestPasswordRecovery() {
+        const emailInput = document.getElementById('login-username');
+        const button = document.getElementById('login-recovery-button');
+        const email = emailInput?.value.trim() || '';
+
+        if (!email || !email.includes('@')) {
+            showLoginError('Inserisci prima il tuo indirizzo email.');
+            return;
+        }
+        if (!supabaseClient) {
+            showLoginError('Connessione sicura non disponibile. Ricarica la pagina.');
+            return;
+        }
+
+        if (button) button.disabled = true;
+        const redirectTo = new URL('./', window.location.href).href;
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+        if (button) button.disabled = false;
+
+        if (error) {
+            console.error('Invio recupero password non riuscito:', error);
+            showLoginError('Invio non riuscito. Attendi qualche minuto e riprova.');
+            return;
+        }
+        showLoginError('Se l’indirizzo e valido, riceverai a breve un’email di recupero.', 'success');
+    }
+
+    async function completePasswordRecovery() {
+        const newPasswordEl = document.getElementById('password-recovery-new');
+        const confirmEl = document.getElementById('password-recovery-confirm');
+        const errorEl = document.getElementById('password-recovery-error');
+        const successEl = document.getElementById('password-recovery-success');
+        const saveButton = document.getElementById('password-recovery-save');
+        const loginButton = document.getElementById('password-recovery-login');
+        const newPassword = newPasswordEl?.value || '';
+
+        if (!errorEl || !newPasswordEl || !confirmEl || !supabaseClient) return;
+        errorEl.style.display = 'none';
+        if (newPassword.length < 12) {
+            errorEl.textContent = 'La password deve contenere almeno 12 caratteri.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (newPassword !== confirmEl.value) {
+            errorEl.textContent = 'Le due password non coincidono.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (saveButton) saveButton.disabled = true;
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (saveButton) saveButton.disabled = false;
+        if (error) {
+            console.error('Aggiornamento password recovery non riuscito:', error);
+            errorEl.textContent = 'Il collegamento non e valido o e scaduto. Richiedine uno nuovo.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        newPasswordEl.value = '';
+        confirmEl.value = '';
+        if (successEl) successEl.style.display = 'block';
+        if (saveButton) saveButton.style.display = 'none';
+        if (loginButton) loginButton.style.display = 'block';
+        clearAuthCallbackUrl();
+    }
+
+    async function returnToLoginAfterRecovery() {
+        if (supabaseClient) await supabaseClient.auth.signOut();
+        aresPasswordRecoveryMode = false;
+        clearAuthCallbackUrl();
+        const recoveryOverlay = document.getElementById('password-recovery-overlay');
+        const loginOverlay = document.getElementById('login-overlay');
+        if (recoveryOverlay) recoveryOverlay.style.display = 'none';
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        showLoginError('Password aggiornata. Ora puoi accedere.', 'success');
+    }
 
     function escapeAresHtml(value) {
         return String(value ?? '')
@@ -22329,26 +22451,25 @@
             return;
         }
 
-        const { data, error } = await supabaseClient.auth.getSession();
-        if (error) {
-            console.error('Errore lettura sessione Supabase:', error);
-            showLoginError('Impossibile verificare la sessione. Riprova.');
-            return;
-        }
-
-        if (data.session?.user) {
-            currentAresUser = await loadCurrentAresProfile(data.session.user);
+        if (initialAuthErrorCode === 'otp_expired') {
+            clearAuthCallbackUrl();
+            showLoginError('Il collegamento di recupero e scaduto. Richiedine uno nuovo.');
         }
 
         if (aresAuthListener) aresAuthListener.unsubscribe();
-        const { data: listenerData } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        const { data: listenerData } = supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY' && session) {
+                aresPasswordRecoveryMode = true;
+                setTimeout(showPasswordRecoveryOverlay, 0);
+                return;
+            }
             if (event === 'SIGNED_OUT') {
                 currentAresUser = null;
                 usersList = [];
-                if (overlay) overlay.style.display = 'flex';
+                if (!aresPasswordRecoveryMode && overlay) overlay.style.display = 'flex';
                 return;
             }
-            if (event === 'USER_UPDATED' && session?.user) {
+            if (event === 'USER_UPDATED' && session?.user && !aresPasswordRecoveryMode) {
                 setTimeout(async () => {
                     currentAresUser = await loadCurrentAresProfile(session.user);
                     setupUserSessionUI();
@@ -22356,6 +22477,22 @@
             }
         });
         aresAuthListener = listenerData.subscription;
+
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) {
+            console.error('Errore lettura sessione Supabase:', error);
+            showLoginError('Impossibile verificare la sessione. Riprova.');
+            return;
+        }
+
+        if (aresPasswordRecoveryMode && data.session) {
+            showPasswordRecoveryOverlay();
+            return;
+        }
+
+        if (data.session?.user) {
+            currentAresUser = await loadCurrentAresProfile(data.session.user);
+        }
 
         if (!currentAresUser) {
             if (data.session) await supabaseClient.auth.signOut();

@@ -43,6 +43,9 @@ assert(manifestBytes[0] !== 0xef, 'manifest.json contiene ancora il BOM UTF-8');
 JSON.parse(manifestBytes.toString('utf8'));
 
 const browserCode = `${html}\n${clientScript}`;
+assert(html.includes("event === 'PASSWORD_RECOVERY'"), 'gestione callback recupero password mancante');
+assert(html.includes('resetPasswordForEmail'), 'richiesta recupero password mancante');
+assert(!html.includes('http://localhost:3000'), 'redirect localhost presente nel sorgente');
 for (const [pattern, description] of [
   [/ares2026/i, 'password predefinita nel sorgente'],
   [/from\(['"]ares_users['"]\)/, 'lettura browser della tabella password legacy'],
