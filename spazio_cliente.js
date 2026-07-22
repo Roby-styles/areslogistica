@@ -106,7 +106,7 @@ function initSpazioCliente() {
     async function fetchRealWeather() {
         // Main Weather
         try {
-            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=42.4939&longitude=12.3361&current=temperature_2m,relative_humidity_2m,wind_speed_10m,cloud_cover,weather_code&daily=precipitation_probability_max&timezone=Europe%2FRome');
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=42.495566&longitude=12.376452&current=temperature_2m,relative_humidity_2m,wind_speed_10m,cloud_cover,weather_code&daily=precipitation_probability_max&timezone=Europe%2FRome');
             const data = await res.json();
             if (data && data.current) {
                 state.env.temp = data.current.temperature_2m;
@@ -127,7 +127,7 @@ function initSpazioCliente() {
 
         // Air Quality
         try {
-            const aqiRes = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=42.4939&longitude=12.3361&current=european_aqi');
+            const aqiRes = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=42.495566&longitude=12.376452&current=european_aqi');
             const aqiData = await aqiRes.json();
             if (aqiData && aqiData.current) {
                 state.env.aqi = aqiData.current.european_aqi;
@@ -993,85 +993,67 @@ window.closeDocModal = function() {
     }
 };
 
-// La mappa viene creata soltanto quando si apre lo Spazio Cliente. In questo
-// modo un browser privo di WebGL puo comunque usare tutto il gestionale.
-let telemetryMapInstance = null;
-
-function showTelemetryMapFallback(message) {
-    const container = document.getElementById('telemetry-map');
-    if (!container) return;
-    container.innerHTML = `
-        <div style="height:100%;min-height:260px;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(135deg,#111827,#1e293b);color:#94a3b8;font-size:13px;line-height:1.6;">
-            <div><div style="font-size:34px;margin-bottom:10px;">🗺️</div>${_scEscape(message)}</div>
-        </div>`;
-}
-
+// La mappa pubblica viene caricata soltanto quando si apre lo Spazio Cliente.
+// Immagini satellitari e perimetro restano sui server Google: nessun file
+// cartografico viene salvato o trasferito tramite Supabase.
 window.initTelemetryMap = function() {
-    const container = document.getElementById('telemetry-map');
-    if (!container) return;
+    const wrapper = document.querySelector('.map-panel .telemetry-map-wrapper');
+    if (!wrapper) return;
 
-    if (telemetryMapInstance) {
-        setTimeout(() => telemetryMapInstance.resize(), 50);
-        return;
+    const panel = wrapper.closest('.map-panel');
+    const heading = panel?.querySelector('.panel-header h2');
+    if (heading) heading.textContent = '🛰️ Mappa Satellitare della Proprietà';
+
+    let iframe = document.getElementById('property-map-embed');
+    if (!iframe) {
+        wrapper.innerHTML = `
+            <div id="property-map-loading" class="property-map-loading" aria-live="polite">
+                <span class="property-map-spinner" aria-hidden="true"></span>
+                <span>Caricamento mappa e confini…</span>
+            </div>
+            <iframe
+                id="property-map-embed"
+                class="property-map-embed"
+                title="Mappa satellitare e perimetro di Villa Ciciarelli"
+                data-src="https://www.google.com/maps/d/embed?mid=1ANe1Zz0XbzbvzXy8OlSyrW_WSyDjB78&ehbc=2E312F"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen>
+            </iframe>
+        `;
+
+        if (panel && !panel.querySelector('.property-map-actions')) {
+            wrapper.insertAdjacentHTML('afterend', `
+                <div class="property-map-actions">
+                    <div class="property-map-meta">
+                        <strong>Perimetro Villa Ciciarelli</strong>
+                        <span>Circa 2,17 ha · Perimetro 602 m</span>
+                    </div>
+                    <div class="property-map-links">
+                        <a href="https://www.google.com/maps/d/viewer?mid=1ANe1Zz0XbzbvzXy8OlSyrW_WSyDjB78" target="_blank" rel="noopener noreferrer">
+                            🗺️ Mappa completa
+                        </a>
+                        <a class="earth-link" href="https://earth.google.com/web/@42.49595776,12.3758491,201.35911135a,449.96703995d,35y,-12.87599823h,75.53919496t,0r/data=CgRCAggBMigKJgokCiAxQU5lMVp6MFhiemJ2elh5OE9sU3lyV19XU3lEakI3OCACOgMKATBCAggASggI9rGc0gEQAQ?utm_source=mymaps" target="_blank" rel="noopener noreferrer">
+                            🌍 Vista 3D Earth
+                        </a>
+                    </div>
+                </div>
+            `);
+        }
+
+        iframe = document.getElementById('property-map-embed');
     }
 
-    if (typeof maplibregl === 'undefined' || typeof maplibregl.supported !== 'function' || !maplibregl.supported()) {
-        showTelemetryMapFallback('La mappa 3D non è supportata da questo browser. Le altre funzioni restano disponibili.');
-        return;
-    }
+    const loading = document.getElementById('property-map-loading');
+    if (!iframe || iframe.dataset.loaded === 'true') return;
 
-    try {
-        telemetryMapInstance = new maplibregl.Map({
-            container,
-            style: {
-                version: 8,
-                sources: {
-                    'esri-satellite': {
-                        type: 'raster',
-                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-                        tileSize: 256,
-                        maxzoom: 19
-                    }
-                },
-                layers: [{
-                    id: 'satellite-layer',
-                    type: 'raster',
-                    source: 'esri-satellite',
-                    minzoom: 0,
-                    maxzoom: 22
-                }]
-            },
-            center: [12.376391, 42.495363],
-            zoom: 18,
-            pitch: 60,
-            bearing: -20,
-            dragRotate: true,
-            pitchWithRotate: true,
-            attributionControl: false
-        });
+    const mapUrl = iframe.dataset.src;
+    if (!mapUrl) return;
 
-        telemetryMapInstance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-        telemetryMapInstance.on('error', event => {
-            console.warn('MapLibre non disponibile:', event?.error || event);
-        });
-        telemetryMapInstance.on('load', () => {
-            const lat = 42.495363;
-            const lng = 12.376391;
-            const marker = document.createElement('div');
-            marker.className = 'map-crosshair';
-            marker.style.position = 'relative';
-            marker.style.top = '0';
-            marker.style.left = '0';
-            marker.style.transform = 'none';
+    iframe.addEventListener('load', () => {
+        if (loading) loading.classList.add('is-hidden');
+    }, { once: true });
 
-            new maplibregl.Marker(marker)
-                .setLngLat([lng, lat])
-                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<div style="color:black;font-family:sans-serif;"><h3>Telecamera PTZ</h3><p>Sensore attivo.</p></div>'))
-                .addTo(telemetryMapInstance);
-        });
-    } catch (error) {
-        console.error('Inizializzazione MapLibre fallita:', error);
-        telemetryMapInstance = null;
-        showTelemetryMapFallback('La mappa 3D non può essere avviata su questo dispositivo.');
-    }
+    iframe.src = mapUrl;
+    iframe.dataset.loaded = 'true';
 };
