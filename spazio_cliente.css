@@ -304,7 +304,7 @@ input:checked + .slider:before { transform: translateX(26px); }
     background: rgba(56, 189, 248, 0.05);
 }
 
-/* Telemetry Map Wrapper (MapLibre GL) */
+/* Mappa satellitare Google My Maps */
 .telemetry-map-wrapper {
     position: relative;
     flex: 1;
@@ -316,37 +316,140 @@ input:checked + .slider:before { transform: translateX(26px); }
     background-color: #0f172a;
 }
 
-.telemetry-map-wrapper #telemetry-map {
+.property-map-embed {
+    display: block;
     width: 100%;
     height: 100%;
+    min-height: 400px;
+    border: 0;
+    background: #0f172a;
 }
 
-/* MapLibre Night Vision Filter */
-.telemetry-map-wrapper .maplibregl-canvas {
-    /* filter: grayscale(40%) brightness(0.6) contrast(1.2) sepia(10%) hue-rotate(190deg); */
-    /* Colori naturali richiesti dall'utente */
-}
-
-.map-crosshair {
+.property-map-loading {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(56, 189, 248, 0.5);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    background: radial-gradient(circle at center, #172554 0%, #0f172a 72%);
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.property-map-loading.is-hidden {
+    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    z-index: 10;
 }
-.map-crosshair::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 4px; height: 4px;
-    background: #38bdf8;
+
+.property-map-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(56, 189, 248, 0.2);
+    border-top-color: #38bdf8;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
+    animation: property-map-spin 0.9s linear infinite;
+}
+
+@keyframes property-map-spin {
+    to { transform: rotate(360deg); }
+}
+
+.property-map-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-top: 12px;
+}
+
+.property-map-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.property-map-meta strong {
+    color: #e2e8f0;
+    font-size: 12px;
+}
+
+.property-map-meta span {
+    color: #64748b;
+    font-size: 10px;
+}
+
+.property-map-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.property-map-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 10px;
+    color: #7dd3fc;
+    background: rgba(14, 165, 233, 0.08);
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.property-map-links a:hover {
+    transform: translateY(-1px);
+    border-color: rgba(56, 189, 248, 0.65);
+    background: rgba(14, 165, 233, 0.16);
+}
+
+.property-map-links .earth-link {
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+@media (max-width: 1500px) {
+    .dashboard-grid {
+        grid-template-columns: minmax(360px, 420px) minmax(440px, 1fr) 340px;
+    }
+
+    .property-map-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .property-map-links {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 1180px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .glass-panel {
+        min-height: 0;
+    }
+
+    .telemetry-map-wrapper,
+    .property-map-embed {
+        min-height: 520px;
+    }
 }
 
 /* Holographic Pins */

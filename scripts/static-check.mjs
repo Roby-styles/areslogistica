@@ -49,6 +49,9 @@ assert(html.includes("event === 'PASSWORD_RECOVERY'"), 'gestione callback recupe
 assert(html.includes('resetPasswordForEmail'), 'richiesta recupero password mancante');
 assert(html.includes("['recovery', 'invite'].includes(initialAuthCallbackType)"), 'gestione callback invito mancante');
 assert(html.includes("functions.invoke('ares-admin-users'"), 'collegamento gestione utenti protetta mancante');
+assert(clientScript.includes('1ANe1Zz0XbzbvzXy8OlSyrW_WSyDjB78'), 'mappa Villa Ciciarelli mancante');
+assert(clientScript.includes('earth.google.com/web/@42.49595776,12.3758491'), 'collegamento Google Earth mancante');
+assert(!clientScript.includes('new maplibregl.Map'), 'vecchia inizializzazione MapLibre ancora presente');
 assert(!html.includes('http://localhost:3000'), 'redirect localhost presente nel sorgente');
 assert(!browserCode.includes('SUPABASE_SERVICE_ROLE_KEY'), 'riferimento service-role presente nel codice browser');
 assert(adminFunction.includes('.auth.getUser('), 'verifica server-side del token mancante');
