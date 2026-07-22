@@ -287,6 +287,18 @@ function initSpazioCliente() {
     // Interactive Map Rotation (Drag to rotate)
     // ----------------------------------------------------
     const mapRotator = document.getElementById('map-rotator');
+    const isoContainer = document.getElementById('iso-container');
+
+    // La vecchia planimetria 2.5D non e piu presente nella pagina.
+    // In questo caso saltiamo il relativo motore interattivo e avviamo
+    // direttamente la mappa satellitare pubblica di Villa Ciciarelli.
+    if (!mapRotator || !isoContainer) {
+        if (typeof window.initTelemetryMap === 'function') {
+            setTimeout(window.initTelemetryMap, 50);
+        }
+        return;
+    }
+
     const pins = document.querySelectorAll('.iso-pin');
     let isDragging = false;
     let startX = 0;
@@ -301,7 +313,6 @@ function initSpazioCliente() {
     });
     
     // Aggiunta Zoom con la Rotellina
-    const isoContainer = document.getElementById('iso-container');
     isoContainer.addEventListener('wheel', (e) => {
         e.preventDefault(); // Evita che la pagina scorra
         if (e.deltaY < 0) {
