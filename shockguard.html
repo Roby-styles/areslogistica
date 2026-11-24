@@ -524,6 +524,9 @@
             z-index: 2;
             background: #090d16;
         }
+        #shockguard-map .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(96%);
+        }
 
         .map-legend-bar {
             display: flex;
@@ -1609,10 +1612,9 @@
             zoomControl: true
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap & CartoDB • ARES ShockGuard GIS',
-            subdomains: 'abcd',
-            maxZoom: 20
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap • ARES ShockGuard GIS',
+            maxZoom: 19
         }).addTo(mapInstance);
 
         mapLayerGroup = L.layerGroup().addTo(mapInstance);
