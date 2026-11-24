@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>ARCA GEMINA — ARES ShockGuard™ Telemetry & Chain of Custody</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#07080d">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --bg-deep: #06070c;
+            --bg-panel: rgba(15, 19, 32, 0.72);
+            --bg-panel-strong: rgba(18, 23, 38, 0.88);
+            --gold-primary: #f59e0b;
+            --gold-light: #fde68a;
+            --gold-glow: rgba(245, 158, 11, 0.35);
+            --cyan-neon: #00f2fe;
+            --cyan-glow: rgba(0, 242, 254, 0.32);
+            --emerald-neon: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.35);
+            --crimson-neon: #f43f5e;
+            --crimson-glow: rgba(244, 63, 94, 0.45);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glass: rgba(255, 255, 255, 0.09);
+            --border-gold: rgba(245, 158, 11, 0.35);
+            --border-cyan: rgba(0, 242, 254, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            background-image:
+                radial-gradient(circle at 12% 10%, rgba(245, 158, 11, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 88% 18%, rgba(0, 242, 254, 0.11) 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                linear-gradient(180deg, #05060a 0%, #0b0e18 50%, #06070c 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient holographic grid overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 36px 36px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .portal-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 18px 16px 100px 16px;
+        }
+
+        /* TOP STATUS BAR */
+        .telemetry-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 18px;
+            background: rgba(10, 14, 24, 0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--border-cyan);
+            border-radius: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.08);
+        }
+
+        .live-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--cyan-neon);
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            padding: 6px 12px;
+            border-radius: 999px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--emerald-neon);
+            box-shadow: 0 0 10px var(--emerald-neon);
+            animation: pulseGlow 1.8s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.55; }
+        }
+
+        .serial-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--gold-light);
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid var(--border-gold);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        /* HERO ARCA GEMINA HEADER */
+        .hero-card {
+            position: relative;
+            background: linear-gradient(145deg, rgba(20, 25, 42, 0.88), rgba(10, 13, 24, 0.94));
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-gold);
+            border-radius: 26px;
+            padding: 28px 24px;
+            margin-bottom: 22px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.65), 0 0 40px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255,255,255,0.15);
+            overflow: hidden;
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), var(--cyan-neon), var(--gold-primary), transparent);
+        }
+
+        .hero-crests {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .crest-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 16px;
+            border-radius: 16px;
+        }
+
+        .crest-box img {
+            height: 54px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #fff;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .crest-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .crest-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .crest-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .crest-sub {
+            font-size: 11px;
+            color: var(--gold-light);
+            font-weight: 500;
+        }
+
+        .arca-centerpiece {
+            text-align: center;
+            padding: 12px 10px 18px 10px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 20px;
+        }
+
+        .arca-badge-top {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--cyan-neon);
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+        }
+
+        .arca-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(32px, 6vw, 54px);
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: 5px;
+            background: linear-gradient(135deg, #ffffff 0%, #fde68a 48%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+        }
+
+        .arca-motto {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(13px, 2.5vw, 18px);
+            color: #cbd5e1;
+            letter-spacing: 3px;
+            margin-top: 6px;
+            font-weight: 600;
+            font-style: italic;
+        }
+
+        .hero-specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+
+        .spec-mini-card {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .spec-mini-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .spec-mini-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.35;
+        }
+
+        /* NAVIGATION TABS (NEON PILLS) */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 22px;
+            scrollbar-width: none;
+        }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 170px;
+            padding: 14px 18px;
+            background: rgba(15, 20, 35, 0.75);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.16), rgba(245, 158, 11, 0.14));
+            color: #fff;
+            border-color: var(--cyan-neon);
+            box-shadow: 0 8px 25px rgba(0, 242, 254, 0.18);
+        }
+
+        /* DUAL SHOCKWATCH SENSOR HUD */
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .sensor-card {
+            position: relative;
+            background: var(--bg-panel-strong);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: 22px;
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.45), 0 0 25px rgba(16, 185, 129, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sensor-card.impact-alert {
+            border-color: var(--crimson-neon);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 35px var(--crimson-glow);
+            background: linear-gradient(145deg, rgba(45, 12, 22, 0.92), rgba(20, 10, 18, 0.95));
+            animation: alertBorderPulse 1.5s infinite;
+        }
+
+        @keyframes alertBorderPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(244, 63, 94, 0.35); }
+            50% { box-shadow: 0 0 40px rgba(244, 63, 94, 0.75); }
+        }
+
+        /* Visual ShockWatch Sticker SVG Replica */
+        .shockwatch-visual {
+            width: 96px;
+            height: 96px;
+            flex-shrink: 0;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid rgba(255,255,255,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.7);
+        }
+
+        .sw-top-tag {
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .sw-tube-outer {
+            width: 64px;
+            height: 24px;
+            border-radius: 999px;
+            background: #090d16;
+            border: 2px solid #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px;
+            position: relative;
+        }
+
+        .sw-tube-vial {
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #e2e8f0, #ffffff, #cbd5e1);
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.85), 0 0 25px rgba(16, 185, 129, 0.6);
+            transition: all 0.35s ease;
+        }
+
+        .sensor-card.impact-alert .sw-tube-vial {
+            background: linear-gradient(90deg, #be123c, #f43f5e, #fb7185);
+            box-shadow: 0 0 18px #f43f5e, 0 0 32px #e11d48;
+        }
+
+        .sw-g-badge {
+            margin-top: 7px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--gold-light);
+            background: rgba(245, 158, 11, 0.15);
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .sensor-meta {
+            flex: 1;
+        }
+
+        .sensor-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .sensor-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .sensor-serial {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--cyan-neon);
+            background: rgba(0, 242, 254, 0.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .sensor-pos {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .sensor-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .sensor-card.impact-alert .sensor-status-badge {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fda4af;
+            border-color: rgba(244, 63, 94, 0.5);
+        }
+
+        /* SECTION PANELS */
+        .glass-section {
+            background: var(--bg-panel);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 3px 0 0 0;
+        }
+
+        /* GIS MAP */
+        #shockguard-map {
+            width: 100%;
+            height: 410px;
+            border-radius: 18px;
+            border: 1px solid rgba(0, 242, 254, 0.28);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+            z-index: 2;
+            background: #090d16;
+        }
+
+        .map-legend-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            font-size: 12px;
+        }
+
+        .legend-items {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        /* CHECK-IN CTA BANNER FOR DIRECTOR / OPERATOR */
+        .checkin-cta-box {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.14), rgba(245, 158, 11, 0.14));
+            border: 1px solid var(--cyan-neon);
+            border-radius: 22px;
+            padding: 22px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 15px 40px rgba(0, 242, 254, 0.12);
+        }
+
+        .btn-neon-primary {
+            background: linear-gradient(135deg, #00f2fe 0%, #3b82f6 50%, #6366f1 100%);
+            color: #fff;
+            border: none;
+            padding: 15px 26px;
+            border-radius: 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0, 242, 254, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .btn-neon-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 242, 254, 0.55);
+        }
+
+        .btn-gold-action {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.35);
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        /* TIMELINE CHAIN OF CUSTODY */
+        .timeline-container {
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .timeline-container::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 11px;
+            width: 3px;
+            background: linear-gradient(180deg, var(--gold-primary), var(--cyan-neon), var(--emerald-neon));
+            border-radius: 3px;
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        .timeline-step {
+            position: relative;
+            background: rgba(13, 17, 29, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 18px;
+            transition: all 0.25s ease;
+        }
+
+        .timeline-step:hover {
+            border-color: rgba(0, 242, 254, 0.35);
+            transform: translateX(3px);
+        }
+
+        .timeline-node {
+            position: absolute;
+            left: -27px;
+            top: 22px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-deep);
+            border: 4px solid var(--cyan-neon);
+            box-shadow: 0 0 14px var(--cyan-neon);
+        }
+
+        .timeline-step.step-impact .timeline-node {
+            border-color: var(--crimson-neon);
+            box-shadow: 0 0 16px var(--crimson-neon);
+        }
+
+        .tl-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .tl-stage-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(0, 242, 254, 0.12);
+            color: var(--cyan-neon);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+        }
+
+        .tl-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--gold-light);
+            font-weight: 600;
+        }
+
+        .tl-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+            margin: 6px 0;
+        }
+
+        .tl-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .tl-notes {
+            font-size: 13.5px;
+            color: #e2e8f0;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--gold-primary);
+            padding: 10px 14px;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .tl-photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .tl-photo-thumb {
+            position: relative;
+            height: 125px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            background: #000;
+        }
+
+        .tl-photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .tl-photo-thumb:hover img {
+            transform: scale(1.07);
+        }
+
+        /* TAXONOMY & EXPLODED CRATE ARCHITECTURE */
+        .taxonomy-hero-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+
+        @media (max-width: 860px) {
+            .taxonomy-hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .blueprint-frame {
+            background: #0a0e19;
+            border: 1px solid var(--border-gold);
+            border-radius: 18px;
+            padding: 14px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blueprint-frame img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .layer-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .layer-card {
+            background: rgba(15, 21, 38, 0.85);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 4px solid var(--gold-primary);
+            border-radius: 14px;
+            padding: 14px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .layer-card:hover {
+            border-color: var(--cyan-neon);
+            transform: translateX(4px);
+            background: rgba(20, 28, 50, 0.95);
+        }
+
+        .layer-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .layer-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            margin: 3px 0;
+        }
+
+        .layer-desc {
+            font-size: 12.5px;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+
+        .layer-tag {
+            display: inline-block;
+            margin-top: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        /* OPENING PROTOCOL CARDS */
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .protocol-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .protocol-card img {
+            max-height: 180px;
+            width: auto;
+            border-radius: 12px;
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 12px;
+            cursor: zoom-in;
+        }
+
+        /* DOCUMENTS DOWNLOAD GRID */
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .doc-item {
+            background: rgba(12, 17, 30, 0.85);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.25s ease;
+        }
+
+        .doc-item:hover {
+            border-color: var(--gold-primary);
+            background: rgba(245, 158, 11, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .doc-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--border-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        /* CHECK-IN MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .modal-box {
+            background: linear-gradient(145deg, #111628, #0a0d18);
+            border: 1px solid var(--cyan-neon);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 580px;
+            padding: 26px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.8), 0 0 40px rgba(0, 242, 254, 0.2);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+
+        .form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--cyan-neon);
+            margin-bottom: 6px;
+        }
+
+        .form-field input, .form-field select, .form-field textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+            border-color: var(--cyan-neon);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+        }
+
+        .sensor-toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .sensor-radio-btn {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.03);
+            color: #cbd5e1;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .sensor-radio-btn.selected-ok {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #34d399;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+        }
+
+        .sensor-radio-btn.selected-impact {
+            background: rgba(244, 63, 94, 0.25);
+            border-color: #f43f5e;
+            color: #fda4af;
+            box-shadow: 0 0 18px rgba(244, 63, 94, 0.35);
+        }
+
+        .camera-capture-zone {
+            border: 2px dashed rgba(0, 242, 254, 0.4);
+            background: rgba(0, 242, 254, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .camera-capture-zone:hover {
+            background: rgba(0, 242, 254, 0.1);
+            border-color: var(--cyan-neon);
+        }
+
+        /* LIGHTBOX */
+        #lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(12px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #lightbox-modal img {
+            max-width: 95vw;
+            max-height: 88vh;
+            border-radius: 14px;
+            border: 1px solid var(--border-gold);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+        }
+
+        /* FLOATING BOTTOM BAR FOR MOBILE QUICK ACTION */
+        .floating-dock {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 900;
+            background: rgba(10, 14, 26, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            border-radius: 999px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.75), 0 0 25px rgba(0, 242, 254, 0.18);
+        }
+
+        .dock-btn {
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 9px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .dock-btn.primary {
+            background: linear-gradient(135deg, #00f2fe, #3b82f6);
+            color: #05070e;
+            font-weight: 800;
+        }
+
+        .dock-btn.gold {
+            background: rgba(245, 158, 11, 0.18);
+            color: var(--gold-light);
+            border: 1px solid var(--border-gold);
+        }
+
+        @media print {
+            .floating-dock, .nav-tabs, .checkin-cta-box { display: none !important; }
+            body { background: #0b0e18 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-wrapper">
+
+    <!-- TOP TELEMETRY STATUS BAR -->
+    <div class="telemetry-topbar">
+        <div class="live-pill">
+            <span class="pulse-dot"></span>
+            <span>ARES SHOCKGUARD™ • LIVE TELEMETRY & CUSTODY</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="serial-chip" id="top-shipment-id">ID: ARCA-GEMINA-001</span>
+            <span style="font-size:12px; color:#94a3b8; font-family:'JetBrains Mono', monospace;" id="top-last-sync">CLOUD SYNC: ONLINE</span>
+        </div>
+    </div>
+
+    <!-- HERO HEADER: ARCA GEMINA & CRESTS -->
+    <div class="hero-card">
+        <div class="hero-crests">
+            <div class="crest-box">
+                <img src="assets_arcagemina/ares_logo_wide.png" alt="Logistica ARES" onerror="this.src='logo.jpg'">
+                <div class="crest-info">
+                    <span class="crest-label">Divisione Fine Art & Engineering</span>
+                    <span class="crest-title">LOGISTICA ARES S.R.L.S.</span>
+                    <span class="crest-sub">UNI EN ISO 14001:2015 Certified</span>
+                </div>
+            </div>
+
+            <div class="crest-box" style="border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.06);">
+                <img src="assets_arcagemina/fabbrica_san_pietro.png" alt="Fabbrica di San Pietro">
+                <div class="crest-info">
+                    <span class="crest-label">Ente Destinatario & Committente</span>
+                    <span class="crest-title" id="hero-client-name">Reverenda Fabbrica di San Pietro</span>
+                    <span class="crest-sub" id="hero-client-dept">Città del Vaticano — Studio del Mosaico</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="arca-centerpiece">
+            <div class="arca-badge-top">🛡️ SISTEMA DOPPIA CASSA ISOTERMICA ANTI-URTO • PASSAPORTO DIGITALE</div>
+            <h1 class="arca-title" id="hero-crate-name">ARCA GEMINA</h1>
+            <div class="arca-motto" id="hero-crate-motto">... “ABUNDANS CAUTELA NON NOCET”</div>
+        </div>
+
+        <div class="hero-specs-grid">
+            <div class="spec-mini-card">
+                <span class="spec-mini-label">Opera Custodita</span>
+                <span class="spec-mini-val" id="spec-artwork">Opera Mosaico Policromo ("Cesto di Fiori") — 103 × 78 × 4,5 cm</span>
+            </div>
+            <div class="spec-mini-card">
+                <span class="spec-mini-label">Architettura Cassa</span>
+                <span class="spec-mini-val" id="spec-system">Double-Crate System (OSB/3 12mm + Ethafoam + Multistrato Millerighe 7-Ply)</span>
+            </div>
+            <div class="spec-mini-card">
+                <span class="spec-mini-label">Conformità Doganale</span>
+                <span class="spec-mini-val" style="color:#34d399;">✓ ISPM-15 & USDA-APHIS 7 CFR § 319.40-2(f) EXEMPT (100% Processed Wood)</span>
+            </div>
+            <div class="spec-mini-card">
+                <span class="spec-mini-label">Protocollo Apertura</span>
+                <span class="spec-mini-val" style="color:var(--gold-light);">🔧 Apertura Non-Distruttiva in Piano • Inserto TORX T40</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DUAL SHOCKWATCH SENSOR HUD -->
+    <div class="sensors-grid">
+        <!-- Sensor 1 -->
+        <div class="sensor-card" id="card-sensor-1">
+            <div class="shockwatch-visual">
+                <span class="sw-top-tag">SHOCKWATCH 2</span>
+                <div class="sw-tube-outer">
+                    <div class="sw-tube-vial" id="vial-sensor-1"></div>
+                </div>
+                <span class="sw-g-badge" id="g-sensor-1">25G</span>
+            </div>
+            <div class="sensor-meta">
+                <div class="sensor-header-row">
+                    <span class="sensor-name">RIVELATORE D'URTO #1</span>
+                    <span class="sensor-serial" id="serial-sensor-1">SW2-QR-8841-A</span>
+                </div>
+                <div class="sensor-pos" id="pos-sensor-1">Cassa Esterna — Montante Frontale (Asse Z/Y)</div>
+                <div class="sensor-status-badge" id="badge-sensor-1">
+                    <span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensor 2 -->
+        <div class="sensor-card" id="card-sensor-2">
+            <div class="shockwatch-visual">
+                <span class="sw-top-tag">SHOCKWATCH 2</span>
+                <div class="sw-tube-outer">
+                    <div class="sw-tube-vial" id="vial-sensor-2"></div>
+                </div>
+                <span class="sw-g-badge" id="g-sensor-2">25G</span>
+            </div>
+            <div class="sensor-meta">
+                <div class="sensor-header-row">
+                    <span class="sensor-name">RIVELATORE D'URTO #2</span>
+                    <span class="sensor-serial" id="serial-sensor-2">SW2-QR-8842-B</span>
+                </div>
+                <div class="sensor-pos" id="pos-sensor-2">Cassa Esterna — Fianco Laterale (Asse X/Tilt)</div>
+                <div class="sensor-status-badge" id="badge-sensor-2">
+                    <span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK NAVIGATION TABS -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchPortalTab('tab-telemetry', this)">
+            <span>🛰️</span> Mappa GPS & Catena di Custodia
+        </button>
+        <button class="tab-btn" onclick="switchPortalTab('tab-taxonomy', this)">
+            <span>📐</span> Tassonomia ARCA GEMINA & Esploso
+        </button>
+        <button class="tab-btn" onclick="switchPortalTab('tab-certificates', this)">
+            <span>📜</span> Certificati Doganali & Protocollo Torx
+        </button>
+        <button class="tab-btn" onclick="switchPortalTab('tab-direction', this)">
+            <span>🏛️</span> Contatto Direzione ARES
+        </button>
+    </div>
+
+    <!-- CHECK-IN CALL TO ACTION FOR DIRECTOR / OPERATOR -->
+    <div class="checkin-cta-box">
+        <div>
+            <div style="font-size:11px; font-weight:800; color:var(--cyan-neon); letter-spacing:1.5px; text-transform:uppercase;">
+                ISPEZIONE LIVE & CERTIFICAZIONE FOTOGRAFICA
+            </div>
+            <div style="font-size:18px; font-weight:800; color:#fff; margin-top:2px;">
+                Sei davanti alla cassa ARCA GEMINA? Registra una tappa o certifica la consegna
+            </div>
+            <div style="font-size:13px; color:#cbd5e1; margin-top:3px;">
+                Scatta una foto con lo smartphone: verrà geolocalizzata sulla mappa e aggiunta in tempo reale alla Catena di Custodia.
+            </div>
+        </div>
+        <button class="btn-neon-primary" onclick="openCheckinModal()">
+            <span>📸</span> Scatta Foto & Registra Check-In GPS
+        </button>
+    </div>
+
+    <!-- TAB 1: TELEMETRY, LIVE GIS MAP & TIMELINE -->
+    <div id="tab-telemetry" class="portal-tab-pane">
+        <!-- GIS MAP -->
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>🗺️</span> Tracciato Satellitare & Punti di Ispezione Certificati</h2>
+                    <p class="section-subtitle">Tocca i marker luminosi sulla mappa per ispezionare orario, stato dei rivelatori ShockWatch e prove fotografiche</p>
+                </div>
+                <button onclick="fitMapToRoute()" style="background:rgba(0,242,254,0.1); border:1px solid var(--border-cyan); color:var(--cyan-neon); padding:8px 14px; border-radius:10px; font-weight:700; font-size:12px; cursor:pointer;">
+                    🎯 Centra Tracciato
+                </button>
+            </div>
+
+            <div id="shockguard-map"></div>
+
+            <div class="map-legend-bar">
+                <div class="legend-items">
+                    <span class="legend-dot"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Stabilimento Partenza ARES</span>
+                    <span class="legend-dot"><span style="width:10px;height:10px;border-radius:50%;background:#00f2fe;display:inline-block;"></span> Checkpoint / Piazzale</span>
+                    <span class="legend-dot"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block;"></span> Consegna Certificata OK</span>
+                    <span class="legend-dot"><span style="width:10px;height:10px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> Allarme Urto Rilevato</span>
+                </div>
+                <div style="color:var(--gold-light); font-family:'JetBrains Mono', monospace; font-weight:700;" id="route-stats-label">
+                    Tappe registrate: 1
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAIN OF CUSTODY TIMELINE -->
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>⏱️</span> Catena di Custodia & Registro Fotografico Cronologico</h2>
+                    <p class="section-subtitle">Audit Trail immutabile sincronizzato con il Cloud ARES Logistica (Partenza → Piazzale Vaticano → Consegna Direzione)</p>
+                </div>
+                <button onclick="window.print()" class="btn-gold-action" style="padding:9px 16px; font-size:12px;">
+                    <span>🖨️</span> Stampa Verbale / PDF
+                </button>
+            </div>
+
+            <div class="timeline-container" id="timeline-events-list">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: TAXONOMY & EXPLODED ARCHITECTURE -->
+    <div id="tab-taxonomy" class="portal-tab-pane" style="display:none;">
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>📐</span> Tassonomia Strutturale "ARCA GEMINA" (Double-Crate System)</h2>
+                    <p class="section-subtitle">Ingegnerizzazione a doppia cassa concentrica disaccoppiata con intercapedine visco-elastica e 0% legno massello</p>
+                </div>
+                <span class="serial-chip">100% PROCESSED WOOD • ISPM-15 EXEMPT</span>
+            </div>
+
+            <div class="taxonomy-hero-grid">
+                <div class="blueprint-frame">
+                    <div style="font-size:11px; font-weight:800; color:var(--gold-light); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px;">
+                        TAVOLA TECNICA 01 — ESPLOSO ASSONOMETRICO DOPPIA CASSA (CLICCA PER INGRANDIRE)
+                    </div>
+                    <img src="assets_arcagemina/esploso_tecnico.jpeg" alt="Esploso Tecnico Arca Gemina" onclick="openLightbox(this.src)">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+                        <img src="assets_arcagemina/esploso_proiezioni.jpeg" alt="Proiezioni Ortogonali" onclick="openLightbox(this.src)" style="height:140px; object-fit:cover;">
+                        <img src="assets_arcagemina/opera_mosaico.jpg" alt="Opera Mosaico Custodita" onclick="openLightbox(this.src)" style="height:140px; object-fit:cover;">
+                    </div>
+                </div>
+
+                <div class="layer-stack">
+                    <div class="layer-card">
+                        <div class="layer-num">LIVELLO 01 • GUSCIO PROTETTIVO ESTERNO (OUTER CRATE)</div>
+                        <div class="layer-title">Pannelli I-PAN Poplar OSB/3 — Spessore 12 mm</div>
+                        <div class="layer-desc">Scudo esterno ad alta densità (540–570 kg/m³) certificato UNI EN 300:2006. Fibre di pioppo pressate ad alta temperatura con resine sintetiche (Classe Formaldeide E1 ≤ 8 mg/100g). Coperchio fissato esclusivamente con viti rimovibili.</div>
+                        <span class="layer-tag">EXEMPT: Title 7 CFR § 319.40-2(f) & ISPM-15</span>
+                    </div>
+
+                    <div class="layer-card" style="border-left-color: var(--cyan-neon);">
+                        <div class="layer-num" style="color:var(--cyan-neon);">LIVELLO 02 • DISACCOPPIAMENTO SISMICO & D'URTO</div>
+                        <div class="layer-title">Intercapedine Ammortizzante in Ethafoam / Poliuretano</div>
+                        <div class="layer-desc">Cuscinetto continuo 100% polimerico sintetico interposto tra la cassa esterna e la cassa interna per dissipare accelerazioni impulsive, vibrazioni ad alta frequenza durante il trasporto aereo/stradale e shock termici.</div>
+                        <span class="layer-tag">ASSORBIMENTO ENERGETICO MULTI-ASSE</span>
+                    </div>
+
+                    <div class="layer-card">
+                        <div class="layer-num">LIVELLO 03 • SCRIGNO INTERNO (INNER CRATE)</div>
+                        <div class="layer-title">Cassa Interna Dedicata in OSB/3 — 12 mm</div>
+                        <div class="layer-desc">Camera interna isolata che custodisce direttamente l'opera musiva (103 × 78 × 4,5 cm), impedendo qualsiasi trasmissione diretta dei carichi meccanici esterni sulla cornice.</div>
+                        <span class="layer-tag">DOPPIA BARRIERA CLIMATICA & MECCANICA</span>
+                    </div>
+
+                    <div class="layer-card" style="border-left-color: var(--emerald-neon);">
+                        <div class="layer-num" style="color:var(--emerald-neon);">LIVELLO 04 • NERVATURE & SLITTE (CORNER CLEATS & SKIDS)</div>
+                        <div class="layer-title">Multistrato FORMA "Millerighe" 7-Ply (30×30 mm)</div>
+                        <div class="layer-desc">Listelli angolari strutturali e piedini di sollevamento realizzati per laminazione di pannelli in Multistrato di Pioppo da 10 mm (5+2 sfoglie da ~1,42 mm &lt; 6 mm). Bordi a vista per ispezione immediata USDA-APHIS / Dogane.</div>
+                        <span class="layer-tag">ZERO SOLID WOOD • NESSUNA FUMIGATURA RICHIESTA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: CERTIFICATES & OPENING PROTOCOL -->
+    <div id="tab-certificates" class="portal-tab-pane" style="display:none;">
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>🔧</span> Protocollo Ufficiale di Apertura Non-Distruttiva (CBP / TSA / Museo)</h2>
+                    <p class="section-subtitle">Istruzioni operative incise al laser sulla cassa per garantire la totale sicurezza dell'opera durante l'apertura</p>
+                </div>
+            </div>
+
+            <div class="protocol-grid">
+                <div class="protocol-card">
+                    <img src="assets_arcagemina/protocollo_1.png" alt="Protocollo Handling" onclick="openLightbox(this.src)">
+                    <h3 style="margin:6px 0; color:#fff; font-size:16px;">FASE 1 — Posizionamento Orizzontale</h3>
+                    <p style="font-size:13px; color:#cbd5e1; margin:0;">Prima di rimuovere qualsiasi chiusura, adagiare l'intera cassa <strong>in piano sul pavimento</strong>. Non aprire mai la cassa interna in posizione verticale.</p>
+                </div>
+
+                <div class="protocol-card">
+                    <img src="assets_arcagemina/protocollo_2.png" alt="Protocollo Torx T40" onclick="openLightbox(this.src)">
+                    <h3 style="margin:6px 0; color:var(--gold-light); font-size:16px;">FASE 2 — Svitatura Esclusiva TORX T40</h3>
+                    <p style="font-size:13px; color:#cbd5e1; margin:0;">Coperchio esterno e coperchio interno sono fissati con viti strutturali rimovibili. Utilizzare <strong>esclusivamente inserto TORX T40</strong> (nessun chiodo o colla).</p>
+                </div>
+
+                <div class="protocol-card">
+                    <img src="assets_arcagemina/arca_gemina_logo.png" alt="Arca Gemina" onclick="openLightbox(this.src)">
+                    <h3 style="margin:6px 0; color:var(--cyan-neon); font-size:16px;">FASE 3 — Verifica ShockWatch & Sigilli</h3>
+                    <p style="font-size:13px; color:#cbd5e1; margin:0;">Prima dell'apertura, verificare che entrambi i rivelatori <strong>ShockWatch 2</strong> mostrino la fiala centrale <strong>BIANCA</strong> e registrare la foto di collaudo su questo portale.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>📜</span> Fascicolo Documentale & Certificazioni Allegati</h2>
+                    <p class="section-subtitle">Documentazione ufficiale pronta per il download immediato (Dogane USA, Fabbrica di San Pietro, Schede Tecniche)</p>
+                </div>
+            </div>
+
+            <div class="docs-grid">
+                <a href="assets_arcagemina/Declaration_Case.pdf" target="_blank" class="doc-item">
+                    <div class="doc-icon">🏛️</div>
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">Declaration Case (U.S. Customs & ISPM-15)</div>
+                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Certificato conformità 7 CFR § 319.40-2(f) + Stratigrafia</div>
+                    </div>
+                </a>
+
+                <a href="assets_arcagemina/Lettera_Esenzione_Fumigatura.pdf" target="_blank" class="doc-item">
+                    <div class="doc-icon">✉️</div>
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">Lettera Ufficiale Esenzione Fumigatura</div>
+                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Alla Rev.da Fabbrica di San Pietro in Vaticano</div>
+                    </div>
+                </a>
+
+                <a href="assets_arcagemina/All_1_Datasheet_OSB.pdf" target="_blank" class="doc-item">
+                    <div class="doc-icon">📊</div>
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">Allegato 1 — Datasheet OSB/3 I-PAN</div>
+                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Certificazione tecnica pannelli UNI EN 300:2006</div>
+                    </div>
+                </a>
+
+                <a href="assets_arcagemina/All_2_Datasheet_Multistrato.pdf" target="_blank" class="doc-item">
+                    <div class="doc-icon">🌲</div>
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">Allegato 2 — Datasheet Multistrato FORMA</div>
+                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Specifiche Millerighe 7-Ply &lt; 2mm per sfoglia</div>
+                    </div>
+                </a>
+
+                <a href="assets_arcagemina/Piano_di_Taglio_OSB_Mosaico.pdf" target="_blank" class="doc-item">
+                    <div class="doc-icon">📐</div>
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">Piano Ingegnerizzato di Taglio & Misure</div>
+                        <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Layout geometrico di precisione dei componenti</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: DIRECT CONTACT WITH ARES DIRECTION -->
+    <div id="tab-direction" class="portal-tab-pane" style="display:none;">
+        <div class="glass-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><span>🏛️</span> Linea Diretta Direzione Tecnica — Logistica ARES S.r.l.s.</h2>
+                    <p class="section-subtitle">Assistenza prioritaria 24/7 per la Reverenda Fabbrica di San Pietro, Ispettori Doganali e Curatori</p>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+                <div class="spec-mini-card" style="padding:20px; border-color:var(--border-gold);">
+                    <div class="spec-mini-label">Direzione Operativa & Fine Art</div>
+                    <div style="font-size:18px; font-weight:800; color:#fff; margin:6px 0;">Massimo Olivieri / Roberto Mariani</div>
+                    <div style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+                        📍 Sede Legale: P.zza Bergoncini Duca n.7/B, Roma<br>
+                        🏭 Sede Operativa: Via di Torrevecchia n.901, Roma<br>
+                        🔖 P.IVA: 13842301007
+                    </div>
+                </div>
+
+                <div class="spec-mini-card" style="padding:20px; justify-content:center; gap:12px;">
+                    <a href="tel:+393737397274" class="btn-neon-primary" style="justify-content:center; text-decoration:none;">
+                        <span>📞</span> Chiama Direzione (+39 373 7397274)
+                    </a>
+                    <a href="https://wa.me/393737397274?text=Salve%20Direzione%20ARES%2C%20vi%20contatto%20dal%20Portale%20Telemetria%20della%20cassa%20ARCA%20GEMINA%20(Vaticano)." target="_blank" class="btn-gold-action" style="justify-content:center; background:linear-gradient(135deg,#10b981,#059669); color:#fff;">
+                        <span>💬</span> Canale Diretto WhatsApp VIP
+                    </a>
+                    <a href="mailto:m.olivieri@logistica-ares.it?subject=ARCA%20GEMINA%20-%20Comunicazione%20Portale%20ShockGuard" class="btn-gold-action" style="justify-content:center;">
+                        <span>✉️</span> Invia Email Prioritaria (m.olivieri@logistica-ares.it)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FLOATING DOCK -->
+<div class="floating-dock">
+    <button class="dock-btn primary" onclick="openCheckinModal()">
+        <span>📸</span> Scatta Foto / Check-In
+    </button>
+    <button class="dock-btn gold" onclick="switchPortalTab('tab-taxonomy', document.querySelectorAll('.tab-btn')[1])">
+        <span>📐</span> Tassonomia
+    </button>
+    <a href="tel:+393737397274" class="dock-btn">
+        <span>📞</span> Direzione
+    </a>
+</div>
+
+<!-- MODAL: REGISTER CHECK-IN & PHOTO -->
+<div class="modal-overlay" id="checkin-modal">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
+            <div>
+                <div style="font-size:11px; color:var(--cyan-neon); font-weight:800; letter-spacing:1.2px;">CATENA DI CUSTODIA • NUOVA REGISTRAZIONE</div>
+                <h3 style="margin:2px 0 0 0; font-size:20px; color:#fff;">📸 Registra Ispezione & Foto ARCA GEMINA</h3>
+            </div>
+            <button onclick="closeCheckinModal()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px;">✕</button>
+        </div>
+
+        <div class="form-field">
+            <label>Fase / Tappa Operativa</label>
+            <select id="chk-stage">
+                <option value="FACTORY_DEPARTURE|Partenza dallo Stabilimento Logistica ARES">1. Partenza / Carico in Stabilimento ARES (Roma)</option>
+                <option value="VATICAN_YARD_UNLOAD|Scarico nel Piazzale del Vaticano (Pre-Consegna)">2. Scarico nel Piazzale del Vaticano (Verifica Intermedia)</option>
+                <option value="DIRECTOR_FINAL_DELIVERY|Consegna Ufficiale & Collaudo Direzione Fabbrica di San Pietro" selected>3. Consegna Ufficiale & Collaudo Direzione (Fabbrica di San Pietro)</option>
+                <option value="CUSTOMS_INSPECTION|Ispezione Doganale / Apertura Controllata Torx T40">4. Ispezione Doganale / Verifica Apertura Torx T40</option>
+                <option value="IMPACT_ANOMALY_REPORT|Segnalazione Urto / Anomalia Rivelatore ShockWatch">⚠️ Segnalazione Urto / Anomalia Rivelatore ShockWatch</option>
+            </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-field">
+                <label>Nome di chi certifica / ispeziona</label>
+                <input type="text" id="chk-operator" placeholder="Es. Direttore Fabbrica S. Pietro / R. Mariani">
+            </div>
+            <div class="form-field">
+                <label>Qualifica / Ente</label>
+                <input type="text" id="chk-role" placeholder="Es. Direzione Vaticano / Staff ARES">
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Stato Rivelatore ShockWatch #1 (Frontale 25G)</label>
+            <div class="sensor-toggle-group">
+                <div class="sensor-radio-btn selected-ok" id="btn-s1-ok" onclick="setModalSensor(1, 'OK')">
+                    🟢 FIALA BIANCA (INTEGRO)
+                </div>
+                <div class="sensor-radio-btn" id="btn-s1-impact" onclick="setModalSensor(1, 'IMPACT')">
+                    🔴 FIALA ROSSA (URTO!)
+                </div>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Stato Rivelatore ShockWatch #2 (Laterale 25G)</label>
+            <div class="sensor-toggle-group">
+                <div class="sensor-radio-btn selected-ok" id="btn-s2-ok" onclick="setModalSensor(2, 'OK')">
+                    🟢 FIALA BIANCA (INTEGRO)
+                </div>
+                <div class="sensor-radio-btn" id="btn-s2-impact" onclick="setModalSensor(2, 'IMPACT')">
+                    🔴 FIALA ROSSA (URTO!)
+                </div>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Prova Fotografica (Fotocamera Smartphone o Galleria)</label>
+            <div class="camera-capture-zone" onclick="document.getElementById('chk-photo-input').click()">
+                <div style="font-size:28px; margin-bottom:6px;">📸</div>
+                <div style="font-weight:800; color:#fff; font-size:14px;">Tocca qui per Scattare Foto alla Cassa / Rivelatori</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">Puoi scattare o selezionare una o più foto (invio automatico in Cloud)</div>
+                <input type="file" id="chk-photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoPreview(this)">
+            </div>
+            <div id="chk-photo-previews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;"></div>
+        </div>
+
+        <div class="form-field">
+            <label>Posizione GPS & Luogo Rilevato</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="chk-location-name" placeholder="Rilevamento GPS in corso..." style="flex:1;">
+                <button type="button" onclick="detectUserGPS()" style="background:rgba(0,242,254,0.15); border:1px solid var(--cyan-neon); color:var(--cyan-neon); border-radius:12px; padding:0 14px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                    📍Aggiorna GPS
+                </button>
+            </div>
+            <div id="chk-gps-coords" style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--gold-light); margin-top:4px;"></div>
+        </div>
+
+        <div class="form-field">
+            <label>Note / Osservazioni Verbale</label>
+            <textarea id="chk-notes" rows="2" placeholder="Es. Cassa consegnata integra, entrambi i rivelatori ShockWatch bianchi."></textarea>
+        </div>
+
+        <div id="chk-submit-status" style="display:none; padding:10px 14px; border-radius:10px; margin-bottom:12px; font-size:13px; font-weight:700;"></div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button onclick="closeCheckinModal()" style="background:rgba(255,255,255,0.08); border:none; color:#cbd5e1; padding:13px 20px; border-radius:12px; font-weight:700; cursor:pointer;">Annulla</button>
+            <button id="btn-submit-checkin" class="btn-neon-primary" onclick="submitCheckinEvent()">
+                <span>🚀</span> Certifica & Invia al Cloud ARES
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox-modal" onclick="this.style.display='none'">
+    <img id="lightbox-img" src="" alt="Zoom">
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://ypjmouwytrubedowkjci.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwam1vdXd5dHJ1YmVkb3dramNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDAzNDIsImV4cCI6MjA5NjU3NjM0Mn0.-dmyNf08xQqR3gbeCbptqat0Bl-4SlTZ5YnmSUspU9I';
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const SHIPMENT_ID = urlParams.get('id') || 'ARCA-GEMINA-001';
+
+    let currentShipment = null;
+    let currentEvents = [];
+    let mapInstance = null;
+    let mapLayerGroup = null;
+    let modalSensor1 = 'OK';
+    let modalSensor2 = 'OK';
+    let detectedLat = 41.9016;
+    let detectedLng = 12.4534;
+    let stagedPhotoDataUrls = [];
+
+    function switchPortalTab(tabId, btnEl) {
+        document.querySelectorAll('.portal-tab-pane').forEach(p => p.style.display = 'none');
+        const target = document.getElementById(tabId);
+        if (target) target.style.display = 'block';
+
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        if (tabId === 'tab-telemetry' && mapInstance) {
+            setTimeout(() => {
+                mapInstance.invalidateSize();
+                fitMapToRoute();
+            }, 120);
+        }
+    }
+
+    function openLightbox(src) {
+        const modal = document.getElementById('lightbox-modal');
+        const img = document.getElementById('lightbox-img');
+        img.src = src;
+        modal.style.display = 'flex';
+    }
+
+    function initMap() {
+        if (mapInstance) return;
+        mapInstance = L.map('shockguard-map', {
+            center: [41.9135, 12.4325],
+            zoom: 13,
+            zoomControl: true
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap & CartoDB • ARES ShockGuard GIS',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(mapInstance);
+
+        mapLayerGroup = L.layerGroup().addTo(mapInstance);
+    }
+
+    async function loadShipmentAndEvents() {
+        document.getElementById('top-shipment-id').textContent = `ID: ${SHIPMENT_ID}`;
+
+        if (sb) {
+            try {
+                const { data: shipData } = await sb
+                    .from('ares_shockguard_shipments')
+                    .select('*')
+                    .eq('id', SHIPMENT_ID)
+                    .maybeSingle();
+
+                if (shipData) currentShipment = shipData;
+
+                const { data: evData } = await sb
+                    .from('ares_shockguard_events')
+                    .select('*')
+                    .eq('shipment_id', SHIPMENT_ID)
+                    .order('created_at', { ascending: true });
+
+                if (evData && evData.length > 0) currentEvents = evData;
+            } catch (err) {
+                console.warn('Fallback locale:', err);
+            }
+        }
+
+        if (!currentShipment) {
+            currentShipment = {
+                id: 'ARCA-GEMINA-001',
+                crate_name: 'ARCA GEMINA',
+                motto: 'ABUNDANS CAUTELA NON NOCET',
+                client_name: 'Reverenda Fabbrica di San Pietro in Vaticano',
+                client_dept: 'Città del Vaticano — Studio del Mosaico / Ufficio Tecnico',
+                sensor1_serial: 'SW2-QR-8841-A',
+                sensor1_g: '25G',
+                sensor1_pos: 'Cassa Esterna — Montante Frontale (Asse Z/Y)',
+                sensor1_status: 'OK',
+                sensor2_serial: 'SW2-QR-8842-B',
+                sensor2_g: '25G',
+                sensor2_pos: 'Cassa Esterna — Fianco Laterale (Asse X/Tilt)',
+                sensor2_status: 'OK',
+                artwork_title: 'Opera Mosaico Policromo con Cornice Bianca ("Cesto di Fiori")',
+                artwork_dims: '103 × 78 × 4,5 cm',
+                crate_system: 'Double-Crate System 100% Processed Wood (OSB/3 12mm + Ethafoam + Multistrato Millerighe 7-Ply)'
+            };
+        }
+
+        if (!currentEvents || currentEvents.length === 0) {
+            currentEvents = [{
+                id: 1,
+                stage_code: 'ORIGIN_ARMED',
+                stage_title: 'Collaudo Strutturale, Sigillatura Torx T40 & Armamento Sensori ShockWatch',
+                operator_name: 'Direzione Tecnica ARES (M. Olivieri / R. Mariani)',
+                operator_role: 'Fine Art Packing & Logistics Division',
+                location_name: 'Stabilimento Logistica ARES — Via di Torrevecchia 901, Roma',
+                lat: 41.9254,
+                lng: 12.4116,
+                sensor1_status: 'OK',
+                sensor2_status: 'OK',
+                notes: 'Doppia cassa ARCA GEMINA assemblata e collaudata. Applicati e armati n.2 rivelatori d\'urto ShockWatch 2 QR (Fiala Bianca = 0G superati).',
+                photos: ['assets_arcagemina/esploso_tecnico.jpeg', 'assets_arcagemina/opera_mosaico.jpg'],
+                created_at: new Date().toISOString()
+            }];
+        }
+
+        renderHeaderAndSensors();
+        renderMapRoute();
+        renderTimeline();
+    }
+
+    function renderHeaderAndSensors() {
+        const s = currentShipment;
+        document.getElementById('hero-crate-name').textContent = s.crate_name || 'ARCA GEMINA';
+        document.getElementById('hero-crate-motto').textContent = `... “${s.motto || 'ABUNDANS CAUTELA NON NOCET'}”`;
+        document.getElementById('hero-client-name').textContent = s.client_name || 'Reverenda Fabbrica di San Pietro';
+        document.getElementById('hero-client-dept').textContent = s.client_dept || 'Città del Vaticano';
+        if (s.artwork_title) {
+            document.getElementById('spec-artwork').textContent = `${s.artwork_title} (${s.artwork_dims || '103 × 78 × 4,5 cm'})`;
+        }
+        if (s.crate_system) {
+            document.getElementById('spec-system').textContent = s.crate_system;
+        }
+
+        // Check latest sensor state from events or shipment
+        let s1Status = s.sensor1_status || 'OK';
+        let s2Status = s.sensor2_status || 'OK';
+        currentEvents.forEach(ev => {
+            if (ev.sensor1_status === 'IMPACT') s1Status = 'IMPACT';
+            if (ev.sensor2_status === 'IMPACT') s2Status = 'IMPACT';
+        });
+
+        document.getElementById('serial-sensor-1').textContent = s.sensor1_serial || 'SW2-QR-8841-A';
+        document.getElementById('g-sensor-1').textContent = s.sensor1_g || '25G';
+        document.getElementById('pos-sensor-1').textContent = s.sensor1_pos || 'Montante Frontale';
+
+        document.getElementById('serial-sensor-2').textContent = s.sensor2_serial || 'SW2-QR-8842-B';
+        document.getElementById('g-sensor-2').textContent = s.sensor2_g || '25G';
+        document.getElementById('pos-sensor-2').textContent = s.sensor2_pos || 'Fianco Laterale';
+
+        const card1 = document.getElementById('card-sensor-1');
+        const badge1 = document.getElementById('badge-sensor-1');
+        if (s1Status === 'IMPACT') {
+            card1.classList.add('impact-alert');
+            badge1.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (>25G)</span>';
+        } else {
+            card1.classList.remove('impact-alert');
+            badge1.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>';
+        }
+
+        const card2 = document.getElementById('card-sensor-2');
+        const badge2 = document.getElementById('badge-sensor-2');
+        if (s2Status === 'IMPACT') {
+            card2.classList.add('impact-alert');
+            badge2.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (>25G)</span>';
+        } else {
+            card2.classList.remove('impact-alert');
+            badge2.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>';
+        }
+    }
+
+    function renderMapRoute() {
+        if (!mapInstance || !mapLayerGroup) return;
+        mapLayerGroup.clearLayers();
+
+        const coordsList = [];
+
+        currentEvents.forEach((ev, index) => {
+            const lat = Number(ev.lat) || 41.9016;
+            const lng = Number(ev.lng) || 12.4534;
+            coordsList.push([lat, lng]);
+
+            const isImpact = ev.sensor1_status === 'IMPACT' || ev.sensor2_status === 'IMPACT';
+            let color = '#00f2fe';
+            if (index === 0) color = '#f59e0b';
+            else if (ev.stage_code === 'DIRECTOR_FINAL_DELIVERY') color = '#10b981';
+            if (isImpact) color = '#f43f5e';
+
+            const iconHtml = `
+                <div style="
+                    width: 34px; height: 34px; border-radius: 50%;
+                    background: #070a14;
+                    border: 3px solid ${color};
+                    box-shadow: 0 0 18px ${color};
+                    color: #fff; font-weight: 900; font-size: 13px;
+                    display: flex; align-items: center; justify-content: center;
+                    font-family: 'JetBrains Mono', monospace;
+                ">${index + 1}</div>
+            `;
+
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            const photos = Array.isArray(ev.photos) ? ev.photos : [];
+            const firstPhotoHtml = photos.length > 0
+                ? `<img src="${photos[0]}" style="width:100%; height:110px; object-fit:cover; border-radius:8px; margin-top:8px; cursor:pointer;" onclick="openLightbox('${photos[0]}')">`
+                : '';
+
+            const timeStr = new Date(ev.created_at).toLocaleString('it-IT', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const popupHtml = `
+                <div style="font-family:'Outfit',sans-serif; min-width:210px; color:#0f172a;">
+                    <div style="font-size:10px; font-weight:800; color:#6366f1; text-transform:uppercase;">TAPPA #${index + 1} • ${timeStr}</div>
+                    <div style="font-size:14px; font-weight:800; margin:3px 0;">${ev.stage_title}</div>
+                    <div style="font-size:12px; color:#475569;">📍 ${ev.location_name || ''}</div>
+                    <div style="font-size:11.5px; font-weight:700; margin-top:5px; color:${isImpact ? '#e11d48' : '#059669'};">
+                        Sensori: S1 ${ev.sensor1_status} | S2 ${ev.sensor2_status}
+                    </div>
+                    ${firstPhotoHtml}
+                </div>
+            `;
+
+            L.marker([lat, lng], { icon: customIcon })
+                .bindPopup(popupHtml)
+                .addTo(mapLayerGroup);
+        });
+
+        // Also add Vatican destination preview marker if only 1 point exists so the route line to Vatican is visible
+        if (coordsList.length === 1 && currentShipment?.dest_lat && currentShipment?.dest_lng) {
+            const destCoords = [Number(currentShipment.dest_lat), Number(currentShipment.dest_lng)];
+            const destIcon = L.divIcon({
+                html: `<div style="width:30px;height:30px;border-radius:50%;background:rgba(16,185,129,0.2);border:2px dashed #10b981;color:#10b981;display:flex;align-items:center;justify-content:center;font-size:14px;">🏛️</div>`,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            L.marker(destCoords, { icon: destIcon })
+                .bindPopup(`<b>Destinazione Finale Programmata</b><br>Fabbrica di San Pietro — Città del Vaticano`)
+                .addTo(mapLayerGroup);
+
+            L.polyline([coordsList[0], destCoords], {
+                color: '#f59e0b',
+                weight: 3,
+                dashArray: '8, 8',
+                opacity: 0.75
+            }).addTo(mapLayerGroup);
+
+            coordsList.push(destCoords);
+        } else if (coordsList.length > 1) {
+            // Glow polyline + core polyline
+            L.polyline(coordsList, {
+                color: '#00f2fe',
+                weight: 8,
+                opacity: 0.25
+            }).addTo(mapLayerGroup);
+
+            L.polyline(coordsList, {
+                color: '#00f2fe',
+                weight: 3.5,
+                opacity: 0.95
+            }).addTo(mapLayerGroup);
+        }
+
+        document.getElementById('route-stats-label').textContent = `Tappe Certificati in Cloud: ${currentEvents.length}`;
+        fitMapToRoute(coordsList);
+    }
+
+    function fitMapToRoute(coordsOverride) {
+        if (!mapInstance) return;
+        const pts = coordsOverride || currentEvents.map(e => [Number(e.lat) || 41.9016, Number(e.lng) || 12.4534]);
+        if (pts.length > 1) {
+            mapInstance.fitBounds(pts, { padding: [45, 45], maxZoom: 16 });
+        } else if (pts.length === 1) {
+            mapInstance.setView(pts[0], 14);
+        }
+    }
+
+    function renderTimeline() {
+        const container = document.getElementById('timeline-events-list');
+        if (!container) return;
+
+        // Show newest or chronological (chronological 1 -> 2 -> 3 tells the journey clearly)
+        container.innerHTML = currentEvents.map((ev, idx) => {
+            const isImpact = ev.sensor1_status === 'IMPACT' || ev.sensor2_status === 'IMPACT';
+            const timeStr = new Date(ev.created_at).toLocaleString('it-IT', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            const photos = Array.isArray(ev.photos) ? ev.photos : [];
+            const photosHtml = photos.length > 0 ? `
+                <div class="tl-photos-grid">
+                    ${photos.map((p, pIdx) => `
+                        <div class="tl-photo-thumb" onclick="openLightbox('${p}')">
+                            <img src="${p}" alt="Foto Tappa ${idx + 1}">
+                            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);font-size:10px;padding:3px 7px;color:#fff;font-family:'JetBrains Mono',monospace;">
+                                📸 PROVA #${idx + 1}.${pIdx + 1}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
+
+            return `
+                <div class="timeline-step ${isImpact ? 'step-impact' : ''}">
+                    <div class="timeline-node"></div>
+                    <div class="tl-header">
+                        <span class="tl-stage-badge">TAPPA #0${idx + 1} • ${ev.stage_code || 'CHECKPOINT'}</span>
+                        <span class="tl-time">🕒 ${timeStr}</span>
+                    </div>
+                    <div class="tl-title">${ev.stage_title}</div>
+                    <div class="tl-meta-row">
+                        <span>👤 <strong>${ev.operator_name || 'Operatore Certificato'}</strong> (${ev.operator_role || 'ARES / Vaticano'})</span>
+                        <span>📍 ${ev.location_name || 'Coordinate GPS Certificati'}</span>
+                        <span style="font-family:'JetBrains Mono',monospace; color:var(--cyan-neon);">
+                            GPS: ${Number(ev.lat || 41.9016).toFixed(5)}, ${Number(ev.lng || 12.4534).toFixed(5)}
+                        </span>
+                    </div>
+                    ${ev.notes ? `<div class="tl-notes">${ev.notes}</div>` : ''}
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <span style="font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:8px; background:${ev.sensor1_status === 'IMPACT' ? 'rgba(244,63,94,0.2)' : 'rgba(16,185,129,0.15)'}; color:${ev.sensor1_status === 'IMPACT' ? '#fda4af' : '#34d399'};">
+                            Sensore #1: ${ev.sensor1_status === 'IMPACT' ? '🔴 URTO RILEVATO' : '🟢 BIANCO (OK)'}
+                        </span>
+                        <span style="font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:8px; background:${ev.sensor2_status === 'IMPACT' ? 'rgba(244,63,94,0.2)' : 'rgba(16,185,129,0.15)'}; color:${ev.sensor2_status === 'IMPACT' ? '#fda4af' : '#34d399'};">
+                            Sensore #2: ${ev.sensor2_status === 'IMPACT' ? '🔴 URTO RILEVATO' : '🟢 BIANCO (OK)'}
+                        </span>
+                    </div>
+                    ${photosHtml}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // MODAL & CHECK-IN LOGIC
+    function openCheckinModal() {
+        document.getElementById('checkin-modal').style.display = 'flex';
+        stagedPhotoDataUrls = [];
+        document.getElementById('chk-photo-previews').innerHTML = '';
+        document.getElementById('chk-submit-status').style.display = 'none';
+        detectUserGPS();
+    }
+
+    function closeCheckinModal() {
+        document.getElementById('checkin-modal').style.display = 'none';
+    }
+
+    function setModalSensor(num, status) {
+        if (num === 1) {
+            modalSensor1 = status;
+            document.getElementById('btn-s1-ok').className = 'sensor-radio-btn ' + (status === 'OK' ? 'selected-ok' : '');
+            document.getElementById('btn-s1-impact').className = 'sensor-radio-btn ' + (status === 'IMPACT' ? 'selected-impact' : '');
+        } else {
+            modalSensor2 = status;
+            document.getElementById('btn-s2-ok').className = 'sensor-radio-btn ' + (status === 'OK' ? 'selected-ok' : '');
+            document.getElementById('btn-s2-impact').className = 'sensor-radio-btn ' + (status === 'IMPACT' ? 'selected-impact' : '');
+        }
+    }
+
+    function detectUserGPS() {
+        const locInput = document.getElementById('chk-location-name');
+        const coordsLabel = document.getElementById('chk-gps-coords');
+        coordsLabel.textContent = 'Acquisizione satelliti GPS in corso...';
+
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                detectedLat = pos.coords.latitude;
+                detectedLng = pos.coords.longitude;
+                coordsLabel.textContent = `✓ Coordinate GPS acquisite: ${detectedLat.toFixed(6)}, ${detectedLng.toFixed(6)} (±${Math.round(pos.coords.accuracy)}m)`;
+
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${detectedLat}&lon=${detectedLng}`);
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        locInput.value = data.display_name.split(',').slice(0, 4).join(',');
+                    }
+                } catch (e) {
+                    if (!locInput.value) locInput.value = 'Città del Vaticano / Roma (Coordinate GPS Certificati)';
+                }
+            }, () => {
+                detectedLat = 41.9016;
+                detectedLng = 12.4534;
+                coordsLabel.textContent = `Coordinate predefinite Vaticano: ${detectedLat}, ${detectedLng}`;
+                if (!locInput.value) locInput.value = 'Fabbrica di San Pietro — Città del Vaticano';
+            }, { enableHighAccuracy: true, timeout: 7000 });
+        } else {
+            locInput.value = 'Fabbrica di San Pietro — Città del Vaticano';
+        }
+    }
+
+    function handlePhotoPreview(input) {
+        const files = Array.from(input.files || []);
+        const previewContainer = document.getElementById('chk-photo-previews');
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Compress image on canvas for fast upload & instant display
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 1280;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                        else { w = Math.round(w * maxDim / h); h = maxDim; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    stagedPhotoDataUrls.push(compressedDataUrl);
+
+                    const thumb = document.createElement('img');
+                    thumb.src = compressedDataUrl;
+                    thumb.style.cssText = 'width:76px;height:76px;object-fit:cover;border-radius:10px;border:2px solid var(--cyan-neon);';
+                    previewContainer.appendChild(thumb);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function submitCheckinEvent() {
+        const btn = document.getElementById('btn-submit-checkin');
+        const statusBox = document.getElementById('chk-submit-status');
+        const stageRaw = document.getElementById('chk-stage').value;
+        const [stageCode, stageTitle] = stageRaw.split('|');
+
+        const operatorName = document.getElementById('chk-operator').value.trim() || 'Direzione / Operatore Certificato';
+        const operatorRole = document.getElementById('chk-role').value.trim() || 'Fabbrica di San Pietro / ARES';
+        const locationName = document.getElementById('chk-location-name').value.trim() || 'Città del Vaticano / Roma';
+        const notes = document.getElementById('chk-notes').value.trim() || 'Ispezione visiva e verifica rivelatori ShockWatch eseguita.';
+
+        btn.disabled = true;
+        statusBox.style.display = 'block';
+        statusBox.style.background = 'rgba(0, 242, 254, 0.15)';
+        statusBox.style.color = 'var(--cyan-neon)';
+        statusBox.textContent = '⏳ Sincronizzazione crittografata con il Cloud ARES in corso...';
+
+        const uploadedPhotoUrls = [];
+
+        if (sb && stagedPhotoDataUrls.length > 0) {
+            for (let i = 0; i < stagedPhotoDataUrls.length; i++) {
+                try {
+                    const dataUrl = stagedPhotoDataUrls[i];
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const fileName = `shockguard/${SHIPMENT_ID}_${Date.now()}_${i + 1}.jpg`;
+                    const { error: upErr } = await sb.storage
+                        .from('galleria-lavori')
+                        .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+
+                    if (!upErr) {
+                        const { data: pubUrlData } = sb.storage.from('galleria-lavori').getPublicUrl(fileName);
+                        if (pubUrlData?.publicUrl) {
+                            uploadedPhotoUrls.push(pubUrlData.publicUrl);
+                            continue;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Upload bucket fallback a DataURL:', e);
+                }
+                uploadedPhotoUrls.push(stagedPhotoDataUrls[i]);
+            }
+        } else {
+            uploadedPhotoUrls.push(...stagedPhotoDataUrls);
+        }
+
+        const newEventPayload = {
+            shipment_id: SHIPMENT_ID,
+            step_order: currentEvents.length + 1,
+            stage_code: stageCode,
+            stage_title: stageTitle,
+            operator_name: operatorName,
+            operator_role: operatorRole,
+            location_name: locationName,
+            lat: detectedLat,
+            lng: detectedLng,
+            sensor1_status: modalSensor1,
+            sensor2_status: modalSensor2,
+            notes: notes,
+            photos: uploadedPhotoUrls
+        };
+
+        if (sb) {
+            try {
+                const { data: inserted, error } = await sb
+                    .from('ares_shockguard_events')
+                    .insert(newEventPayload)
+                    .select()
+                    .single();
+
+                if (!error && inserted) {
+                    currentEvents.push(inserted);
+                } else {
+                    currentEvents.push({ ...newEventPayload, created_at: new Date().toISOString() });
+                }
+
+                // Update overall shipment sensor statuses
+                const updatedShipmentFields = {
+                    sensor1_status: modalSensor1 === 'IMPACT' ? 'IMPACT' : currentShipment.sensor1_status,
+                    sensor2_status: modalSensor2 === 'IMPACT' ? 'IMPACT' : currentShipment.sensor2_status,
+                    overall_status: (modalSensor1 === 'IMPACT' || modalSensor2 === 'IMPACT')
+                        ? 'IMPACT_ALERT'
+                        : (stageCode === 'DIRECTOR_FINAL_DELIVERY' ? 'DELIVERED_OK' : 'IN_TRANSIT'),
+                    updated_at: new Date().toISOString()
+                };
+                await sb.from('ares_shockguard_shipments').update(updatedShipmentFields).eq('id', SHIPMENT_ID);
+                Object.assign(currentShipment, updatedShipmentFields);
+            } catch (err) {
+                console.error('Errore salvataggio evento:', err);
+                currentEvents.push({ ...newEventPayload, created_at: new Date().toISOString() });
+            }
+        } else {
+            currentEvents.push({ ...newEventPayload, created_at: new Date().toISOString() });
+        }
+
+        btn.disabled = false;
+        closeCheckinModal();
+        renderHeaderAndSensors();
+        renderMapRoute();
+        renderTimeline();
+        switchPortalTab('tab-telemetry', document.querySelectorAll('.tab-btn')[0]);
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        initMap();
+        await loadShipmentAndEvents();
+    });
+</script>
+
+</body>
+</html>

@@ -2180,6 +2180,7 @@
         <button class="btn-nav" onclick="show('fascicoli')">📂 Fascicoli</button>
         <button class="btn-nav" onclick="show('grafana')">📊 Business Intelligence</button>
         <button class="btn-nav" onclick="show('operativa')">🗺️ Sala Operativa</button>
+        <button class="btn-nav" onclick="show('shockguard')" style="border: 1px solid rgba(245, 158, 11, 0.35); background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(0, 242, 254, 0.08)); color: #fde68a;">🛡️ ShockGuard • Arca Gemina</button>
         <button class="btn-nav" onclick="show('videomanager')">📹 Video Manager</button>
         <button class="btn-nav" id="btn-nav-utenti" onclick="show('utenti')" style="display: none;">⚙️ Amministratore Super</button>
         <button class="btn-nav" id="btn-nav-spaziocliente" onclick="show('spaziocliente')">🏢 Spazio Cliente</button>
@@ -20343,6 +20344,108 @@
                 </div>
             </div>
         </div>
+
+        <!-- VIEW SHOCKGUARD MASTER CENTER & LASER QR GENERATOR -->
+        <div id="view-shockguard" class="view-section">
+            <div class="bi-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+                <div>
+                    <h2 class="bi-title" style="margin:0; background:linear-gradient(90deg, #fff, #fde68a, #00f2fe); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">🛡️ ARES ShockGuard™ — Telemetria d'Urto & Passaporto Casse</h2>
+                    <div style="font-size:13px; color:#94a3b8; margin-top:4px;">Centrale Master sostitutiva SpotSee Cloud • Generatore QR per Incisore Laser • Monitoraggio Live Catena di Custodia</div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <a href="shockguard.html?id=ARCA-GEMINA-001" target="_blank" class="btn-action" style="text-decoration:none; background:linear-gradient(135deg, #f59e0b, #d97706); color:#000; font-weight:800; padding:10px 18px; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+                        🏛️ Apri Portale Direttore Vaticano (ARCA GEMINA) ↗
+                    </a>
+                    <button class="btn-action" onclick="renderShockGuardMaster()" style="background:rgba(0,242,254,0.15); border:1px solid #00f2fe; color:#00f2fe; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">
+                        🔄 Aggiorna Telemetria Cloud
+                    </button>
+                </div>
+            </div>
+
+            <!-- TOP LASER QR & CRATE MASTER CARD -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:20px; margin-bottom:24px;">
+                <!-- LASER QR GENERATOR CARD -->
+                <div class="card-ui" style="background: linear-gradient(145deg, rgba(16, 21, 38, 0.85), rgba(10, 13, 24, 0.95)); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 20px; padding: 24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <span style="font-size:11px; font-weight:800; color:#f59e0b; letter-spacing:1.5px; text-transform:uppercase;">⚡ GENERATORE QR PER INCISORE LASER (LIGHTBURN)</span>
+                        <span style="font-size:11px; background:rgba(16,185,129,0.15); color:#34d399; padding:3px 10px; border-radius:999px; font-weight:700;">1 QR UNICO</span>
+                    </div>
+
+                    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+                        <div style="background:#ffffff; padding:14px; border-radius:16px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+                            <img id="sg-laser-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&margin=2&data=https%3A%2F%2Froby-styles.github.io%2Fareslogistica%2Fshockguard.html%3Fid%3DARCA-GEMINA-001" alt="QR Laser Arca Gemina" style="width:155px; height:155px; display:block;">
+                            <div style="color:#000; font-weight:900; font-size:11px; letter-spacing:1.5px; margin-top:6px; font-family:monospace;">ARCA-GEMINA-001</div>
+                        </div>
+
+                        <div style="flex:1; min-width:210px;">
+                            <h3 style="margin:0 0 6px 0; color:#fff; font-size:20px;">ARCA GEMINA (Vaticano)</h3>
+                            <div style="font-size:12.5px; color:#cbd5e1; line-height:1.5; margin-bottom:12px;">
+                                Correzione errore <strong>Livello H (30%)</strong> specifica per pirografia e incisione laser su legno OSB / alluminio. Punta direttamente al Dossier Olografico, Mappa GPS, Foto e Tassonomia della Cassa.
+                            </div>
+                            <div style="font-size:11px; font-family:monospace; color:#00f2fe; background:rgba(0,0,0,0.4); padding:8px 10px; border-radius:8px; word-break:break-all; margin-bottom:12px;" id="sg-qr-target-url">
+                                https://roby-styles.github.io/areslogistica/shockguard.html?id=ARCA-GEMINA-001
+                            </div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button onclick="downloadLaserQrPlate()" class="btn-action" style="background:linear-gradient(135deg,#00f2fe,#3b82f6); color:#05070e; font-weight:800; padding:9px 14px; border-radius:10px; font-size:12.5px; cursor:pointer; border:none;">
+                                    📥 Scarica Targhetta Laser (PNG Alta Ris.)
+                                </button>
+                                <button onclick="copyShockGuardLink()" class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; font-weight:700; padding:9px 14px; border-radius:10px; font-size:12.5px; cursor:pointer; border:1px solid rgba(255,255,255,0.15);">
+                                    🔗 Copia Link per WhatsApp Direttore
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SENSORS & SHIPMENT CONTROL CARD -->
+                <div class="card-ui" style="background: linear-gradient(145deg, rgba(16, 21, 38, 0.85), rgba(10, 13, 24, 0.95)); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                        <span style="font-size:11px; font-weight:800; color:#00f2fe; letter-spacing:1.5px; text-transform:uppercase;">🎛️ CONTROLLO MASTER RIVELATORI SHOCKWATCH 2</span>
+                        <span id="sg-master-status-pill" style="font-size:11px; background:rgba(16,185,129,0.2); color:#34d399; padding:4px 10px; border-radius:999px; font-weight:800;">🟢 INTEGRI (0G)</span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                        <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #1 (Frontale)</div>
+                            <input type="text" id="sg-s1-serial" value="SW2-QR-8841-A" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <button onclick="setMasterSensorState(1, 'OK')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #10b981; background:rgba(16,185,129,0.18); color:#34d399; font-size:11px; font-weight:800; cursor:pointer;">🟢 Bianco OK</button>
+                                <button onclick="setMasterSensorState(1, 'IMPACT')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #f43f5e; background:rgba(244,63,94,0.15); color:#fda4af; font-size:11px; font-weight:800; cursor:pointer;">🔴 Rosso Urto</button>
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #2 (Laterale)</div>
+                            <input type="text" id="sg-s2-serial" value="SW2-QR-8842-B" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
+                            <div style="display:flex; gap:6px; margin-top:8px;">
+                                <button onclick="setMasterSensorState(2, 'OK')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #10b981; background:rgba(16,185,129,0.18); color:#34d399; font-size:11px; font-weight:800; cursor:pointer;">🟢 Bianco OK</button>
+                                <button onclick="setMasterSensorState(2, 'IMPACT')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #f43f5e; background:rgba(244,63,94,0.15); color:#fda4af; font-size:11px; font-weight:800; cursor:pointer;">🔴 Rosso Urto</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                        <button onclick="saveMasterSensorSerials()" class="btn-action" style="background:rgba(0,242,254,0.15); border:1px solid #00f2fe; color:#00f2fe; padding:9px 16px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                            💾 Salva Seriali Adesivi in Cloud
+                        </button>
+                        <a href="shockguard.html?id=ARCA-GEMINA-001" target="_blank" style="font-size:12.5px; color:#fde68a; font-weight:700; text-decoration:underline;">
+                            📸 Aggiungi Tappa / Foto dal Portale →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE EVENTS LOG TABLE IN ERP -->
+            <div class="card-ui" style="background: rgba(16, 20, 35, 0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; font-size:18px; color:#fff;">📡 Registro Tappe GPS & Prove Fotografiche (ARCA GEMINA)</h3>
+                    <span id="sg-events-count-badge" style="font-size:12px; color:#00f2fe; font-weight:700;">Caricamento...</span>
+                </div>
+                <div id="sg-master-events-container" style="display:flex; flex-direction:column; gap:12px;">
+                    <!-- Populated by renderShockGuardMaster() -->
+                </div>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -20678,6 +20781,7 @@
             renderClientLogs();
         }
         if(id === 'operativa') initGisMap();
+        if(id === 'shockguard') renderShockGuardMaster();
         if(id === 'videomanager') renderCameraManager();
         if(id === 'spaziocliente') {
             if (typeof initSpazioCliente === 'function') initSpazioCliente();
@@ -29490,6 +29594,174 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCloudStatus("Errore eliminazione fascicolo", "error");
             }
         }
+    }
+
+    // ================================================================
+    // 🛡️ ARES SHOCKGUARD™ MASTER CONTROLLER & LASER QR PLATE GENERATOR
+    // ================================================================
+    const SHOCKGUARD_PUBLIC_URL = 'https://roby-styles.github.io/areslogistica/shockguard.html?id=ARCA-GEMINA-001';
+
+    async function renderShockGuardMaster() {
+        const container = document.getElementById('sg-master-events-container');
+        const countBadge = document.getElementById('sg-events-count-badge');
+        const statusPill = document.getElementById('sg-master-status-pill');
+        if (!container) return;
+
+        container.innerHTML = `<div style="padding:20px; text-align:center; color:#94a3b8;">⏳ Sincronizzazione telemetria ARCA GEMINA dal Cloud Supabase...</div>`;
+
+        if (!supabaseClient) return;
+
+        try {
+            const { data: ship } = await supabaseClient
+                .from('ares_shockguard_shipments')
+                .select('*')
+                .eq('id', 'ARCA-GEMINA-001')
+                .maybeSingle();
+
+            if (ship) {
+                const s1Input = document.getElementById('sg-s1-serial');
+                const s2Input = document.getElementById('sg-s2-serial');
+                if (s1Input && ship.sensor1_serial) s1Input.value = ship.sensor1_serial;
+                if (s2Input && ship.sensor2_serial) s2Input.value = ship.sensor2_serial;
+
+                const isImpact = ship.sensor1_status === 'IMPACT' || ship.sensor2_status === 'IMPACT';
+                if (statusPill) {
+                    statusPill.style.background = isImpact ? 'rgba(244,63,94,0.2)' : 'rgba(16,185,129,0.2)';
+                    statusPill.style.color = isImpact ? '#fda4af' : '#34d399';
+                    statusPill.textContent = isImpact ? '🔴 ALLARME URTO RILEVATO' : '🟢 INTEGRI (0G)';
+                }
+            }
+
+            const { data: events, error } = await supabaseClient
+                .from('ares_shockguard_events')
+                .select('*')
+                .eq('shipment_id', 'ARCA-GEMINA-001')
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+
+            const list = events || [];
+            if (countBadge) countBadge.textContent = `${list.length} Tappe Certificati in Cloud`;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div style="padding:20px; text-align:center; color:#64748b;">Nessuna tappa registrata.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map((ev, idx) => {
+                const isImpact = ev.sensor1_status === 'IMPACT' || ev.sensor2_status === 'IMPACT';
+                const dt = new Date(ev.created_at).toLocaleString('it-IT');
+                const photos = Array.isArray(ev.photos) ? ev.photos : [];
+                const thumbsHtml = photos.map(p => `<a href="${p}" target="_blank"><img src="${p}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.2);"></a>`).join('');
+
+                return `
+                    <div style="background:rgba(0,0,0,0.35); border:1px solid ${isImpact ? 'rgba(244,63,94,0.45)' : 'rgba(255,255,255,0.08)'}; border-left:4px solid ${isImpact ? '#f43f5e' : '#00f2fe'}; border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:240px;">
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                                <span style="font-size:11px; font-weight:800; background:rgba(0,242,254,0.12); color:#00f2fe; padding:3px 9px; border-radius:6px; font-family:monospace;">TAPPA #0${idx + 1} • ${ev.stage_code}</span>
+                                <span style="font-size:12px; color:#fde68a; font-family:monospace;">🕒 ${dt}</span>
+                                <span style="font-size:11px; font-weight:800; color:${isImpact ? '#fda4af' : '#34d399'};">S1: ${ev.sensor1_status} | S2: ${ev.sensor2_status}</span>
+                            </div>
+                            <div style="font-size:16px; font-weight:800; color:#fff; margin-bottom:4px;">${ev.stage_title}</div>
+                            <div style="font-size:12.5px; color:#94a3b8; margin-bottom:6px;">👤 <strong>${ev.operator_name || ''}</strong> (${ev.operator_role || ''}) — 📍 ${ev.location_name || ''} (${Number(ev.lat || 0).toFixed(4)}, ${Number(ev.lng || 0).toFixed(4)})</div>
+                            <div style="font-size:13px; color:#cbd5e1;">${ev.notes || ''}</div>
+                            ${thumbsHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${thumbsHtml}</div>` : ''}
+                        </div>
+                        <div>
+                            ${idx > 0 ? `<button onclick="deleteShockGuardEvent(${ev.id})" style="background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.35); color:#fda4af; padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:700; cursor:pointer;">🗑️ Elimina Tappa</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error('Errore renderShockGuardMaster:', err);
+            container.innerHTML = `<div style="padding:20px; color:#f43f5e;">Errore caricamento telemetria: ${err.message}</div>`;
+        }
+    }
+
+    async function setMasterSensorState(sensorNum, status) {
+        if (!supabaseClient) return;
+        const field = sensorNum === 1 ? { sensor1_status: status } : { sensor2_status: status };
+        await supabaseClient.from('ares_shockguard_shipments').update(field).eq('id', 'ARCA-GEMINA-001');
+        showCloudStatus(`Sensore #${sensorNum} impostato su ${status}`, 'success');
+        await renderShockGuardMaster();
+    }
+
+    async function saveMasterSensorSerials() {
+        if (!supabaseClient) return;
+        const s1 = document.getElementById('sg-s1-serial')?.value.trim() || 'SW2-QR-8841-A';
+        const s2 = document.getElementById('sg-s2-serial')?.value.trim() || 'SW2-QR-8842-B';
+        await supabaseClient.from('ares_shockguard_shipments').update({
+            sensor1_serial: s1,
+            sensor2_serial: s2
+        }).eq('id', 'ARCA-GEMINA-001');
+        showCloudStatus('Seriali ShockWatch salvati in Cloud!', 'success');
+        alert('Seriali dei 2 rivelatori ShockWatch aggiornati con successo!');
+    }
+
+    async function deleteShockGuardEvent(eventId) {
+        if (!confirm('Vuoi eliminare questa tappa di test dalla Catena di Custodia?')) return;
+        if (!supabaseClient) return;
+        await supabaseClient.from('ares_shockguard_events').delete().eq('id', eventId);
+        await renderShockGuardMaster();
+    }
+
+    function copyShockGuardLink() {
+        navigator.clipboard.writeText(SHOCKGUARD_PUBLIC_URL).then(() => {
+            alert('Link del Portale Direttore ARCA GEMINA copiato negli appunti!\n\n' + SHOCKGUARD_PUBLIC_URL);
+        });
+    }
+
+    function downloadLaserQrPlate() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 1480;
+        const ctx = canvas.getContext('2d');
+
+        // Pure high-contrast white background for LightBurn / Laser engraving
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Outer technical border
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 18;
+        ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
+
+        ctx.lineWidth = 4;
+        ctx.strokeRect(64, 64, canvas.width - 128, canvas.height - 128);
+
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+
+        ctx.font = '900 72px serif';
+        ctx.fillText('ARCA GEMINA', canvas.width / 2, 165);
+
+        ctx.font = 'italic 600 32px serif';
+        ctx.fillText('“ABUNDANS CAUTELA NON NOCET”', canvas.width / 2, 220);
+
+        ctx.font = '800 28px sans-serif';
+        ctx.fillText('ARES SHOCKGUARD™ • LIVE TELEMETRY & TAXONOMY', canvas.width / 2, 285);
+
+        const qrImg = new Image();
+        qrImg.crossOrigin = 'anonymous';
+        qrImg.onload = () => {
+            ctx.drawImage(qrImg, 200, 330, 800, 800);
+
+            ctx.font = '900 36px monospace';
+            ctx.fillText('ID: ARCA-GEMINA-001 • DUAL 25G MONITORED', canvas.width / 2, 1200);
+
+            ctx.font = '700 28px sans-serif';
+            ctx.fillText('SCAN QR CODE FOR GPS ROUTE, PHOTOS & OPENING PROTOCOL', canvas.width / 2, 1265);
+
+            ctx.font = '800 34px sans-serif';
+            ctx.fillText('LOGISTICA ARES S.R.L.S. — FINE ART DIVISION (ROMA)', canvas.width / 2, 1345);
+
+            const link = document.createElement('a');
+            link.download = 'TARGHETTA_LASER_ARCA_GEMINA_QR.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=800x800&ecc=H&margin=1&data=' + encodeURIComponent(SHOCKGUARD_PUBLIC_URL);
     }
 </script>
     <script src="spazio_cliente.js"></script>
