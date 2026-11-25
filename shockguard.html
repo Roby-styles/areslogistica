@@ -530,8 +530,8 @@
             z-index: 2;
             background: #090d16;
         }
-        #shockguard-map .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(96%);
+        .sg-dark-road-tiles {
+            filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(98%);
         }
 
         .map-legend-bar {
@@ -1652,10 +1652,20 @@
             zoomControl: true
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap • ARES ShockGuard GIS',
-            maxZoom: 19
-        }).addTo(mapInstance);
+        const satHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Satellite Hybrid • ARES ShockGuard GIS',
+            maxZoom: 20
+        });
+        const darkStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps • ARES ShockGuard GIS',
+            maxZoom: 20,
+            className: 'sg-dark-road-tiles'
+        });
+        satHybrid.addTo(mapInstance);
+        L.control.layers({
+            "🛰️ Satellite Ibrido (Strade + Sat)": satHybrid,
+            "🗺️ Mappa Stradale Dark-Neon": darkStreet
+        }, null, { position: 'topright' }).addTo(mapInstance);
 
         mapLayerGroup = L.layerGroup().addTo(mapInstance);
     }

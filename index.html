@@ -20456,8 +20456,8 @@
                     </button>
                 </div>
                 <style>
-                    #sg-master-map .leaflet-tile-pane {
-                        filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(96%);
+                    .sg-dark-road-tiles {
+                        filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(98%);
                     }
                 </style>
                 <div id="sg-master-map" style="width:100%; height:400px; border-radius:16px; border:1px solid rgba(0,242,254,0.28); background:#090d16; z-index:2;"></div>
@@ -21828,18 +21828,17 @@
                 zoomControl: true
             });
 
-            // Layer di Base stradale (OSM standard con contrasto scuro premium)
-            darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
+            // Layer di Base stradale (Google Maps Road con tema scuro Dark-Neon, zero chiavi e zero blocchi file://)
+            darkLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google Maps &bull; ARES GIS',
                 maxZoom: 20,
+                className: 'sg-dark-road-tiles',
                 crossOrigin: 'anonymous'
             });
 
-            // Layer Grigio Chiaro Premium ("Grey Light" Positron)
-            greyLightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
+            // Layer Grigio Chiaro Premium
+            greyLightLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google Maps',
                 maxZoom: 20,
                 crossOrigin: 'anonymous'
             });
@@ -27185,9 +27184,10 @@
                     attributionControl: false
                 }).setView([41.9028, 12.4964], 10);
                 
-                const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    subdomains: 'abcd',
-                    maxZoom: 19
+                const darkLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    className: 'sg-dark-road-tiles',
+                    attribution: '&copy; Google Maps'
                 });
 
                 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -29650,10 +29650,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 zoom: 12,
                 zoomControl: true
             });
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap • ARES ShockGuard Master GIS',
-                maxZoom: 19
-            }).addTo(sgMasterMap);
+            const darkStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google Maps • ARES ShockGuard Master GIS',
+                maxZoom: 20,
+                className: 'sg-dark-road-tiles'
+            });
+            const satHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                attribution: '&copy; Google Satellite Hybrid • ARES ShockGuard Master GIS',
+                maxZoom: 20
+            });
+            satHybrid.addTo(sgMasterMap);
+            L.control.layers({
+                "🛰️ Satellite Ibrido (Strade + Sat)": satHybrid,
+                "🗺️ Mappa Stradale Dark-Neon": darkStreet
+            }, null, { position: 'topright' }).addTo(sgMasterMap);
             sgMasterLayerGroup = L.layerGroup().addTo(sgMasterMap);
         } else {
             setTimeout(() => sgMasterMap.invalidateSize(), 100);
