@@ -20444,6 +20444,34 @@
                 </div>
             </div>
 
+            <!-- LIVE GIS MAP IN MASTER ERP -->
+            <div class="card-ui" style="background: rgba(16, 20, 35, 0.78); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 24px; margin-bottom: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                    <div>
+                        <h3 style="margin:0; font-size:18px; color:#fff;">🗺️ Mappa Satellitare Live &amp; Tracciato GPS (ARCA GEMINA)</h3>
+                        <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Clicca sui marker numerati del tracciato per ispezionare luogo, orario, stato dei 2 sensori 5G e foto scattate</div>
+                    </div>
+                    <button onclick="fitMasterShockGuardMap()" style="background:rgba(0,242,254,0.12); border:1px solid #00f2fe; color:#00f2fe; padding:8px 14px; border-radius:10px; font-weight:700; font-size:12px; cursor:pointer;">
+                        🎯 Centra Tracciato sulla Mappa
+                    </button>
+                </div>
+                <style>
+                    #sg-master-map .leaflet-tile-pane {
+                        filter: invert(100%) hue-rotate(185deg) brightness(92%) contrast(96%);
+                    }
+                </style>
+                <div id="sg-master-map" style="width:100%; height:400px; border-radius:16px; border:1px solid rgba(0,242,254,0.28); background:#090d16; z-index:2;"></div>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:12px; padding:10px 14px; background:rgba(0,0,0,0.35); border-radius:12px; font-size:12px; color:#cbd5e1;">
+                    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;"></span>Partenza Stabilimento ARES</span>
+                        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00f2fe;margin-right:5px;"></span>Accertamento / Checkpoint</span>
+                        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:5px;"></span>Consegna Finale Vaticano</span>
+                        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f43f5e;margin-right:5px;"></span>Allarme Urto (&gt;5G)</span>
+                    </div>
+                    <span id="sg-master-map-stats" style="color:#fde68a; font-family:monospace; font-weight:700;">Tracciato Live Attivo</span>
+                </div>
+            </div>
+
             <!-- LIVE EVENTS LOG TABLE IN ERP -->
             <div class="card-ui" style="background: rgba(16, 20, 35, 0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; margin-bottom: 40px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -29609,6 +29637,121 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🛡️ ARES SHOCKGUARD™ MASTER CONTROLLER & LASER QR PLATE GENERATOR
     // ================================================================
     const SHOCKGUARD_PUBLIC_URL = 'https://roby-styles.github.io/areslogistica/shockguard.html?id=ARCA-GEMINA-001';
+    let sgMasterMap = null;
+    let sgMasterLayerGroup = null;
+    let sgMasterCoords = [];
+
+    function initMasterShockGuardMap() {
+        const mapEl = document.getElementById('sg-master-map');
+        if (!mapEl || !window.L) return;
+        if (!sgMasterMap) {
+            sgMasterMap = L.map('sg-master-map', {
+                center: [41.9135, 12.4325],
+                zoom: 12,
+                zoomControl: true
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap • ARES ShockGuard Master GIS',
+                maxZoom: 19
+            }).addTo(sgMasterMap);
+            sgMasterLayerGroup = L.layerGroup().addTo(sgMasterMap);
+        } else {
+            setTimeout(() => sgMasterMap.invalidateSize(), 100);
+        }
+    }
+
+    function fitMasterShockGuardMap() {
+        if (!sgMasterMap || sgMasterCoords.length === 0) return;
+        if (sgMasterCoords.length > 1) {
+            sgMasterMap.fitBounds(sgMasterCoords, { padding: [40, 40], maxZoom: 16 });
+        } else {
+            sgMasterMap.setView(sgMasterCoords[0], 14);
+        }
+    }
+
+    function renderMasterShockGuardRoute(events, ship) {
+        initMasterShockGuardMap();
+        if (!sgMasterMap || !sgMasterLayerGroup) return;
+        sgMasterLayerGroup.clearLayers();
+        sgMasterCoords = [];
+
+        events.forEach((ev, idx) => {
+            const lat = Number(ev.lat) || 41.9016;
+            const lng = Number(ev.lng) || 12.4534;
+            sgMasterCoords.push([lat, lng]);
+
+            const isImpact = ev.sensor1_status === 'IMPACT' || ev.sensor2_status === 'IMPACT';
+            let color = '#00f2fe';
+            if (idx === 0) color = '#f59e0b';
+            else if (ev.stage_code === 'DIRECTOR_FINAL_DELIVERY') color = '#10b981';
+            if (isImpact) color = '#f43f5e';
+
+            const iconHtml = `
+                <div style="
+                    width: 34px; height: 34px; border-radius: 50%;
+                    background: #070a14;
+                    border: 3px solid ${color};
+                    box-shadow: 0 0 18px ${color};
+                    color: #fff; font-weight: 900; font-size: 13px;
+                    display: flex; align-items: center; justify-content: center;
+                    font-family: monospace;
+                ">${idx + 1}</div>
+            `;
+
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+
+            const photos = Array.isArray(ev.photos) ? ev.photos : [];
+            const firstPhotoHtml = photos.length > 0
+                ? `<a href="${photos[0]}" target="_blank"><img src="${photos[0]}" style="width:100%; height:110px; object-fit:cover; border-radius:8px; margin-top:8px;"></a>`
+                : '';
+
+            const dt = new Date(ev.created_at).toLocaleString('it-IT');
+            const popupHtml = `
+                <div style="font-family:'Outfit',sans-serif; min-width:210px; color:#0f172a;">
+                    <div style="font-size:10px; font-weight:800; color:#6366f1; text-transform:uppercase;">TAPPA #0${idx + 1} • ${dt}</div>
+                    <div style="font-size:14px; font-weight:800; margin:3px 0;">${ev.stage_title}</div>
+                    <div style="font-size:12px; color:#475569;">📍 ${ev.location_name || ''}</div>
+                    <div style="font-size:11.5px; font-weight:700; margin-top:5px; color:${isImpact ? '#e11d48' : '#059669'};">
+                        Sensori 5G: S1 ${ev.sensor1_status} | S2 ${ev.sensor2_status}
+                    </div>
+                    ${firstPhotoHtml}
+                </div>
+            `;
+
+            L.marker([lat, lng], { icon: customIcon }).bindPopup(popupHtml).addTo(sgMasterLayerGroup);
+        });
+
+        if (sgMasterCoords.length === 1 && ship?.dest_lat && ship?.dest_lng) {
+            const destCoords = [Number(ship.dest_lat), Number(ship.dest_lng)];
+            const destIcon = L.divIcon({
+                html: `<div style="width:30px;height:30px;border-radius:50%;background:rgba(16,185,129,0.2);border:2px dashed #10b981;color:#10b981;display:flex;align-items:center;justify-content:center;font-size:14px;">🏛️</div>`,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            L.marker(destCoords, { icon: destIcon })
+                .bindPopup(`<b>Destinazione Finale Programmata</b><br>Fabbrica di San Pietro — Città del Vaticano`)
+                .addTo(sgMasterLayerGroup);
+            L.polyline([sgMasterCoords[0], destCoords], { color: '#f59e0b', weight: 3, dashArray: '8, 8', opacity: 0.75 }).addTo(sgMasterLayerGroup);
+            sgMasterCoords.push(destCoords);
+        } else if (sgMasterCoords.length > 1) {
+            L.polyline(sgMasterCoords, { color: '#00f2fe', weight: 8, opacity: 0.25 }).addTo(sgMasterLayerGroup);
+            L.polyline(sgMasterCoords, { color: '#00f2fe', weight: 3.5, opacity: 0.95 }).addTo(sgMasterLayerGroup);
+        }
+
+        const statsEl = document.getElementById('sg-master-map-stats');
+        if (statsEl) statsEl.textContent = `Punti GPS sul Tracciato: ${events.length}`;
+
+        setTimeout(() => {
+            sgMasterMap.invalidateSize();
+            fitMasterShockGuardMap();
+        }, 150);
+    }
 
     async function renderShockGuardMaster() {
         const container = document.getElementById('sg-master-events-container');
@@ -29651,6 +29794,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const list = events || [];
             if (countBadge) countBadge.textContent = `${list.length} Tappe Certificati in Cloud`;
+            renderMasterShockGuardRoute(list, ship);
 
             if (list.length === 0) {
                 container.innerHTML = `<div style="padding:20px; text-align:center; color:#64748b;">Nessuna tappa registrata.</div>`;
@@ -29677,6 +29821,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${thumbsHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${thumbsHtml}</div>` : ''}
                         </div>
                         <div>
+                            ${ev.lat && ev.lng ? `<button onclick="if(sgMasterMap){sgMasterMap.flyTo([${ev.lat},${ev.lng}],16);}" style="background:rgba(0,242,254,0.14); border:1px solid rgba(0,242,254,0.35); color:#00f2fe; padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:700; cursor:pointer; margin-right:6px;">📍 Vedi su Mappa</button>` : ''}
                             ${idx > 0 ? `<button onclick="deleteShockGuardEvent(${ev.id})" style="background:rgba(244,63,94,0.15); border:1px solid rgba(244,63,94,0.35); color:#fda4af; padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:700; cursor:pointer;">🗑️ Elimina Tappa</button>` : ''}
                         </div>
                     </div>
