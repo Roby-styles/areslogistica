@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ares-cache-v66';
+const CACHE_NAME = 'ares-cache-v67';
 const ASSETS = [
   './',
   './index.html',

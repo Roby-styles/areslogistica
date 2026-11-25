@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
 
 :root {
     --bg-dark: #0f172a;
@@ -19,7 +19,7 @@ html, body {
     height: 100vh;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Blocca le scrollbar a livello di pagina intera in modo assoluto */
+    overflow-x: hidden; overflow-y: auto;
 }
 
 #view-spaziocliente {
@@ -256,7 +256,7 @@ input:checked + .slider:before { transform: translateX(26px); }
     background: rgba(0,0,0,0.2);
     padding: 10px; /* Ridotto */
     border-radius: 12px;
-    /* margin-bottom rimosso perché c'è già il gap della griglia */
+    /* margin-bottom rimosso perchÃ© c'Ã¨ giÃ  il gap della griglia */
     transition: transform 0.3s;
     min-height: 0; /* Permette il restringimento */
 }
@@ -1023,8 +1023,9 @@ input[type=range] {
     background: rgba(255,255,255,0.2);
 }
 
-/* Effetto Notturno naturale (Meno blu, più realistico) */
+/* Effetto Notturno naturale (Meno blu, piÃ¹ realistico) */
 .terrain-base .leaflet-tile-pane {
     filter: grayscale(40%) brightness(0.6) contrast(1.2) sepia(10%) hue-rotate(190deg);
     opacity: 0.9;
 }
+
