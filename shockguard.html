@@ -1156,16 +1156,16 @@
                 <div class="sw-tube-outer">
                     <div class="sw-tube-vial" id="vial-sensor-1"></div>
                 </div>
-                <span class="sw-g-badge" id="g-sensor-1">25G</span>
+                <span class="sw-g-badge" id="g-sensor-1">5G</span>
             </div>
             <div class="sensor-meta">
                 <div class="sensor-header-row">
                     <span class="sensor-name">RIVELATORE D'URTO #1</span>
-                    <span class="sensor-serial" id="serial-sensor-1">SW2-QR-8841-A</span>
+                    <span class="sensor-serial" id="serial-sensor-1" onclick="openSerialAssignModal()" style="cursor:pointer;" title="Tocca per scansionare o inserire il seriale dell'adesivo">📲 ASSEGNA SERIALE</span>
                 </div>
-                <div class="sensor-pos" id="pos-sensor-1">Cassa Esterna — Montante Frontale (Asse Z/Y)</div>
+                <div class="sensor-pos" id="pos-sensor-1">Cassa Esterna — Montante Frontale (Soglia 5G • Alta Sensibilità)</div>
                 <div class="sensor-status-badge" id="badge-sensor-1">
-                    <span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>
+                    <span>🟢 FIALA BIANCA • INTEGRO (&lt; 5G)</span>
                 </div>
             </div>
         </div>
@@ -1177,16 +1177,16 @@
                 <div class="sw-tube-outer">
                     <div class="sw-tube-vial" id="vial-sensor-2"></div>
                 </div>
-                <span class="sw-g-badge" id="g-sensor-2">25G</span>
+                <span class="sw-g-badge" id="g-sensor-2">5G</span>
             </div>
             <div class="sensor-meta">
                 <div class="sensor-header-row">
                     <span class="sensor-name">RIVELATORE D'URTO #2</span>
-                    <span class="sensor-serial" id="serial-sensor-2">SW2-QR-8842-B</span>
+                    <span class="sensor-serial" id="serial-sensor-2" onclick="openSerialAssignModal()" style="cursor:pointer;" title="Tocca per scansionare o inserire il seriale dell'adesivo">📲 ASSEGNA SERIALE</span>
                 </div>
-                <div class="sensor-pos" id="pos-sensor-2">Cassa Esterna — Fianco Laterale (Asse X/Tilt)</div>
+                <div class="sensor-pos" id="pos-sensor-2">Cassa Esterna — Fianco Laterale (Soglia 5G • Alta Sensibilità)</div>
                 <div class="sensor-status-badge" id="badge-sensor-2">
-                    <span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>
+                    <span>🟢 FIALA BIANCA • INTEGRO (&lt; 5G)</span>
                 </div>
             </div>
         </div>
@@ -1515,26 +1515,37 @@
             </div>
         </div>
 
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-field">
+                <label>Seriale Rivelatore #1 (5G Frontale)</label>
+                <input type="text" id="chk-s1-serial" placeholder="Leggi sull'adesivo #1 al collocamento...">
+            </div>
+            <div class="form-field">
+                <label>Seriale Rivelatore #2 (5G Laterale)</label>
+                <input type="text" id="chk-s2-serial" placeholder="Leggi sull'adesivo #2 al collocamento...">
+            </div>
+        </div>
+
         <div class="form-field">
-            <label>Stato Rivelatore ShockWatch #1 (Frontale 25G)</label>
+            <label>Stato Rivelatore ShockWatch #1 (Frontale 5G)</label>
             <div class="sensor-toggle-group">
                 <div class="sensor-radio-btn selected-ok" id="btn-s1-ok" onclick="setModalSensor(1, 'OK')">
-                    🟢 FIALA BIANCA (INTEGRO)
+                    🟢 FIALA BIANCA (INTEGRO &lt; 5G)
                 </div>
                 <div class="sensor-radio-btn" id="btn-s1-impact" onclick="setModalSensor(1, 'IMPACT')">
-                    🔴 FIALA ROSSA (URTO!)
+                    🔴 FIALA ROSSA (URTO &gt; 5G!)
                 </div>
             </div>
         </div>
 
         <div class="form-field">
-            <label>Stato Rivelatore ShockWatch #2 (Laterale 25G)</label>
+            <label>Stato Rivelatore ShockWatch #2 (Laterale 5G)</label>
             <div class="sensor-toggle-group">
                 <div class="sensor-radio-btn selected-ok" id="btn-s2-ok" onclick="setModalSensor(2, 'OK')">
-                    🟢 FIALA BIANCA (INTEGRO)
+                    🟢 FIALA BIANCA (INTEGRO &lt; 5G)
                 </div>
                 <div class="sensor-radio-btn" id="btn-s2-impact" onclick="setModalSensor(2, 'IMPACT')">
-                    🔴 FIALA ROSSA (URTO!)
+                    🔴 FIALA ROSSA (URTO &gt; 5G!)
                 </div>
             </div>
         </div>
@@ -1671,17 +1682,17 @@
                 motto: 'ABUNDANS CAUTELA NON NOCET',
                 client_name: 'Reverenda Fabbrica di San Pietro in Vaticano',
                 client_dept: 'Città del Vaticano — Studio del Mosaico / Ufficio Tecnico',
-                sensor1_serial: 'SW2-QR-8841-A',
-                sensor1_g: '25G',
-                sensor1_pos: 'Cassa Esterna — Montante Frontale (Asse Z/Y)',
+                sensor1_serial: 'DA RILEVARE AL COLLOCAMENTO',
+                sensor1_g: '5G',
+                sensor1_pos: 'Cassa Esterna — Montante Frontale (Soglia 5G • Alta Sensibilità)',
                 sensor1_status: 'OK',
-                sensor2_serial: 'SW2-QR-8842-B',
-                sensor2_g: '25G',
-                sensor2_pos: 'Cassa Esterna — Fianco Laterale (Asse X/Tilt)',
+                sensor2_serial: 'DA RILEVARE AL COLLOCAMENTO',
+                sensor2_g: '5G',
+                sensor2_pos: 'Cassa Esterna — Fianco Laterale (Soglia 5G • Alta Sensibilità)',
                 sensor2_status: 'OK',
                 artwork_title: 'Opera Mosaico Policromo con Cornice Bianca ("Cesto di Fiori")',
                 artwork_dims: '103 × 78 × 4,5 cm',
-                crate_system: 'Double-Crate System 100% Processed Wood (OSB/3 12mm + Ethafoam + Multistrato Millerighe 7-Ply)'
+                crate_system: 'Double-Crate System 100% OSB/3 (12mm & 18mm + Ethafoam Cushioning — Zero Solid Wood)'
             };
         }
 
@@ -1689,7 +1700,7 @@
             currentEvents = [{
                 id: 1,
                 stage_code: 'ORIGIN_ARMED',
-                stage_title: 'Collaudo Strutturale, Sigillatura Torx T40 & Armamento Sensori ShockWatch',
+                stage_title: 'Collaudo Strutturale, Sigillatura Torx T40 & Predisposizione Sensori 5G',
                 operator_name: 'Direzione Tecnica ARES (M. Olivieri / R. Mariani)',
                 operator_role: 'Fine Art Packing & Logistics Division',
                 location_name: 'Stabilimento Logistica ARES — Via di Torrevecchia 901, Roma',
@@ -1697,8 +1708,8 @@
                 lng: 12.4116,
                 sensor1_status: 'OK',
                 sensor2_status: 'OK',
-                notes: 'Doppia cassa ARCA GEMINA assemblata e collaudata. Applicati e armati n.2 rivelatori d\'urto ShockWatch 2 QR (Fiala Bianca = 0G superati).',
-                photos: ['assets_arcagemina/esploso_tecnico.jpeg', 'assets_arcagemina/opera_mosaico.jpg'],
+                notes: 'Doppia cassa ARCA GEMINA assemblata e collaudata. Predisposti n.2 rivelatori d\'urto ad alta sensibilità ShockWatch 2 QR da 5G (Fiala Bianca = < 5G). I numeri seriali verranno letti e registrati al momento del collocamento sulla cassa.',
+                photos: ['assets_arcagemina/esploso_tecnico.png', 'assets_arcagemina/opera_mosaico.jpg'],
                 created_at: new Date().toISOString()
             }];
         }
@@ -1729,32 +1740,62 @@
             if (ev.sensor2_status === 'IMPACT') s2Status = 'IMPACT';
         });
 
-        document.getElementById('serial-sensor-1').textContent = s.sensor1_serial || 'SW2-QR-8841-A';
-        document.getElementById('g-sensor-1').textContent = s.sensor1_g || '25G';
-        document.getElementById('pos-sensor-1').textContent = s.sensor1_pos || 'Montante Frontale';
+        const s1SerialText = (!s.sensor1_serial || s.sensor1_serial.includes('DA RILEVARE'))
+            ? '📲 DA LEGGERE AL COLLOCAMENTO (Tocca)'
+            : `SN: ${s.sensor1_serial} ✏️`;
+        const s2SerialText = (!s.sensor2_serial || s.sensor2_serial.includes('DA RILEVARE'))
+            ? '📲 DA LEGGERE AL COLLOCAMENTO (Tocca)'
+            : `SN: ${s.sensor2_serial} ✏️`;
 
-        document.getElementById('serial-sensor-2').textContent = s.sensor2_serial || 'SW2-QR-8842-B';
-        document.getElementById('g-sensor-2').textContent = s.sensor2_g || '25G';
-        document.getElementById('pos-sensor-2').textContent = s.sensor2_pos || 'Fianco Laterale';
+        document.getElementById('serial-sensor-1').textContent = s1SerialText;
+        document.getElementById('g-sensor-1').textContent = s.sensor1_g || '5G';
+        document.getElementById('pos-sensor-1').textContent = s.sensor1_pos || 'Cassa Esterna — Montante Frontale (Soglia 5G)';
+
+        document.getElementById('serial-sensor-2').textContent = s2SerialText;
+        document.getElementById('g-sensor-2').textContent = s.sensor2_g || '5G';
+        document.getElementById('pos-sensor-2').textContent = s.sensor2_pos || 'Cassa Esterna — Fianco Laterale (Soglia 5G)';
 
         const card1 = document.getElementById('card-sensor-1');
         const badge1 = document.getElementById('badge-sensor-1');
         if (s1Status === 'IMPACT') {
             card1.classList.add('impact-alert');
-            badge1.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (>25G)</span>';
+            badge1.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (&gt; 5G)</span>';
         } else {
             card1.classList.remove('impact-alert');
-            badge1.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>';
+            badge1.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (&lt; 5G)</span>';
         }
 
         const card2 = document.getElementById('card-sensor-2');
         const badge2 = document.getElementById('badge-sensor-2');
         if (s2Status === 'IMPACT') {
             card2.classList.add('impact-alert');
-            badge2.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (>25G)</span>';
+            badge2.innerHTML = '<span>🔴 FIALA ROSSA • ALLARME URTO RILEVATO (&gt; 5G)</span>';
         } else {
             card2.classList.remove('impact-alert');
-            badge2.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (0G SUPERATI)</span>';
+            badge2.innerHTML = '<span>🟢 FIALA BIANCA • INTEGRO (&lt; 5G)</span>';
+        }
+    }
+
+    async function openSerialAssignModal() {
+        const cur1 = (currentShipment?.sensor1_serial && !currentShipment.sensor1_serial.includes('DA RILEVARE')) ? currentShipment.sensor1_serial : '';
+        const cur2 = (currentShipment?.sensor2_serial && !currentShipment.sensor2_serial.includes('DA RILEVARE')) ? currentShipment.sensor2_serial : '';
+        const s1 = prompt('Inserisci o scansiona il Numero Seriale del RIVELATORE #1 (5G Frontale):', cur1);
+        if (s1 === null) return;
+        const s2 = prompt('Inserisci o scansiona il Numero Seriale del RIVELATORE #2 (5G Laterale):', cur2);
+        if (s2 === null) return;
+
+        const val1 = s1.trim() || 'DA RILEVARE AL COLLOCAMENTO';
+        const val2 = s2.trim() || 'DA RILEVARE AL COLLOCAMENTO';
+        currentShipment.sensor1_serial = val1;
+        currentShipment.sensor2_serial = val2;
+        renderHeaderAndSensors();
+
+        if (sb) {
+            await sb.from('ares_shockguard_shipments').update({
+                sensor1_serial: val1,
+                sensor2_serial: val2,
+                updated_at: new Date().toISOString()
+            }).eq('id', SHIPMENT_ID);
         }
     }
 
@@ -1933,6 +1974,10 @@
         stagedPhotoDataUrls = [];
         document.getElementById('chk-photo-previews').innerHTML = '';
         document.getElementById('chk-submit-status').style.display = 'none';
+        const s1In = document.getElementById('chk-s1-serial');
+        const s2In = document.getElementById('chk-s2-serial');
+        if (s1In) s1In.value = (currentShipment?.sensor1_serial && !currentShipment.sensor1_serial.includes('DA RILEVARE')) ? currentShipment.sensor1_serial : '';
+        if (s2In) s2In.value = (currentShipment?.sensor2_serial && !currentShipment.sensor2_serial.includes('DA RILEVARE')) ? currentShipment.sensor2_serial : '';
         detectUserGPS();
     }
 
@@ -2095,8 +2140,12 @@
                     currentEvents.push({ ...newEventPayload, created_at: new Date().toISOString() });
                 }
 
-                // Update overall shipment sensor statuses
+                // Update overall shipment sensor statuses and serials if read during placement
+                const typedS1 = document.getElementById('chk-s1-serial')?.value.trim();
+                const typedS2 = document.getElementById('chk-s2-serial')?.value.trim();
                 const updatedShipmentFields = {
+                    sensor1_serial: typedS1 || currentShipment.sensor1_serial,
+                    sensor2_serial: typedS2 || currentShipment.sensor2_serial,
                     sensor1_status: modalSensor1 === 'IMPACT' ? 'IMPACT' : currentShipment.sensor1_status,
                     sensor2_status: modalSensor2 === 'IMPACT' ? 'IMPACT' : currentShipment.sensor2_status,
                     overall_status: (modalSensor1 === 'IMPACT' || modalSensor2 === 'IMPACT')

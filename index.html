@@ -20400,14 +20400,14 @@
                 <!-- SENSORS & SHIPMENT CONTROL CARD -->
                 <div class="card-ui" style="background: linear-gradient(145deg, rgba(16, 21, 38, 0.85), rgba(10, 13, 24, 0.95)); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 20px; padding: 24px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                        <span style="font-size:11px; font-weight:800; color:#00f2fe; letter-spacing:1.5px; text-transform:uppercase;">🎛️ CONTROLLO MASTER RIVELATORI SHOCKWATCH 2</span>
-                        <span id="sg-master-status-pill" style="font-size:11px; background:rgba(16,185,129,0.2); color:#34d399; padding:4px 10px; border-radius:999px; font-weight:800;">🟢 INTEGRI (0G)</span>
+                        <span style="font-size:11px; font-weight:800; color:#00f2fe; letter-spacing:1.5px; text-transform:uppercase;">🎛️ CONTROLLO MASTER RIVELATORI SHOCKWATCH 2 (SOGLIA 5G)</span>
+                        <span id="sg-master-status-pill" style="font-size:11px; background:rgba(16,185,129,0.2); color:#34d399; padding:4px 10px; border-radius:999px; font-weight:800;">🟢 INTEGRI (&lt; 5G)</span>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                         <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
-                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #1 (Frontale)</div>
-                            <input type="text" id="sg-s1-serial" value="SW2-QR-8841-A" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #1 (5G Frontale)</div>
+                            <input type="text" id="sg-s1-serial" value="" placeholder="Da leggere al collocamento..." style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
                             <div style="display:flex; gap:6px; margin-top:8px;">
                                 <button onclick="setMasterSensorState(1, 'OK')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #10b981; background:rgba(16,185,129,0.18); color:#34d399; font-size:11px; font-weight:800; cursor:pointer;">🟢 Bianco OK</button>
                                 <button onclick="setMasterSensorState(1, 'IMPACT')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #f43f5e; background:rgba(244,63,94,0.15); color:#fda4af; font-size:11px; font-weight:800; cursor:pointer;">🔴 Rosso Urto</button>
@@ -20415,8 +20415,8 @@
                         </div>
 
                         <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
-                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #2 (Laterale)</div>
-                            <input type="text" id="sg-s2-serial" value="SW2-QR-8842-B" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">RIVELATORE #2 (5G Laterale)</div>
+                            <input type="text" id="sg-s2-serial" value="" placeholder="Da leggere al collocamento..." style="width:100%; margin-top:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px;">
                             <div style="display:flex; gap:6px; margin-top:8px;">
                                 <button onclick="setMasterSensorState(2, 'OK')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #10b981; background:rgba(16,185,129,0.18); color:#34d399; font-size:11px; font-weight:800; cursor:pointer;">🟢 Bianco OK</button>
                                 <button onclick="setMasterSensorState(2, 'IMPACT')" style="flex:1; padding:6px; border-radius:8px; border:1px solid #f43f5e; background:rgba(244,63,94,0.15); color:#fda4af; font-size:11px; font-weight:800; cursor:pointer;">🔴 Rosso Urto</button>
@@ -29621,14 +29621,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ship) {
                 const s1Input = document.getElementById('sg-s1-serial');
                 const s2Input = document.getElementById('sg-s2-serial');
-                if (s1Input && ship.sensor1_serial) s1Input.value = ship.sensor1_serial;
-                if (s2Input && ship.sensor2_serial) s2Input.value = ship.sensor2_serial;
+                if (s1Input) s1Input.value = (ship.sensor1_serial && !ship.sensor1_serial.includes('DA RILEVARE')) ? ship.sensor1_serial : '';
+                if (s2Input) s2Input.value = (ship.sensor2_serial && !ship.sensor2_serial.includes('DA RILEVARE')) ? ship.sensor2_serial : '';
 
                 const isImpact = ship.sensor1_status === 'IMPACT' || ship.sensor2_status === 'IMPACT';
                 if (statusPill) {
                     statusPill.style.background = isImpact ? 'rgba(244,63,94,0.2)' : 'rgba(16,185,129,0.2)';
                     statusPill.style.color = isImpact ? '#fda4af' : '#34d399';
-                    statusPill.textContent = isImpact ? '🔴 ALLARME URTO RILEVATO' : '🟢 INTEGRI (0G)';
+                    statusPill.textContent = isImpact ? '🔴 ALLARME URTO (> 5G)' : '🟢 INTEGRI (< 5G)';
                 }
             }
 
@@ -29689,14 +29689,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveMasterSensorSerials() {
         if (!supabaseClient) return;
-        const s1 = document.getElementById('sg-s1-serial')?.value.trim() || 'SW2-QR-8841-A';
-        const s2 = document.getElementById('sg-s2-serial')?.value.trim() || 'SW2-QR-8842-B';
+        const s1 = document.getElementById('sg-s1-serial')?.value.trim() || 'DA RILEVARE AL COLLOCAMENTO';
+        const s2 = document.getElementById('sg-s2-serial')?.value.trim() || 'DA RILEVARE AL COLLOCAMENTO';
         await supabaseClient.from('ares_shockguard_shipments').update({
             sensor1_serial: s1,
-            sensor2_serial: s2
+            sensor2_serial: s2,
+            sensor1_g: '5G',
+            sensor2_g: '5G'
         }).eq('id', 'ARCA-GEMINA-001');
-        showCloudStatus('Seriali ShockWatch salvati in Cloud!', 'success');
-        alert('Seriali dei 2 rivelatori ShockWatch aggiornati con successo!');
+        showCloudStatus('Seriali ShockWatch 5G salvati in Cloud!', 'success');
+        alert('Seriali dei 2 rivelatori ShockWatch (5G) aggiornati con successo!');
     }
 
     async function deleteShockGuardEvent(eventId) {
@@ -29748,7 +29750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.drawImage(qrImg, 200, 330, 800, 800);
 
             ctx.font = '900 36px monospace';
-            ctx.fillText('ID: ARCA-GEMINA-001 • DUAL 25G MONITORED', canvas.width / 2, 1200);
+            ctx.fillText('ID: ARCA-GEMINA-001 • DUAL 5G MONITORED', canvas.width / 2, 1200);
 
             ctx.font = '700 28px sans-serif';
             ctx.fillText('SCAN QR CODE FOR GPS ROUTE, PHOTOS & OPENING PROTOCOL', canvas.width / 2, 1265);
