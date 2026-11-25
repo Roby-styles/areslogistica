@@ -282,35 +282,41 @@
             line-height: 1.35;
         }
 
-        /* NAVIGATION TABS (NEON PILLS) */
+        /* NAVIGATION TABS (NEON PILLS - ADAPTIVE GRID) */
         .nav-tabs {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 6px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
             margin-bottom: 22px;
-            scrollbar-width: none;
         }
-        .nav-tabs::-webkit-scrollbar { display: none; }
+
+        @media (max-width: 560px) {
+            .nav-tabs {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+        }
 
         .tab-btn {
-            flex: 1;
-            min-width: 170px;
-            padding: 14px 18px;
-            background: rgba(15, 20, 35, 0.75);
+            width: 100%;
+            padding: 13px 14px;
+            background: rgba(15, 20, 35, 0.78);
             border: 1px solid var(--border-glass);
             border-radius: 16px;
             color: var(--text-muted);
             font-family: 'Outfit', sans-serif;
-            font-size: 13px;
+            font-size: clamp(12px, 1.8vw, 13.5px);
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
+            text-align: center;
+            gap: 8px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
+            white-space: normal;
+            line-height: 1.25;
+            overflow: hidden;
         }
 
         .tab-btn:hover {
@@ -1487,21 +1493,25 @@
     <div class="modal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
             <div>
-                <div style="font-size:11px; color:var(--cyan-neon); font-weight:800; letter-spacing:1.2px;">CATENA DI CUSTODIA • NUOVA REGISTRAZIONE</div>
-                <h3 style="margin:2px 0 0 0; font-size:20px; color:#fff;">📸 Registra Ispezione & Foto ARCA GEMINA</h3>
+                <div style="font-size:11px; color:var(--cyan-neon); font-weight:800; letter-spacing:1.2px;" id="chk-auto-step-badge">CATENA DI CUSTODIA • ACCERTAMENTO #02 (ILLIMITATI)</div>
+                <h3 style="margin:2px 0 0 0; font-size:20px; color:#fff;">📸 Registra Nuovo Accertamento &amp; Foto</h3>
             </div>
             <button onclick="closeCheckinModal()" style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px;">✕</button>
         </div>
 
         <div class="form-field">
-            <label>Fase / Tappa Operativa</label>
-            <select id="chk-stage">
-                <option value="FACTORY_DEPARTURE|Partenza dallo Stabilimento Logistica ARES">1. Partenza / Carico in Stabilimento ARES (Roma)</option>
-                <option value="VATICAN_YARD_UNLOAD|Scarico nel Piazzale del Vaticano (Pre-Consegna)">2. Scarico nel Piazzale del Vaticano (Verifica Intermedia)</option>
-                <option value="DIRECTOR_FINAL_DELIVERY|Consegna Ufficiale & Collaudo Direzione Fabbrica di San Pietro" selected>3. Consegna Ufficiale & Collaudo Direzione (Fabbrica di San Pietro)</option>
-                <option value="CUSTOMS_INSPECTION|Ispezione Doganale / Apertura Controllata Torx T40">4. Ispezione Doganale / Verifica Apertura Torx T40</option>
-                <option value="IMPACT_ANOMALY_REPORT|Segnalazione Urto / Anomalia Rivelatore ShockWatch">⚠️ Segnalazione Urto / Anomalia Rivelatore ShockWatch</option>
+            <label>Tipologia Accertamento / Checkpoint (Seleziona o scrivi liberamente per N passaggi)</label>
+            <select id="chk-stage" onchange="onStageSelectChange(this)" style="margin-bottom: 8px;">
+                <option value="CHECKPOINT_TRANSIT">📍 Accertamento Fotografico &amp; Verifica Rivelatori 5G (Qualsiasi Tappa / Passaggio)</option>
+                <option value="FACTORY_DEPARTURE">🏭 Partenza / Carico in Stabilimento Logistica ARES</option>
+                <option value="TRANSIT_HANDLING">🚚 Controllo Intermedio in Transito / Movimentazione Mezzo</option>
+                <option value="VATICAN_YARD_UNLOAD">🏛️ Scarico nel Piazzale / Varco Città del Vaticano</option>
+                <option value="INTERNAL_TRANSFER">📦 Trasferimento Interno verso Reparto / Studio del Mosaico</option>
+                <option value="DIRECTOR_FINAL_DELIVERY">👑 Consegna &amp; Collaudo alla Presenza della Direzione</option>
+                <option value="CUSTOMS_INSPECTION">🛃 Ispezione Doganale / Apertura Controllata Torx T40</option>
+                <option value="IMPACT_ANOMALY_REPORT">⚠️ Segnalazione Urto / Anomalia Rivelatore ShockWatch 5G</option>
             </select>
+            <input type="text" id="chk-custom-title" placeholder="Titolo accertamento (es. Accertamento #2 — Scarico Piazzale Vaticano, Verifica Intermedia, ecc.)">
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -1709,7 +1719,7 @@
                 sensor1_status: 'OK',
                 sensor2_status: 'OK',
                 notes: 'Doppia cassa ARCA GEMINA assemblata e collaudata. Predisposti n.2 rivelatori d\'urto ad alta sensibilità ShockWatch 2 QR da 5G (Fiala Bianca = < 5G). I numeri seriali verranno letti e registrati al momento del collocamento sulla cassa.',
-                photos: ['assets_arcagemina/esploso_tecnico.png', 'assets_arcagemina/opera_mosaico.jpg'],
+                photos: ['assets_arcagemina/esploso_tecnico.png'],
                 created_at: new Date().toISOString()
             }];
         }
@@ -1968,12 +1978,33 @@
         }).join('');
     }
 
-    // MODAL & CHECK-IN LOGIC
+    // MODAL & CHECK-IN LOGIC (UNLIMITED N ACCERTAMENTI)
+    function onStageSelectChange(sel) {
+        const nextNum = (currentEvents ? currentEvents.length : 1) + 1;
+        const mapTitles = {
+            'CHECKPOINT_TRANSIT': `Accertamento #0${nextNum} — Verifica Integrità Cassa & Rivelatori 5G`,
+            'FACTORY_DEPARTURE': `Accertamento #0${nextNum} — Partenza / Carico in Stabilimento ARES`,
+            'TRANSIT_HANDLING': `Accertamento #0${nextNum} — Controllo Intermedio in Transito`,
+            'VATICAN_YARD_UNLOAD': `Accertamento #0${nextNum} — Scarico nel Piazzale Città del Vaticano`,
+            'INTERNAL_TRANSFER': `Accertamento #0${nextNum} — Trasferimento Interno verso Reparto Vaticano`,
+            'DIRECTOR_FINAL_DELIVERY': `Accertamento #0${nextNum} — Consegna Ufficiale & Collaudo Direzione`,
+            'CUSTOMS_INSPECTION': `Accertamento #0${nextNum} — Ispezione Doganale / Verifica Torx T40`,
+            'IMPACT_ANOMALY_REPORT': `Accertamento #0${nextNum} — Segnalazione Anomalia Rivelatore ShockWatch 5G`
+        };
+        const titleInput = document.getElementById('chk-custom-title');
+        if (titleInput) titleInput.value = mapTitles[sel.value] || `Accertamento #0${nextNum} — Verifica Integrità`;
+    }
+
     function openCheckinModal() {
         document.getElementById('checkin-modal').style.display = 'flex';
         stagedPhotoDataUrls = [];
         document.getElementById('chk-photo-previews').innerHTML = '';
         document.getElementById('chk-submit-status').style.display = 'none';
+        const nextNum = (currentEvents ? currentEvents.length : 1) + 1;
+        const badgeEl = document.getElementById('chk-auto-step-badge');
+        if (badgeEl) badgeEl.textContent = `CATENA DI CUSTODIA • ACCERTAMENTO PROGRESSIVO #0${nextNum} (ILLIMITATI)`;
+        const selEl = document.getElementById('chk-stage');
+        if (selEl) onStageSelectChange(selEl);
         const s1In = document.getElementById('chk-s1-serial');
         const s2In = document.getElementById('chk-s2-serial');
         if (s1In) s1In.value = (currentShipment?.sensor1_serial && !currentShipment.sensor1_serial.includes('DA RILEVARE')) ? currentShipment.sensor1_serial : '';
@@ -2067,8 +2098,9 @@
     async function submitCheckinEvent() {
         const btn = document.getElementById('btn-submit-checkin');
         const statusBox = document.getElementById('chk-submit-status');
-        const stageRaw = document.getElementById('chk-stage').value;
-        const [stageCode, stageTitle] = stageRaw.split('|');
+        const stageCode = document.getElementById('chk-stage').value || 'CHECKPOINT_TRANSIT';
+        const nextNum = (currentEvents ? currentEvents.length : 1) + 1;
+        const stageTitle = document.getElementById('chk-custom-title')?.value.trim() || `Accertamento #0${nextNum} — Verifica Integrità Cassa & Rivelatori 5G`;
 
         const operatorName = document.getElementById('chk-operator').value.trim() || 'Direzione / Operatore Certificato';
         const operatorRole = document.getElementById('chk-role').value.trim() || 'Fabbrica di San Pietro / ARES';
